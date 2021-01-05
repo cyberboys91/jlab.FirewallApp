@@ -23,26 +23,25 @@ public class PackChangeReceiver extends BroadcastReceiver {
         if (action == null)
             return;
         int uid = intent.getIntExtra(Intent.EXTRA_UID, 0);
-        switch (action) {
-            case Intent.ACTION_PACKAGE_REMOVED:
-                if (uid > 0) {
+        if (uid > 0) {
+            switch (action) {
+                case Intent.ACTION_PACKAGE_REMOVED:
                     if (appMgr.deleteAplicationData(uid) > 0) {
                         NotificationManagerCompat.from(context).cancel(uid); // installed notification
                         NotificationManagerCompat.from(context).cancel(uid + 10000); // access notification
                     }
-                }
-                break;
-            case Intent.ACTION_PACKAGE_ADDED:
-            case Intent.ACTION_PACKAGE_REPLACED:
-                uid = intent.getIntExtra(Intent.EXTRA_UID, 0);
-                ApplicationDetails appDetails = getOnlyInternetApps(uid, packMgr, context);
-                if(appDetails != null) {
-                    if (Intent.ACTION_PACKAGE_REPLACED.equals(intent.getAction()))
-                        appMgr.updateApplicationData(uid, appDetails);
-                    else
-                        appMgr.addApplicationData(appDetails);
-                }
-                break;
+                    break;
+                case Intent.ACTION_PACKAGE_ADDED:
+                case Intent.ACTION_PACKAGE_REPLACED:
+                    ApplicationDetails appDetails = getOnlyInternetApps(uid, packMgr, context);
+                    if (appDetails != null) {
+                        if (Intent.ACTION_PACKAGE_REPLACED.equals(intent.getAction()))
+                            appMgr.updateApplicationData(uid, appDetails);
+                        else
+                            appMgr.addApplicationData(appDetails);
+                    }
+                    break;
+            }
         }
     }
 
