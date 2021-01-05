@@ -29,6 +29,7 @@
     <color name="blue">#1e64aa</color>
     <color name="blue_dark">#154b80</color>
     <color name="blue_bright">#159ce1</color>
+    <color name="native_green">#00ff00</color>
     <color name="green">#3c8d27</color>
     <color name="green_dark">#245617</color>
     <color name="green_bright">#439d2c</color>

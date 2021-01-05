@@ -65,7 +65,7 @@
                     android:textColor="@color/white"
                     android:padding="4dp"
                     android:text="@string/allow"
-                    android:textSize="@dimen/text_short_size"
+                    android:textSize="@dimen/text_short_size_sp"
                     android:layout_gravity="center"/>
 
                 </android.support.v7.widget.CardView>
@@ -83,7 +83,7 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/black"
                     android:padding="4dp"
-                    android:textSize="@dimen/text_short_size"
+                    android:textSize="@dimen/text_short_size_sp"
                     android:text="@string/block"
                     android:layout_gravity="center" />
 

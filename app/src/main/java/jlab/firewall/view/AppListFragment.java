@@ -107,11 +107,6 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     content = getContent();
                     handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
                 }

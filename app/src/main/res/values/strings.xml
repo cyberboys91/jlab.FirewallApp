@@ -27,4 +27,6 @@
     <string name="app_list_request">ACCESS</string>
     <string name="empty_list">Empty</string>
     <string name="time">time</string>
+    <string name="arrow_up">↑</string>
+    <string name="arrow_down">↓</string>
 </resources>

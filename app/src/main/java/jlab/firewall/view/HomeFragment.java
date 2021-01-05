@@ -57,7 +57,6 @@ public class HomeFragment extends Fragment {
                     .setPointColor(COLOR_TRANSPARENT).setStrokeWidth(1).setFilled(true));
             lines.add(new Line(trafficDataDownSpeedPoints).setColor(COLOR_GREEN)
                     .setPointColor(COLOR_TRANSPARENT).setStrokeWidth(1).setFilled(true));
-
             chartData.setLines(lines);
             chart.setLineChartData(chartData);
         }
