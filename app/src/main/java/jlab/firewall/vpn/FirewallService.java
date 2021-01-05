@@ -11,6 +11,7 @@ import android.net.TrafficStats;
 import android.net.VpnService;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.support.v4.content.LocalBroadcastManager;
@@ -47,7 +48,6 @@ import jlab.firewall.R;
 import jlab.firewall.activity.MainActivity;
 import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
-import lecho.lib.hellocharts.model.AxisValue;
 import lecho.lib.hellocharts.model.PointValue;
 
 import static java.util.Collections.binarySearch;
@@ -63,7 +63,6 @@ public class FirewallService extends VpnService {
     public static ArrayList<Integer> mapPackageAllowed = new ArrayList<>();
     public static ArrayList<Integer> mapPackageNotified = new ArrayList<>();
     public static ArrayList<Integer> mapPackageInteract = new ArrayList<>();
-    public static ArrayList<Integer> allUid = new ArrayList<>();
     public static ArrayList<PointValue> trafficDataUpSpeedPoints = new ArrayList<>();
     public static ArrayList<PointValue> trafficDataDownSpeedPoints = new ArrayList<>();
     public static final String TAG = FirewallService.class.getSimpleName();
@@ -99,7 +98,7 @@ public class FirewallService extends VpnService {
     private Semaphore semaphoreNotificator = new Semaphore(1);
     private boolean refreshTrafficDataAux = false;
     private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps";
-    private Handler handler = new Handler(new Handler.Callback() {
+    private Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             switch (msg.what) {
@@ -333,7 +332,8 @@ public class FirewallService extends VpnService {
         mapPackageNotified = new ArrayList<>();
         mapPackageAllowed = new ArrayList<>();
         mapPackageInteract = new ArrayList<>();
-        List<ApplicationDetails> allApps = getPackagesInternetPermission(context);
+        ArrayList<Integer> allUid = new ArrayList<>();
+        List<ApplicationDetails> allApps = getPackagesInternetPermission(context, allUid);
         ApplicationDbManager appDbMgr = new ApplicationDbManager(context);
         List<ApplicationDetails> appsDetails = appDbMgr.getAllAppDetails();
         int countUid = allUid.size();

@@ -28,7 +28,6 @@ import jlab.firewall.R;
 import jlab.firewall.db.ApplicationDetails;
 import static java.util.Collections.binarySearch;
 import static java.util.Collections.sort;
-import static jlab.firewall.vpn.FirewallService.allUid;
 import static jlab.firewall.vpn.FirewallService.mapPackageAllowed;
 import static jlab.firewall.vpn.FirewallService.mapPackageInteract;
 import static jlab.firewall.vpn.FirewallService.mapPackageNotified;
@@ -65,11 +64,11 @@ public class Utils {
         return indexSearch >= 0 && indexSearch < mapPackageAllowed.size();
     }
 
-    public static List<ApplicationDetails> getPackagesInternetPermission (Context context) {
+    public static List<ApplicationDetails> getPackagesInternetPermission (Context context,
+                                                                          ArrayList<Integer> allUid) {
         PackageManager pm = context.getPackageManager();
         List<ApplicationInfo> appsInfo = pm.getInstalledApplications(0);
         ArrayList<ApplicationDetails> result = new ArrayList<>();
-        allUid = new ArrayList<>();
         for (int i = 0; i < appsInfo.size(); i++) {
             ApplicationInfo current = appsInfo.get(i);
             if (hasInternet(current.packageName, context)) {

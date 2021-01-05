@@ -51,19 +51,24 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
     }
 
     private void addApps(SQLiteDatabase db) {
-        addApps(db, getPackagesInternetPermission(mContext));
+        addApps(db, getPackagesInternetPermission(mContext, new ArrayList<Integer>()));
     }
 
     public void addApps(SQLiteDatabase db, List<ApplicationDetails> appsDetails) {
         for (ApplicationDetails app : appsDetails)
-            saveApplicationData(db, app);
+            addApplicationData(db, app);
     }
 
     public void addApps(List<ApplicationDetails> appsDetails) {
         addApps(getWritableDatabase(), appsDetails);
     }
 
-    public long saveApplicationData(SQLiteDatabase sqLiteDatabase, ApplicationDetails applicationDetails) {
+    public long addApplicationData(SQLiteDatabase sqLiteDatabase, ApplicationDetails applicationDetails) {
+        return sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
+    }
+
+    public long addApplicationData(ApplicationDetails applicationDetails) {
+        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
         return sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
     }
 

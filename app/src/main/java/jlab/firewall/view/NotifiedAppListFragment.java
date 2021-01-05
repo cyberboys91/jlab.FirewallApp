@@ -1,5 +1,6 @@
 package jlab.firewall.view;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import com.bumptech.glide.Glide;
 import java.util.List;
 import jlab.firewall.R;
 import jlab.firewall.db.ApplicationDetails;
+import jlab.firewall.vpn.FirewallService;
 import jlab.firewall.vpn.Utils;
 
 import static jlab.firewall.view.SwitchMultiOptionButton.viewOnTouchListener;
@@ -71,7 +73,7 @@ public class NotifiedAppListFragment extends AppListFragment {
                     reload();
                 }
             });
-            allowInternet.setOnTouchListener(viewOnTouchListener(allowInternet));
+            allowInternet.setOnTouchListener(viewOnTouchListener());
             blockInternet.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -82,7 +84,7 @@ public class NotifiedAppListFragment extends AppListFragment {
                     reload();
                 }
             });
-            blockInternet.setOnTouchListener(viewOnTouchListener(blockInternet));
+            blockInternet.setOnTouchListener(viewOnTouchListener());
         }
         return convertView;
     }
@@ -96,6 +98,16 @@ public class NotifiedAppListFragment extends AppListFragment {
     public List<ApplicationDetails> getContent() {
         content = appDbMgr.getNotifiedAppDetails();
         return content;
+    }
+
+    @Override
+    public int getCount() {
+        return FirewallService.mapPackageNotified.size();
+    }
+
+    @Override
+    public String getName(Context context) {
+        return context.getString(R.string.app_list_request);
     }
 }
 

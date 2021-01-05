@@ -1,9 +1,11 @@
 package jlab.firewall.view;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -50,7 +52,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         public void runOnUiThread(Runnable runnable) { }
     };
     protected List<ApplicationDetails> content = new ArrayList<>();
-    protected Handler handler = new Handler(new Handler.Callback() {
+    protected Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             switch (msg.what) {
@@ -107,6 +109,11 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             new Thread(new Runnable() {
                 @Override
                 public void run() {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     content = getContent();
                     handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
                 }
@@ -128,6 +135,16 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     @Override
     public boolean hasDetails() {
         return false;
+    }
+
+    @Override
+    public int getCount() {
+        return content.size();
+    }
+
+    @Override
+    public String getName(Context context) {
+        return context.getString(R.string.app_list);
     }
 
     @Override

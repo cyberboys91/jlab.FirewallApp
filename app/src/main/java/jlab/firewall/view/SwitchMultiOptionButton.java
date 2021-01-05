@@ -1,4 +1,5 @@
 package jlab.firewall.view;
+
 /*
  * Created by Javier on 02/01/2021.
  */
@@ -7,7 +8,6 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
 
 import jlab.firewall.R;
@@ -57,7 +57,7 @@ public class SwitchMultiOptionButton extends LinearLayout {
                 onSwitchListener.onSwitchChange(state);
             }
         });
-        setOnTouchListener(viewOnTouchListener(this));
+        setOnTouchListener(viewOnTouchListener());
     }
 
     public void setState (int state) {
@@ -75,14 +75,22 @@ public class SwitchMultiOptionButton extends LinearLayout {
         this.onSwitchListener = onSwitchListener;
     }
 
-    public static View.OnTouchListener viewOnTouchListener (final View view) {
+    public static View.OnTouchListener viewOnTouchListener () {
         return new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        view.startAnimation(AnimationUtils.loadAnimation(view.getContext(), R.anim.beat_in_click_button));
+                    case MotionEvent.ACTION_HOVER_ENTER:
+                    case MotionEvent.ACTION_HOVER_EXIT:
+                    case MotionEvent.ACTION_HOVER_MOVE:
+                    case MotionEvent.ACTION_MOVE:
+                        v.setAlpha(.5f);
                         break;
+                    case MotionEvent.ACTION_UP:
+                        v.setAlpha(1f);
+                    default:
+                        v.setAlpha(1f);
                 }
                 return false;
             }

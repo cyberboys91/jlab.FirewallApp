@@ -3,9 +3,6 @@
     <!-- Base application theme. -->
     <style name="AppTheme">
         <item name="android:alertDialogTheme">@style/AlertDialog.AppCompat</item>
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/accent</item>
         <item name="android:windowEnterAnimation">@anim/fade_in</item>
         <item name="android:windowExitAnimation">@anim/fade_out</item>
         <item name="android:actionBarStyle">@style/ActionBarStyle</item>
@@ -19,12 +16,9 @@
 
     </style>
     <style name="AppTheme.FullScreen" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/accent</item>
         <item name="android:windowEnterAnimation">@anim/fade_in</item>
         <item name="android:windowExitAnimation">@anim/fade_out</item>
-        <item name="android:windowFullscreen">true</item>
+        <!--<item name="android:windowFullscreen">true</item>-->
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>

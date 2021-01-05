@@ -6,6 +6,7 @@ import jlab.firewall.vpn.FirewallService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.content.Intent;
+import android.os.Looper;
 import android.widget.ImageView;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -51,7 +52,7 @@ public class SplashActivity extends AppCompatActivity {
         Animation animation = AnimationUtils.loadAnimation(this, R.anim.beat);
         ivIcon.startAnimation(animation);
 
-        new Handler().postDelayed(new Runnable() {
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
                 new Thread(new Runnable() {

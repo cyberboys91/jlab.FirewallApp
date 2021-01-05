@@ -10,16 +10,14 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.TextView;
-
 import java.util.ArrayList;
-
 import jlab.firewall.R;
-
-import static jlab.firewall.vpn.FirewallService.mapPackageNotified;
 
 public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.TabListener,
         ViewPager.OnPageChangeListener {
+    private static final int MAX_COUNT_ALLOW_IN_TITLE = 999;
     private final Context mContext;
     private final ActionBar mActionBar;
     private final ViewPager mViewPager;
@@ -51,18 +49,20 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
             ((OnReloadListener) mFragments.get(position)).reload();
     }
 
-    private void addTitleBadgeCountViewAppNotified(int position) {
+    private void addTitleBadgeCountViewAppNotified(int position, OnReloadListener listener) {
         if (position >= 0 && position < mFragments.size()) {
-            int count = mapPackageNotified.size();
+            int count = listener.getCount();
             View customTitleView = mActionBar.getTabAt(position).getCustomView();
             if (customTitleView == null)
                 customTitleView = LayoutInflater.from(mContext)
                         .inflate(R.layout.title_with_badge, null);
-            ((TextView) customTitleView.findViewById(R.id.tvTitle)).setText(R.string.app_list_request);
+            ((TextView) customTitleView.findViewById(R.id.tvTitle)).setText(listener.getName(mContext));
             if (count > 0)
-                ((TextView) customTitleView.findViewById(R.id.tvBadgeCount)).setText(count < 999
-                        ? String.valueOf(count) : String.valueOf(count) + "+");
-            (customTitleView.findViewById(R.id.rlBadgeWrapper)).setVisibility(count > 0
+                ((TextView) customTitleView.findViewById(R.id.tvBadgeCount))
+                        .setText(count < MAX_COUNT_ALLOW_IN_TITLE
+                                ? String.valueOf(count)
+                                : String.valueOf(MAX_COUNT_ALLOW_IN_TITLE) + "+");
+            customTitleView.findViewById(R.id.rlBadgeWrapper).setVisibility(count > 0
                     ? View.VISIBLE : View.GONE);
             mActionBar.getTabAt(position).setCustomView(customTitleView);
         }
@@ -74,15 +74,15 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
         tab.setTabListener(this);
         mTabs.add(info);
         final int position = mFragments.size();
-        Fragment fragment = Fragment.instantiate(mContext, info.clss.getName(), info.args);
+        final Fragment fragment = Fragment.instantiate(mContext, info.clss.getName(), info.args);
         if (fragment instanceof OnReloadListener && ((OnReloadListener) fragment).hasDetails()) {
             ((OnReloadListener) fragment).setOnRefreshDetailsListener(new Runnable() {
                 @Override
                 public void run() {
-                    addTitleBadgeCountViewAppNotified(position);
+                    addTitleBadgeCountViewAppNotified(position, (OnReloadListener) fragment);
                 }
             });
-            addTitleBadgeCountViewAppNotified(position);
+            addTitleBadgeCountViewAppNotified(position, (OnReloadListener) fragment);
         }
         mFragments.add(fragment);
         mActionBar.addTab(tab);
