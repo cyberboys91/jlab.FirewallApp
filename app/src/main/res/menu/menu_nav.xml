@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/mnRateApp"
+        android:title="@string/rate_app"
+        android:checkable="true"/>
+        <!--app:actionLayout="@layout/menu_counter" />-->
+    <item android:id="@+id/mnAbout"
+        android:title="@string/about"
+        android:checkable="true"/>
+        <!--app:actionLayout="@layout/menu_counter" />-->
+    <item android:id="@+id/mnClose"
+        android:title="@string/close"
+        android:checkable="true"/>
+        <!--app:actionLayout="@layout/menu_counter" />-->
+</menu>

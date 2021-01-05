@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="10dp"
+    android:paddingStart="10dp"
+    android:paddingRight="10dp"
+    android:paddingEnd="10dp"
+    android:paddingTop="5dp">
+
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:id="@+id/ivIcon"
+        android:layout_gravity="center_vertical"
+        android:src="@drawable/app_icon_background"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_gravity="center_vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvName"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="@dimen/text_big_size"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvPackagesName"
+            android:textSize="@dimen/text_middle_size"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@android:color/holo_blue_dark"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:padding="5dp">
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/llAllowInternet"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="10dp"
+                android:layout_marginEnd="7dp"
+                android:layout_marginRight="7dp"
+                app:cardBackgroundColor="@color/accent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
+                    android:padding="4dp"
+                    android:text="@string/allow"
+                    android:textSize="@dimen/text_short_size"
+                    android:layout_gravity="center"/>
+
+                </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/llBlockInternet"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                app:cardCornerRadius="10dp"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/white">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:padding="4dp"
+                    android:textSize="@dimen/text_short_size"
+                    android:text="@string/block"
+                    android:layout_gravity="center" />
+
+            </android.support.v7.widget.CardView>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</LinearLayout>
