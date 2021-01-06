@@ -104,7 +104,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
         LocalBroadcastManager.getInstance(this).registerReceiver(onFirewallChangeStatusReceiver,
                 new IntentFilter(intentFilter));
     }
-
+    
     @Override
     protected void onDestroy() {
         super.onDestroy();

@@ -177,9 +177,13 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                             onRunOnUiThread.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Glide.with(icon).asBitmap().load(bm)
-                                            .into(icon);
-                                    icon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fast_fade_in));
+                                    try {
+                                        Glide.with(icon).asBitmap().load(bm)
+                                                .into(icon);
+                                        icon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fast_fade_in));
+                                    } catch (Exception ignored) {
+                                        ignored.printStackTrace();
+                                    }
                                 }
                             });
                             semaphoreLoadIcon.release();

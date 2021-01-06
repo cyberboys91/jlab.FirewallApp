@@ -2,6 +2,7 @@ package jlab.firewall.vpn;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.usage.NetworkStatsManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,12 +12,14 @@ import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.net.TrafficStats;
 import android.net.VpnService;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.util.ArrayMap;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.Gravity;
@@ -40,6 +43,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -62,6 +66,8 @@ import static jlab.firewall.vpn.Utils.getSizeString;
 import static jlab.firewall.vpn.Utils.isBlocked;
 
 public class FirewallService extends VpnService {
+
+    private static Map<String, Integer> mapAddress = new ArrayMap<>();
     public static ArrayList<Integer> mapPackageAllowed = new ArrayList<>();
     public static ArrayList<Integer> mapPackageNotified = new ArrayList<>();
     public static ArrayList<Integer> mapPackageInteract = new ArrayList<>();
@@ -77,6 +83,7 @@ public class FirewallService extends VpnService {
             START_VPN_ACTION = "jlab.action.START_VPN",
             STARTED_VPN_ACTION = "jlab.action.STARTED_VPN_ACTION",
             STOPPED_VPN_ACTION = "jlab.action.STOPPED_VPN_ACTION",
+            STOP_VPN_ACTION = "jlab.action.STOP_VPN_ACTION",
             NOT_PREPARED_VPN_ACTION = "jlab.action.NOT_PREPARED_VPN_ACTION";
     private static final int REQUEST_INTERNET_NOTIFICATION = 9200,
             REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9403,
@@ -99,12 +106,20 @@ public class FirewallService extends VpnService {
     private Semaphore semaphoreNotificator = new Semaphore(1);
     private boolean refreshTrafficDataAux = false;
     private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps";
-    private Builder builder;
     private BroadcastReceiver startVpnReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals(START_VPN_ACTION))
-                startIfCan();
+            switch (intent.getAction()) {
+                case START_VPN_ACTION:
+                    startIfCan();
+                    break;
+                case STOP_VPN_ACTION:
+                    //TODO: Implementar
+                    stopSelf();
+                    break;
+                default:
+                    break;
+            }
         }
     };
     private Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
@@ -143,12 +158,23 @@ public class FirewallService extends VpnService {
         }
     });
 
+    private void loadAddress () {
+        mapAddress.clear();
+        mapAddress.put("10.0.0.0", 8);
+        mapAddress.put("172.16.0.0", 12);
+        mapAddress.put("192.168.0.0", 16);
+        mapAddress.put("169.254.0.0", 16);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
+        loadAddress();
         startIfCan();
+        IntentFilter intentFilter = new IntentFilter(START_VPN_ACTION);
+        intentFilter.addAction(STOP_VPN_ACTION);
         LocalBroadcastManager.getInstance(getBaseContext()).registerReceiver(startVpnReceiver,
-                new IntentFilter(START_VPN_ACTION));
+                intentFilter);
     }
 
     public void startIfCan() {
@@ -263,15 +289,13 @@ public class FirewallService extends VpnService {
     private boolean setupVPN() {
         if (vpnInterface == null) {
             try {
-                if (builder == null) {
-                    Intent configure = new Intent(this, MainActivity.class);
-                    configure.putExtra(VPN_PREPARED_KEY, true);
-                    PendingIntent pi = PendingIntent.getActivity(this, VPN_REQUEST_CODE, configure, 0);
-                    builder = addAllInetAddressToBuilder(new Builder())
-                            .addRoute(VPN_ROUTE, 0)
-                            .setConfigureIntent(pi)
-                            .setSession(getPackageName());
-                }
+                Intent configure = new Intent(this, MainActivity.class);
+                configure.putExtra(VPN_PREPARED_KEY, true);
+                PendingIntent pi = PendingIntent.getActivity(this, VPN_REQUEST_CODE, configure, 0);
+                Builder builder = addAllInetAddressToBuilder(new Builder())
+                        .addRoute(VPN_ROUTE, 0)
+                        .setConfigureIntent(pi)
+                        .setSession(getPackageName());
                 vpnInterface = builder.establish();
                 return vpnInterface != null;
             } catch (Exception ignored) {
@@ -288,10 +312,11 @@ public class FirewallService extends VpnService {
                 for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (!inetAddress.isLoopbackAddress() && inetAddress.getAddress().length == 4)
-                        //TODO: Tiene que ser /24 o no inicia el servicio vpn
-                        builder.addAddress(inetAddress, 24);
+                        builder.addAddress(inetAddress, 8);
                 }
             }
+            for (String address : mapAddress.keySet())
+                builder.addAddress(address, mapAddress.get(address));
         } catch (SocketException e) {
             e.printStackTrace();
         }

@@ -85,7 +85,10 @@ public class HomeFragment extends Fragment {
         vpnButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startServiceVPN();
+                if (!FirewallService.isRunning())
+                    startFirewallService();
+                else
+                    stopFirewallService();
             }
         });
         vpnButton.setOnTouchListener(SwitchMultiOptionButton.viewOnTouchListener());
@@ -126,7 +129,12 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
-    private void startServiceVPN() {
+    private void stopFirewallService() {
+        LocalBroadcastManager.getInstance(getContext())
+                .sendBroadcast(new Intent(FirewallService.STOP_VPN_ACTION));
+    }
+
+    private void startFirewallService() {
         if (startVPN != null && !FirewallService.isRunning())
             startVPN.run();
     }
@@ -157,7 +165,7 @@ public class HomeFragment extends Fragment {
 
     public void enableButton(boolean enable) {
         if (vpnButton != null) {
-            vpnButton.setEnabled(enable);
+            //vpnButton.setEnabled(enable);
             if (enable) {
                 tvTextButton.setText(R.string.start_vpn);
             } else {
