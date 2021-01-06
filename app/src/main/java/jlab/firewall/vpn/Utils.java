@@ -38,15 +38,12 @@ public class Utils {
 
     public static boolean hasInternet(String packageName, Context context) {
         PackageManager pm = context.getPackageManager();
-        return (pm.checkPermission("android.permission.INTERNET", packageName) == PackageManager.PERMISSION_GRANTED);
+        return (pm.checkPermission("android.permission.INTERNET", packageName)
+                == PackageManager.PERMISSION_GRANTED);
     }
 
     public static boolean isBlocked (int uid) {
         return !hasAccess(uid);
-    }
-
-    public static boolean isNotifiedAndInteract(int uid) {
-        return isNotified(uid) && isInteract(uid);
     }
 
     public static boolean isNotified (int uid) {
@@ -62,6 +59,18 @@ public class Utils {
     public static boolean hasAccess (int uid) {
         int indexSearch = binarySearch(mapPackageAllowed, uid);
         return indexSearch >= 0 && indexSearch < mapPackageAllowed.size();
+    }
+
+    public static void removeFromMapsIfExist (int uid) {
+        int indexSearch = binarySearch(mapPackageNotified, uid);
+        if (indexSearch >= 0 && indexSearch < mapPackageNotified.size())
+            mapPackageNotified.remove(indexSearch);
+        indexSearch = binarySearch(mapPackageInteract, uid);
+        if (indexSearch >= 0 && indexSearch < mapPackageInteract.size())
+            mapPackageInteract.remove(indexSearch);
+        indexSearch = binarySearch(mapPackageAllowed, uid);
+        if (indexSearch >= 0 && indexSearch < mapPackageAllowed.size())
+            mapPackageAllowed.remove(indexSearch);
     }
 
     public static List<ApplicationDetails> getPackagesInternetPermission (Context context,

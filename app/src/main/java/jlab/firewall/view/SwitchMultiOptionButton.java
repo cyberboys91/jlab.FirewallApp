@@ -89,8 +89,10 @@ public class SwitchMultiOptionButton extends LinearLayout {
                         break;
                     case MotionEvent.ACTION_UP:
                         v.setAlpha(1f);
+                        break;
                     default:
                         v.setAlpha(1f);
+                        break;
                 }
                 return false;
             }

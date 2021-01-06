@@ -81,7 +81,7 @@ public class ApplicationDetails implements Parcelable {
         return Utils.getIconForApp(pPackName.toString(), context);
     }
 
-    public void setPrincipalPackageName (String principalPackageName) {
+    public void setPrincipalPackName(String principalPackageName) {
         this.pPackName = new StringBuilder(principalPackageName);
     }
 
@@ -129,6 +129,18 @@ public class ApplicationDetails implements Parcelable {
 
     public void setInternet(boolean internet) {
         this.internet = internet;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
+
+    public void setNames(String names) {
+        this.names = new StringBuilder(names);
+    }
+
+    public void setPackNames(String packNames) {
+        this.packNames = new StringBuilder(packNames);
     }
 
     public ContentValues toContentValues() {

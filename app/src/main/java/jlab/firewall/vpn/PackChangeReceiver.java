@@ -9,6 +9,7 @@ import android.support.v4.app.NotificationManagerCompat;
 import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
 import static jlab.firewall.vpn.Utils.hasInternet;
+import static jlab.firewall.vpn.Utils.removeFromMapsIfExist;
 
 /**
  * Created by Javier on 5/1/2021.
@@ -25,21 +26,31 @@ public class PackChangeReceiver extends BroadcastReceiver {
         int uid = intent.getIntExtra(Intent.EXTRA_UID, 0);
         if (uid > 0) {
             switch (action) {
-                case Intent.ACTION_PACKAGE_REMOVED:
+                case Intent.ACTION_PACKAGE_FULLY_REMOVED:
                     if (appMgr.deleteAplicationData(uid) > 0) {
+                        removeFromMapsIfExist(uid);
                         NotificationManagerCompat.from(context).cancel(uid); // installed notification
                         NotificationManagerCompat.from(context).cancel(uid + 10000); // access notification
                     }
                     break;
                 case Intent.ACTION_PACKAGE_ADDED:
-                case Intent.ACTION_PACKAGE_REPLACED:
                     ApplicationDetails appDetails = getOnlyInternetApps(uid, packMgr, context);
-                    if (appDetails != null) {
-                        if (Intent.ACTION_PACKAGE_REPLACED.equals(intent.getAction()))
-                            appMgr.updateApplicationData(uid, appDetails);
-                        else
-                            appMgr.addApplicationData(appDetails);
+                    if (appDetails != null)
+                        appMgr.addApplicationData(appDetails);
+                    break;
+                case Intent.ACTION_PACKAGE_REPLACED:
+                    appDetails = appMgr.getApplicationForId(uid);
+                    ApplicationDetails appDetails2 = getOnlyInternetApps(uid, packMgr, context);
+                    if(appDetails != null && appDetails2 != null) {
+                        appDetails2.setInteract(appDetails.interact());
+                        appDetails2.setInternet(appDetails.hasInternet());
+                        appDetails2.setNotified(appDetails.notified());
+                        appMgr.updateApplicationData(uid, appDetails2);
                     }
+                    else if(appDetails == null && appDetails2 != null)
+                        appMgr.addApplicationData(appDetails2);
+                    break;
+                default:
                     break;
             }
         }
@@ -47,7 +58,7 @@ public class PackChangeReceiver extends BroadcastReceiver {
 
     private ApplicationDetails getOnlyInternetApps(int uid, PackageManager packMgr,
                                      Context context) {
-        String names = null, pPackName = null, packNames = null;
+        String names = "", pPackName = "", packNames = "";
         int count = 0;
         String[] packagesForUid = packMgr.getPackagesForUid(uid);
         if(packagesForUid != null) {
@@ -57,10 +68,11 @@ public class PackChangeReceiver extends BroadcastReceiver {
                         count++;
                         ApplicationInfo appInfo = packMgr.getApplicationInfo(packName,
                                 PackageManager.GET_META_DATA);
-                        if (pPackName == null)
+                        if (pPackName.length() == 0)
                             pPackName = packName;
-                        names += (names != null ? ", " : "") + packMgr.getApplicationLabel(appInfo);
-                        packNames += (packNames != null ? ", " : "") + packName;
+                        names += (names.length() != 0 ? ", " : "")
+                                + packMgr.getApplicationLabel(appInfo);
+                        packNames += (packNames.length() != 0 ? ", " : "") + packName;
                     } catch (PackageManager.NameNotFoundException e) {
                         e.printStackTrace();
                     }

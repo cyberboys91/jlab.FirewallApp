@@ -2,8 +2,10 @@ package jlab.firewall.vpn;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
@@ -69,8 +71,13 @@ public class FirewallService extends VpnService {
     public static final String VPN_ROUTE = "0.0.0.0",
             APP_DETAILS_NOTIFICATION_KEY = "APP_DETAILS_NOTIFICATION_KEY",
             APP_DETAILS_NAME_NOTIFICATION_KEY = "APP_DETAILS_NAME_NOTIFICATION_KEY",
+            VPN_PREPARED_KEY = "VPN_PREPARED_KEY",
             REFRESH_COUNT_NOTIFIED_APPS_ACTION = "jlab.action.REFRESH_COUNT_NOTIFIED_APPS",
-            REFRESH_TRAFFIC_DATA = "jlab.action.REFRESH_TRAFFIC_DATA";
+            REFRESH_TRAFFIC_DATA = "jlab.action.REFRESH_TRAFFIC_DATA",
+            START_VPN_ACTION = "jlab.action.START_VPN",
+            STARTED_VPN_ACTION = "jlab.action.STARTED_VPN_ACTION",
+            STOPPED_VPN_ACTION = "jlab.action.STOPPED_VPN_ACTION",
+            NOT_PREPARED_VPN_ACTION = "jlab.action.NOT_PREPARED_VPN_ACTION";
     private static final int REQUEST_INTERNET_NOTIFICATION = 9200,
             REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9403,
             MAX_COUNT_POINTS = 100, myUid = Process.myUid();
@@ -79,12 +86,6 @@ public class FirewallService extends VpnService {
     public static AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
         downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
     private long downBytesInStart, upBytesInStart, x;
-    private static IPostRunningListener postRunning = new IPostRunningListener() {
-        @Override
-        public void run(boolean running) {
-
-        }
-    };
     private static boolean isRunning = false;
     private ParcelFileDescriptor vpnInterface = null;
     private BlockingQueue<Packet> deviceToNetworkUDPQueue;
@@ -98,6 +99,14 @@ public class FirewallService extends VpnService {
     private Semaphore semaphoreNotificator = new Semaphore(1);
     private boolean refreshTrafficDataAux = false;
     private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps";
+    private Builder builder;
+    private BroadcastReceiver startVpnReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent.getAction().equals(START_VPN_ACTION))
+                startIfCan();
+        }
+    };
     private Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -121,12 +130,14 @@ public class FirewallService extends VpnService {
                             .setColor(getResources().getColor(R.color.gray))
                             .setLargeIcon(Utils.getIconForApp(app.getPrincipalPackName(),
                                     getBaseContext()))
-                            .setContentIntent(getPendintIntent())
+                            .setContentIntent(getPendingIntentNotificationClicked())
                             .build());
                     handler.removeMessages(NOTIFY_INTERNET_REQUEST_ACCESS);
                     LocalBroadcastManager.getInstance(getBaseContext())
                             .sendBroadcast(new Intent(REFRESH_COUNT_NOTIFIED_APPS_ACTION));
                     return true;
+                default:
+                    break;
             }
             return false;
         }
@@ -135,39 +146,49 @@ public class FirewallService extends VpnService {
     @Override
     public void onCreate() {
         super.onCreate();
-        isRunning = false;
-        if (setupVPN())
-            try {
-                appMgr = new ApplicationDbManager(this);
-                packageManager = getBaseContext().getPackageManager();
-                notMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(1000);
-                deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(1000);
-                networkToDeviceQueue = new ArrayBlockingQueue<>(1000);
+        startIfCan();
+        LocalBroadcastManager.getInstance(getBaseContext()).registerReceiver(startVpnReceiver,
+                new IntentFilter(START_VPN_ACTION));
+    }
 
-                executorService = Executors.newFixedThreadPool(10);
-                executorService.submit(new UdpHandler(deviceToNetworkUDPQueue, networkToDeviceQueue, this));
-                executorService.submit(new TcpHandler(deviceToNetworkTCPQueue, networkToDeviceQueue, this));
-                executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
-                        deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
-                isRunning = true;
-                FirewallService.postRunning.run(true);
-                loadTrafficDataView();
-                Log.i(TAG, "Started");
-            } catch (Exception e) {
-                Log.e(TAG, "Error starting service", e);
-                FirewallService.postRunning.run(false);
-                cleanup();
-            }
-        else
-            FirewallService.postRunning.run(false);
+    public void startIfCan() {
+        if(!isRunning) {
+            if (setupVPN())
+                try {
+                    appMgr = new ApplicationDbManager(this);
+                    packageManager = getBaseContext().getPackageManager();
+                    notMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(1000);
+                    deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(1000);
+                    networkToDeviceQueue = new ArrayBlockingQueue<>(1000);
+
+                    executorService = Executors.newFixedThreadPool(10);
+                    executorService.submit(new UdpHandler(deviceToNetworkUDPQueue, networkToDeviceQueue, this));
+                    executorService.submit(new TcpHandler(deviceToNetworkTCPQueue, networkToDeviceQueue, this));
+                    executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
+                            deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
+                    isRunning = true;
+                    LocalBroadcastManager.getInstance(this)
+                            .sendBroadcast(new Intent(STARTED_VPN_ACTION));
+                    loadTrafficDataView();
+                    Log.i(TAG, "Started");
+                } catch (Exception e) {
+                    Log.e(TAG, "Error starting service", e);
+                    LocalBroadcastManager.getInstance(this)
+                            .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
+                    cleanup();
+                }
+            else
+                LocalBroadcastManager.getInstance(this)
+                        .sendBroadcast(new Intent(NOT_PREPARED_VPN_ACTION));
+        }
     }
 
     private void loadTrafficDataView() {
         try {
             if (!Thread.interrupted() && isRunning()) {
                 floatingTrafficDataView = LayoutInflater.from(this)
-                        .inflate(R.layout.floating_traffic_data_layout, null);
+                        .inflate(R.layout.floating_traffic_data, null);
                 tvFloatingTrafficSpeed = floatingTrafficDataView.findViewById(R.id.tvTrafficDataSpeed);
                 tvFloatingTrafficTotal = floatingTrafficDataView.findViewById(R.id.tvTrafficDataTotal);
                 final LinearLayout llFloatingTrafficTotal = floatingTrafficDataView.findViewById(R.id.llTrafficDataTotal);
@@ -213,6 +234,8 @@ public class FirewallService extends VpnService {
                                     }, 5000);
                                 }
                                 return true;
+                            default:
+                                break;
                         }
                         return false;
                     }
@@ -231,10 +254,6 @@ public class FirewallService extends VpnService {
         return TrafficStats.getUidTxBytes(myUid);
     }
 
-    public static void setPostRunning(IPostRunningListener postRunning) {
-        FirewallService.postRunning = postRunning;
-    }
-
     @Override
     public void onLowMemory() {
         super.onLowMemory();
@@ -244,12 +263,15 @@ public class FirewallService extends VpnService {
     private boolean setupVPN() {
         if (vpnInterface == null) {
             try {
-                Intent configure = new Intent(this, MainActivity.class);
-                PendingIntent pi = PendingIntent.getActivity(this, VPN_REQUEST_CODE, configure, 0);
-                Builder builder = addAllInetAddressToBuilder(new Builder())
-                        .addRoute(VPN_ROUTE, 0)
-                        .setConfigureIntent(pi)
-                        .setSession(getPackageName());
+                if (builder == null) {
+                    Intent configure = new Intent(this, MainActivity.class);
+                    configure.putExtra(VPN_PREPARED_KEY, true);
+                    PendingIntent pi = PendingIntent.getActivity(this, VPN_REQUEST_CODE, configure, 0);
+                    builder = addAllInetAddressToBuilder(new Builder())
+                            .addRoute(VPN_ROUTE, 0)
+                            .setConfigureIntent(pi)
+                            .setSession(getPackageName());
+                }
                 vpnInterface = builder.establish();
                 return vpnInterface != null;
             } catch (Exception ignored) {
@@ -289,14 +311,20 @@ public class FirewallService extends VpnService {
     public void onDestroy() {
         super.onDestroy();
         isRunning = false;
-        postRunning.run(false);
         downBytesInStart = upBytesInStart = 0;
         upByteTotal.set(0);
         downByteTotal.set(0);
         upByteSpeed.set(0);
         downByteSpeed.set(0);
+        trafficDataDownSpeedPoints.clear();
+        trafficDataUpSpeedPoints.clear();
+        x = 0;
         if (floatingTrafficDataView != null)
             windowMgr.removeView(floatingTrafficDataView);
+        LocalBroadcastManager.getInstance(getBaseContext())
+                .unregisterReceiver(startVpnReceiver);
+        LocalBroadcastManager.getInstance(this)
+                .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
         cleanup();
         Log.i(TAG, "Stopped");
     }
@@ -328,7 +356,6 @@ public class FirewallService extends VpnService {
     }
 
     public static void loadAppData (Context context, Runnable onFinish) {
-        //TODO: Crear un servicio q escuche cuando se instalen y desintalen las app para optimizar esto
         mapPackageNotified = new ArrayList<>();
         mapPackageAllowed = new ArrayList<>();
         mapPackageInteract = new ArrayList<>();
@@ -416,7 +443,7 @@ public class FirewallService extends VpnService {
         }).start();
     }
 
-    private PendingIntent getPendintIntent() {
+    private PendingIntent getPendingIntentNotificationClicked() {
         Intent intent = new Intent(getBaseContext(), MainActivity.class);
         intent.putExtra(SELECTED_TAB_KEY, 1);
         return PendingIntent.getActivity(getBaseContext(), SHOW_NOTIFIED_APPS_REQUEST_CODE
@@ -429,9 +456,14 @@ public class FirewallService extends VpnService {
             boolean refreshSpeed = false;
             long lastUpByteTotal = upByteTotal.get(),
                     lastDownByteTotal = downByteTotal.get();
-            while (!Thread.interrupted() && isRunning()) {
+            while (true) {
                 try {
                     Thread.sleep(500);
+                    if (Thread.interrupted() || !isRunning()) {
+                        handler.removeMessages(REFRESH_TRAFFIC_DATA_FLOATING_VIEW);
+                        handler.removeMessages(NOTIFY_INTERNET_REQUEST_ACCESS);
+                        break;
+                    }
                     if (refreshSpeed) {
                         upByteSpeed.set(upByteTotal.get() - lastUpByteTotal);
                         lastUpByteTotal = upByteTotal.get();
@@ -465,7 +497,6 @@ public class FirewallService extends VpnService {
                     e.printStackTrace();
                 }
             }
-            TrafficStats.getUidTxBytes(Process.myUid());
         }
     });
 

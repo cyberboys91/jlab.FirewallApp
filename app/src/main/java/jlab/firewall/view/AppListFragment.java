@@ -67,6 +67,8 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                     srlRefresh.setRefreshing(false);
                     refreshDetails();
                     break;
+                default:
+                    break;
             }
             return false;
         }
@@ -203,6 +205,8 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                             current.setInteract(false);
                             current.setInternet(false);
                             current.setNotified(false);
+                            break;
+                        default:
                             break;
                     }
                     appDbMgr.updateApplicationData(current.getUid(), current);

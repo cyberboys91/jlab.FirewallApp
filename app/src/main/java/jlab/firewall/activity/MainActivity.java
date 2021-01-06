@@ -19,6 +19,8 @@ import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+
 import java.util.ArrayList;
 import jlab.firewall.R;
 import jlab.firewall.view.AppListFragment;
@@ -29,6 +31,7 @@ import jlab.firewall.view.TabsAdapter;
 import jlab.firewall.vpn.FirewallService;
 import static jlab.firewall.vpn.Utils.rateApp;
 import static jlab.firewall.vpn.Utils.showAboutDialog;
+import static jlab.firewall.vpn.Utils.showSnackBar;
 
 public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
 
@@ -40,18 +43,36 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
     private ViewPager tabHost;
     private ActionBar actionBar;
     private TabsAdapter tabsAdapter;
-    private BroadcastReceiver onNotificationReceiver = new BroadcastReceiver () {
+    private BroadcastReceiver onFirewallChangeStatusReceiver = new BroadcastReceiver () {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION))
-                tabsAdapter.reloadListFragment(1);
+            try {
+                switch (intent.getAction()) {
+                    case FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION:
+                        tabsAdapter.reloadListFragment(1);
+                        break;
+                    case FirewallService.STARTED_VPN_ACTION:
+                        showSnackBar(R.string.started_vpn_service, tabHost);
+                        break;
+                    case FirewallService.STOPPED_VPN_ACTION:
+                        showSnackBar(R.string.stopped_vpn_service, tabHost);
+                        break;
+                    case FirewallService.NOT_PREPARED_VPN_ACTION:
+                        showSnackBar(R.string.not_prepared_vpn_service, tabHost);
+                        break;
+                    default:
+                        break;
+                }
+            } catch (Exception ignored) {
+                ignored.printStackTrace();
+            }
         }
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
+        setContentView(R.layout.activity_main);
         tabHost = findViewById(R.id.vpContent);
         HomeFragment.startVPN = new Runnable() {
             @Override
@@ -67,23 +88,27 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
 
         tabsAdapter = new TabsAdapter(this, tabHost);
         tabsAdapter.addTab(actionBar.newTab().setText(getString(R.string.home)),
-                HomeFragment.class, null);
+                HomeFragment.class, savedInstanceState);
 
         tabsAdapter.addTab(actionBar.newTab().setText(getString(R.string.app_list_request)),
-                NotifiedAppListFragment.class, null);
+                NotifiedAppListFragment.class, savedInstanceState);
         tabsAdapter.addTab(actionBar.newTab().setText(getString(R.string.app_list)),
-                AppListFragment.class, null);
+                AppListFragment.class, savedInstanceState);
         tabHost.setCurrentItem(getIntent().getIntExtra(SELECTED_TAB_KEY, 0));
         requestPermission();
         AppListFragment.setOnRunOnUiThread(this);
-        LocalBroadcastManager.getInstance(this).registerReceiver(onNotificationReceiver,
-                new IntentFilter(FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION));
+        IntentFilter intentFilter = new IntentFilter(FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION);
+        intentFilter.addAction(FirewallService.STARTED_VPN_ACTION);
+        intentFilter.addAction(FirewallService.STOPPED_VPN_ACTION);
+        intentFilter.addAction(FirewallService.NOT_PREPARED_VPN_ACTION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(onFirewallChangeStatusReceiver,
+                new IntentFilter(intentFilter));
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotificationReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(onFirewallChangeStatusReceiver);
     }
 
     public boolean requestPermission() {

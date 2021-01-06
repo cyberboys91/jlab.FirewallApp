@@ -21,7 +21,6 @@ public class NetConnections {
     private static final int TCP_PROTOCOL_INT = 6, UDP_PROTOCOL_INT = 17;
     public static final int LENGTH_PREFIX_HEX_ADDRESS_VERSION_6 = 24;
 
-    //TODO: Testear nueva solucion
     public static int getUid(Context context, Protocol protocol, InetAddress localHost, int localPort,
                              InetAddress remoteHost, int remotePort) {
 
@@ -105,7 +104,7 @@ public class NetConnections {
         HexDataPacket hexDataPacket = new HexDataPacket(isV6, connection);
 
 
-        //TODO: Comparacion de netguard
+        //Comparacion de netguard
         /*if (_sport == sport &&
                 (_dport == dport || _dport == 0) &&
                 (memcmp(_saddr, saddr, (size_t) (ws * 4)) == 0 ||
