@@ -114,8 +114,13 @@ public class FirewallService extends VpnService {
                     startIfCan();
                     break;
                 case STOP_VPN_ACTION:
-                    //TODO: Implementar
-                    stopSelf();
+                    try {
+                        //TODO: Implementar
+                        stopSelf();
+                        vpnInterface.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     break;
                 default:
                     break;
