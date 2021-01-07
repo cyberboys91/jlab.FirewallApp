@@ -17,6 +17,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -104,7 +105,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
         LocalBroadcastManager.getInstance(this).registerReceiver(onFirewallChangeStatusReceiver,
                 new IntentFilter(intentFilter));
     }
-    
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -165,7 +166,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
-        return super.onCreateOptionsMenu(menu);
+        return true;
     }
 
     @Override
@@ -184,8 +185,8 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
                 finish();
                 break;
             default:
-                return false;
+                break;
         }
-        return true;
+        return super.onOptionsItemSelected(item);
     }
 }

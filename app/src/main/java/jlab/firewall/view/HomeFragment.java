@@ -2,6 +2,8 @@ package jlab.firewall.view;
 
 import android.os.Bundle;
 import jlab.firewall.R;
+
+import android.support.v7.widget.CardView;
 import android.view.View;
 import java.util.ArrayList;
 import android.view.ViewGroup;
@@ -34,7 +36,7 @@ import static jlab.firewall.vpn.Utils.getTimeString;
 
 public class HomeFragment extends Fragment {
 
-    private View vpnButton;
+    private CardView vpnButton;
     public static Runnable startVPN;
     private final int ONE_KB = 1024;
     private LineChartView chart;
@@ -50,13 +52,13 @@ public class HomeFragment extends Fragment {
                     addChartData();
                     break;
                 case FirewallService.STARTED_VPN_ACTION:
-                    enableButton(false);
+                    changeStateButton(false);
                     break;
                 case FirewallService.STOPPED_VPN_ACTION:
-                    enableButton(true);
+                    changeStateButton(true);
                     break;
                 case FirewallService.NOT_PREPARED_VPN_ACTION:
-                    enableButton(true);
+                    changeStateButton(true);
                     break;
                 default:
                     break;
@@ -163,13 +165,15 @@ public class HomeFragment extends Fragment {
                     .sendBroadcast(new Intent(FirewallService.START_VPN_ACTION));
     }
 
-    public void enableButton(boolean enable) {
+    public void changeStateButton(boolean stopped) {
         if (vpnButton != null) {
             //vpnButton.setEnabled(enable);
-            if (enable) {
+            if (stopped) {
                 tvTextButton.setText(R.string.start_vpn);
+                vpnButton.setCardBackgroundColor(getResources().getColor(R.color.neutral));
             } else {
                 tvTextButton.setText(R.string.stop_vpn);
+                vpnButton.setCardBackgroundColor(getResources().getColor(R.color.yellow));
             }
         }
     }
@@ -184,6 +188,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        enableButton(!isRunning());
+        changeStateButton(!isRunning());
     }
 }
