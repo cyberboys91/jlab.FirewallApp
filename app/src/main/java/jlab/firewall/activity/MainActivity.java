@@ -17,11 +17,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-
 import java.util.ArrayList;
 import jlab.firewall.R;
 import jlab.firewall.view.AppListFragment;
@@ -89,12 +86,11 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
 
         tabsAdapter = new TabsAdapter(this, tabHost);
         tabsAdapter.addTab(actionBar.newTab().setText(getString(R.string.home)),
-                HomeFragment.class, savedInstanceState);
-
+                HomeFragment.class, null);
         tabsAdapter.addTab(actionBar.newTab().setText(getString(R.string.app_list_request)),
-                NotifiedAppListFragment.class, savedInstanceState);
+                NotifiedAppListFragment.class, null);
         tabsAdapter.addTab(actionBar.newTab().setText(getString(R.string.app_list)),
-                AppListFragment.class, savedInstanceState);
+                AppListFragment.class, null);
         tabHost.setCurrentItem(getIntent().getIntExtra(SELECTED_TAB_KEY, 0));
         requestPermission();
         AppListFragment.setOnRunOnUiThread(this);
@@ -104,6 +100,13 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
         intentFilter.addAction(FirewallService.NOT_PREPARED_VPN_ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(onFirewallChangeStatusReceiver,
                 new IntentFilter(intentFilter));
+
+        if (savedInstanceState != null
+                && savedInstanceState.containsKey(FirewallService.VPN_PREPARED_KEY)) {
+            LocalBroadcastManager.getInstance(this)
+                    .sendBroadcast(new Intent(FirewallService.START_VPN_ACTION));
+            getIntent().removeExtra(FirewallService.VPN_PREPARED_KEY);
+        }
     }
 
     @Override
@@ -139,11 +142,16 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
     }
 
     private void startVPN() {
-        Intent vpnIntent = FirewallService.prepare(this);
-        if (vpnIntent != null)
-            startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
-        else
-            onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Intent vpnIntent = FirewallService.prepare(MainActivity.this);
+                if (vpnIntent != null)
+                    startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
+                else
+                    onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
+            }
+        }).start();
     }
 
     @Override

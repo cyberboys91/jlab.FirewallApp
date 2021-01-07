@@ -38,7 +38,7 @@
     <style name="AppDefaultTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="AppDefaultTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
     <style name="ActionBarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
-        <item name="android:textSize">@dimen/bar_title_size</item>
+        <item name="android:textSize">@dimen/bar_title_text_size</item>
         <item name="android:textColor">@color/white_dark</item>
         <item name="android:layout_marginLeft">0dp</item>
     </style>

@@ -2,7 +2,6 @@ package jlab.firewall.vpn;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.usage.NetworkStatsManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,7 +11,6 @@ import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.net.TrafficStats;
 import android.net.VpnService;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -198,6 +196,14 @@ public class FirewallService extends VpnService {
                     executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
                             deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
                     isRunning = true;
+                    downBytesInStart = upBytesInStart = 0;
+                    upByteTotal.set(0);
+                    downByteTotal.set(0);
+                    upByteSpeed.set(0);
+                    downByteSpeed.set(0);
+                    trafficDataDownSpeedPoints.clear();
+                    trafficDataUpSpeedPoints.clear();
+                    x = 0;
                     LocalBroadcastManager.getInstance(this)
                             .sendBroadcast(new Intent(STARTED_VPN_ACTION));
                     loadTrafficDataView();
@@ -295,7 +301,7 @@ public class FirewallService extends VpnService {
             try {
                 Intent configure = new Intent(this, MainActivity.class);
                 configure.putExtra(VPN_PREPARED_KEY, true);
-                PendingIntent pi = PendingIntent.getActivity(this, VPN_REQUEST_CODE, configure, 0);
+                PendingIntent pi = PendingIntent.getService(this, VPN_REQUEST_CODE, configure, 0);
                 Builder builder = addAllInetAddressToBuilder(new Builder())
                         .addRoute(VPN_ROUTE, 0)
                         .setConfigureIntent(pi)
@@ -340,14 +346,6 @@ public class FirewallService extends VpnService {
     public void onDestroy() {
         super.onDestroy();
         isRunning = false;
-        downBytesInStart = upBytesInStart = 0;
-        upByteTotal.set(0);
-        downByteTotal.set(0);
-        upByteSpeed.set(0);
-        downByteSpeed.set(0);
-        trafficDataDownSpeedPoints.clear();
-        trafficDataUpSpeedPoints.clear();
-        x = 0;
         if (floatingTrafficDataView != null)
             windowMgr.removeView(floatingTrafficDataView);
         LocalBroadcastManager.getInstance(getBaseContext())
@@ -476,7 +474,7 @@ public class FirewallService extends VpnService {
         Intent intent = new Intent(getBaseContext(), MainActivity.class);
         intent.putExtra(SELECTED_TAB_KEY, 1);
         return PendingIntent.getActivity(getBaseContext(), SHOW_NOTIFIED_APPS_REQUEST_CODE
-                , intent, PendingIntent.FLAG_ONE_SHOT);
+                , intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     private Thread refreshTrafficData = new Thread(new Runnable() {
