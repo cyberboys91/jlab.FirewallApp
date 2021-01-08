@@ -12,6 +12,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -109,12 +111,9 @@ public class Utils {
         if (!inCache)
             try {
                 PackageManager pm = context.getPackageManager();
-                ApplicationInfo appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
-                if (appInfo != null) {
-                    Drawable icon = appInfo.loadIcon(pm);
-                    if (icon instanceof BitmapDrawable)
-                        result = ((BitmapDrawable) icon).getBitmap();
-                }
+                Drawable icon = pm.getApplicationIcon(packageName);
+                if (icon != null)
+                    result = getBitmapFromDrawable(icon);
             } catch (Exception ignored) {
                 ignored.printStackTrace();
             }
@@ -124,6 +123,15 @@ public class Utils {
         if (!inCache)
             iconsCache.put(packageName, result);
         return result;
+    }
+
+    private static Bitmap getBitmapFromDrawable(Drawable drawable) {
+        final Bitmap bm = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(bm);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bm;
     }
 
     public static Bitmap getIconForAppInCache (String packageName) {

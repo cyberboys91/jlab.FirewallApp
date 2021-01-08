@@ -1,5 +1,6 @@
 package jlab.firewall.vpn;
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -11,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.net.TrafficStats;
 import android.net.VpnService;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -53,12 +55,10 @@ import jlab.firewall.activity.MainActivity;
 import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
 import lecho.lib.hellocharts.model.PointValue;
-
 import static java.util.Collections.binarySearch;
 import static java.util.Collections.sort;
 import static jlab.firewall.activity.MainActivity.SELECTED_TAB_KEY;
 import static jlab.firewall.activity.MainActivity.SHOW_NOTIFIED_APPS_REQUEST_CODE;
-import static jlab.firewall.activity.MainActivity.VPN_REQUEST_CODE;
 import static jlab.firewall.vpn.Utils.getPackagesInternetPermission;
 import static jlab.firewall.vpn.Utils.getSizeString;
 import static jlab.firewall.vpn.Utils.isBlocked;
@@ -75,7 +75,6 @@ public class FirewallService extends VpnService {
     public static final String VPN_ROUTE = "0.0.0.0",
             APP_DETAILS_NOTIFICATION_KEY = "APP_DETAILS_NOTIFICATION_KEY",
             APP_DETAILS_NAME_NOTIFICATION_KEY = "APP_DETAILS_NAME_NOTIFICATION_KEY",
-            VPN_PREPARED_KEY = "VPN_PREPARED_KEY",
             REFRESH_COUNT_NOTIFIED_APPS_ACTION = "jlab.action.REFRESH_COUNT_NOTIFIED_APPS",
             REFRESH_TRAFFIC_DATA = "jlab.action.REFRESH_TRAFFIC_DATA",
             START_VPN_ACTION = "jlab.action.START_VPN",
@@ -91,7 +90,7 @@ public class FirewallService extends VpnService {
     public static AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
         downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
     private long downBytesInStart, upBytesInStart, x;
-    private static boolean isRunning = false;
+    private static boolean isRunning, isWaiting;
     private ParcelFileDescriptor vpnInterface = null;
     private BlockingQueue<Packet> deviceToNetworkUDPQueue;
     private BlockingQueue<Packet> deviceToNetworkTCPQueue;
@@ -113,8 +112,8 @@ public class FirewallService extends VpnService {
                     break;
                 case STOP_VPN_ACTION:
                     try {
-                        stopSelf();
                         vpnInterface.close();
+                        stopSelf();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -124,6 +123,7 @@ public class FirewallService extends VpnService {
             }
         }
     };
+    public static ApplicationDetails lastAppNotified;
     private Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -136,16 +136,17 @@ public class FirewallService extends VpnService {
                     handler.removeMessages(REFRESH_TRAFFIC_DATA_FLOATING_VIEW);
                     return true;
                 case NOTIFY_INTERNET_REQUEST_ACCESS:
-                    ApplicationDetails app = msg.getData().getParcelable(APP_DETAILS_NOTIFICATION_KEY);
+                    lastAppNotified = msg.getData().getParcelable(APP_DETAILS_NOTIFICATION_KEY);
                     String name = msg.getData().getString(APP_DETAILS_NAME_NOTIFICATION_KEY);
                     notMgr.notify(REQUEST_INTERNET_NOTIFICATION, new NotificationCompat.Builder(getBaseContext())
                             .setContentText(getBaseContext().getString(R.string.apps_req_internet_access))
                             .setContentTitle(name)
                             .setAutoCancel(true)
                             .setSmallIcon(R.drawable.img_not)
+                            .setChannel(CHANNEL_ID)
                             .setNumber(mapPackageNotified.size())
-                            .setColor(getResources().getColor(R.color.gray))
-                            .setLargeIcon(Utils.getIconForApp(app.getPrincipalPackName(),
+                            .setPriority(NotificationManager.IMPORTANCE_HIGH)
+                            .setLargeIcon(Utils.getIconForApp(lastAppNotified.getPrincipalPackName(),
                                     getBaseContext()))
                             .setContentIntent(getPendingIntentNotificationClicked())
                             .build());
@@ -159,6 +160,7 @@ public class FirewallService extends VpnService {
             return false;
         }
     });
+    private static String CHANNEL_ID;
 
     private void loadAddress () {
         mapAddress.clear();
@@ -181,8 +183,10 @@ public class FirewallService extends VpnService {
 
     public void startIfCan() {
         if(!isRunning) {
-            if (setupVPN())
+            isWaiting = !setupVPN();
+            if (!isWaiting)
                 try {
+                    CHANNEL_ID = getString(R.string.app_list_request);
                     appMgr = new ApplicationDbManager(this);
                     packageManager = getBaseContext().getPackageManager();
                     notMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -204,6 +208,12 @@ public class FirewallService extends VpnService {
                     trafficDataDownSpeedPoints.clear();
                     trafficDataUpSpeedPoints.clear();
                     x = 0;
+                    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                                getString(R.string.app_name), NotificationManager.IMPORTANCE_DEFAULT);
+                        channel.setDescription("");
+                        notMgr.createNotificationChannel(channel);
+                    }
                     LocalBroadcastManager.getInstance(this)
                             .sendBroadcast(new Intent(STARTED_VPN_ACTION));
                     loadTrafficDataView();
@@ -299,12 +309,8 @@ public class FirewallService extends VpnService {
     private boolean setupVPN() {
         if (vpnInterface == null) {
             try {
-                Intent configure = new Intent(this, MainActivity.class);
-                configure.putExtra(VPN_PREPARED_KEY, true);
-                PendingIntent pi = PendingIntent.getService(this, VPN_REQUEST_CODE, configure, 0);
                 Builder builder = addAllInetAddressToBuilder(new Builder())
                         .addRoute(VPN_ROUTE, 0)
-                        .setConfigureIntent(pi)
                         .setSession(getPackageName());
                 vpnInterface = builder.establish();
                 return vpnInterface != null;
@@ -342,6 +348,10 @@ public class FirewallService extends VpnService {
         return isRunning;
     }
 
+    public static boolean isWaiting () {
+        return isWaiting;
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -377,8 +387,8 @@ public class FirewallService extends VpnService {
         }
     }
 
-    public static void cancelNotification () {
-        if(notMgr != null)
+    public static void cancelNotification (int uid) {
+        if (notMgr != null && lastAppNotified != null && lastAppNotified.getUid() == uid)
             notMgr.cancel(REQUEST_INTERNET_NOTIFICATION);
     }
 

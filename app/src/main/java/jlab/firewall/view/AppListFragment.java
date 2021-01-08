@@ -12,6 +12,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.text.Selection;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,13 +49,18 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     protected Semaphore semaphoreLoadIcon = new Semaphore(5);
     protected ApplicationDbManager appDbMgr;
     protected TextView tvEmptyList;
+    protected static int[] colorsSpannable = new int[]{R.color.darken
+            , R.color.yellow, R.color.orange, R.color.green};
+
     protected Runnable onRefreshDetailsListener = new Runnable() {
         @Override
-        public void run() { }
+        public void run() {
+        }
     };
     protected static OnRunOnUiThread onRunOnUiThread = new OnRunOnUiThread() {
         @Override
-        public void runOnUiThread(Runnable runnable) { }
+        public void runOnUiThread(Runnable runnable) {
+        }
     };
     protected List<ApplicationDetails> content = new ArrayList<>();
     protected Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
@@ -111,11 +122,6 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     content = getContent();
                     handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
                 }
@@ -160,7 +166,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         final SwitchMultiOptionButton swInternetStatus = convertView.findViewById(R.id.swInternetStatus);
         if (current != null) {
             packNames.setText(current.getPackNames());
-            name.setText(current.getNames());
+            name.setText(getSpannableFromText(current.getNames(), ',', colorsSpannable));
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
             if (bmInCache != null)
                 Glide.with(getContext()).asBitmap().load(bmInCache).into(icon);
@@ -256,5 +262,22 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
 
     public static void setOnRunOnUiThread(OnRunOnUiThread onRunOnUiThread) {
         AppListFragment.onRunOnUiThread = onRunOnUiThread;
+    }
+
+    protected SpannableStringBuilder getSpannableFromText(String text, char sep, int... colors) {
+        SpannableStringBuilder strBuilder = new SpannableStringBuilder(text);
+        int indexSep = 0, indexColor = 0;
+        if (colors.length > 0)
+            for (int i = 0; i < text.length() && indexSep < text.length(); i++)
+                if (text.charAt(i) == sep) {
+                    if (indexColor >= colors.length)
+                        indexColor = 0;
+                    ForegroundColorSpan colorSpan = new ForegroundColorSpan
+                            (getResources().getColor(colors[indexColor++]));
+                    strBuilder.setSpan(colorSpan, indexSep, i, 0);
+                    indexSep = i + 2;
+                }
+        Selection.selectAll(strBuilder);
+        return strBuilder;
     }
 }

@@ -34,7 +34,7 @@ public class NotifiedAppListFragment extends AppListFragment {
         final ImageView icon = convertView.findViewById(R.id.ivIcon);
         if (current != null) {
             packNames.setText(current.getPackNames());
-            name.setText(current.getNames());
+            name.setText(getSpannableFromText(current.getNames(), ',', colorsSpannable));
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
             if(bmInCache != null)
                 Glide.with(icon).asBitmap().load(bmInCache).into(icon);
@@ -70,6 +70,7 @@ public class NotifiedAppListFragment extends AppListFragment {
                     current.setInteract(true);
                     current.setNotified(false);
                     appDbMgr.updateApplicationData(current.getUid(), current);
+                    FirewallService.cancelNotification(current.getUid());
                     reload();
                 }
             });
@@ -81,6 +82,7 @@ public class NotifiedAppListFragment extends AppListFragment {
                     current.setInteract(true);
                     current.setNotified(false);
                     appDbMgr.updateApplicationData(current.getUid(), current);
+                    FirewallService.cancelNotification(current.getUid());
                     reload();
                 }
             });

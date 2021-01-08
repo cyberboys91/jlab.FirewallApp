@@ -70,7 +70,10 @@
                     android:text="@string/not_traffic_bytes"
                     android:id="@+id/tvUpByteTotal"
                     android:layout_marginLeft="10dp"
-                    android:layout_marginStart="10dp"/>
+                    android:layout_marginStart="10dp"
+                    android:layout_gravity="center"
+                    android:ellipsize="end"
+                    android:maxLines="1"/>
 
             </LinearLayout>
 
@@ -95,7 +98,10 @@
                     android:textSize="@dimen/text_total_size"
                     android:textColor="@color/darken"
                     android:layout_marginLeft="10dp"
-                    android:layout_marginStart="10dp"/>
+                    android:layout_marginStart="10dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:layout_gravity="center"/>
 
             </LinearLayout>
 
