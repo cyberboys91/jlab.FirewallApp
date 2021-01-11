@@ -34,12 +34,11 @@ import static jlab.firewall.vpn.Utils.rateApp;
 import static jlab.firewall.vpn.Utils.showAboutDialog;
 import static jlab.firewall.vpn.Utils.showSnackBar;
 
-public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
+public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
 
     public static final String SELECTED_TAB_KEY = "SELECTED_TAB_KEY";
     public static final int ALL_PERMISSION_REQUEST_CODE = 9100,
-            DRAW_OVERLAY_PERMISSION_REQUEST_CODE = 9101,
-            SHOW_NOTIFIED_APPS_REQUEST_CODE = 9102,
+            SHOW_NOTIFIED_APPS_REQUEST_CODE = 9101, CAN_DRAW_OVERLAY = 9102,
             VPN_REQUEST_CODE = 0x0F;
     private ViewPager tabHost;
     private ActionBar actionBar;
@@ -50,7 +49,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
             try {
                 switch (intent.getAction()) {
                     case FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION:
-                        tabsAdapter.reloadListFragment(1);
+                        tabsAdapter.refreshCountNotified(1);
                         break;
                     case FirewallService.STARTED_VPN_ACTION:
                         showSnackBar(R.string.started_vpn_service, tabHost);
@@ -78,7 +77,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
         HomeFragment.startVPN = new Runnable() {
             @Override
             public void run() {
-                startVPN();
+                startFirewall();
             }
         };
 
@@ -120,40 +119,25 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
                 requestPermissions.add(Manifest.permission.INTERNET);
                 request = true;
             }
-            requestAllPermission(requestPermissions, !request);
+            if (request)
+                requestAllPermission(requestPermissions);
         }
         return request;
     }
 
-    private void requestAllPermission(ArrayList<String> requestPermissions, boolean onlyOnDrawOverlay) {
-        if(!onlyOnDrawOverlay) {
-            String[] permission = new String[requestPermissions.size()];
-            ActivityCompat.requestPermissions(this, requestPermissions.toArray(permission), ALL_PERMISSION_REQUEST_CODE);
-        }
-        //TODO: Revisar pq no funcion en Android 10 (Q)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
-                !Settings.canDrawOverlays(this)) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, DRAW_OVERLAY_PERMISSION_REQUEST_CODE);
-        }
+    private void requestAllPermission(ArrayList<String> requestPermissions) {
+        String[] permission = new String[requestPermissions.size()];
+        ActivityCompat.requestPermissions(this, requestPermissions.toArray(permission), ALL_PERMISSION_REQUEST_CODE);
     }
 
-    private void startVPN() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Intent vpnIntent = VpnService.prepare(MainActivity.this);
-                if (vpnIntent != null)
-                    startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
-                else if(!isWaiting())
-                    onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
-                else
-                    LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
-                            Intent(START_VPN_ACTION));
-            }
-        }).start();
+    private void startFirewall() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, CAN_DRAW_OVERLAY);
+        }
+        else
+            startVPN();
     }
 
     @Override
@@ -161,6 +145,24 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread{
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == VPN_REQUEST_CODE && resultCode == RESULT_OK)
             startService(new Intent(this, FirewallService.class));
+        else if (requestCode == CAN_DRAW_OVERLAY)
+            startVPN();
+    }
+
+    private void startVPN () {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Intent vpnIntent = VpnService.prepare(getBaseContext());
+                if (vpnIntent != null)
+                    startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
+                else if (!isWaiting())
+                    onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
+                else
+                    LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
+                            Intent(START_VPN_ACTION));
+            }
+        }).start();
     }
 
     @Override

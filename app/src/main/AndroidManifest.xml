@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="jlab.firewall">
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -15,6 +16,14 @@
             android:launchMode="singleTask"
             android:configChanges="screenSize|orientation"
             android:theme="@style/AppTheme"/>
+
+        <activity
+            android:name=".activity.BubbleNotifiedActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/notified"
+            android:allowEmbedded="true"
+            android:documentLaunchMode="always"
+            android:resizeableActivity="true"/>
 
         <activity android:name=".activity.SplashActivity"
             android:theme="@style/AppTheme.FullScreen">

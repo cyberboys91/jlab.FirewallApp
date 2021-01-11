@@ -1,8 +1,15 @@
 package jlab.firewall.view;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
+import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +24,39 @@ import jlab.firewall.vpn.FirewallService;
 import jlab.firewall.vpn.Utils;
 
 import static jlab.firewall.view.SwitchMultiOptionButton.viewOnTouchListener;
+import static jlab.firewall.vpn.FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION;
 
 /**
  * Created by Javier on 02/01/2021.
  */
 
 public class NotifiedAppListFragment extends AppListFragment {
+
+    private BroadcastReceiver refreshCountNotifiedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getAction()) {
+                case REFRESH_COUNT_NOTIFIED_APPS_ACTION:
+                    reload();
+                    break;
+            }
+        }
+    };
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        LocalBroadcastManager.getInstance(getContext())
+                .registerReceiver(refreshCountNotifiedReceiver
+                , new IntentFilter(REFRESH_COUNT_NOTIFIED_APPS_ACTION));
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager.getInstance(getContext())
+                .unregisterReceiver(refreshCountNotifiedReceiver);
+    }
 
     @Override
     public View getView(int position, View convertView, @NonNull ViewGroup parent) {
@@ -34,8 +68,20 @@ public class NotifiedAppListFragment extends AppListFragment {
         final ImageView icon = convertView.findViewById(R.id.ivIcon);
         if (current != null) {
             packNames.setText(current.getPackNames());
-            name.setText(getSpannableFromText(current.getNames(), ',', colorsSpannable));
+            name.setText(current.getNames());
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final SpannableStringBuilder text = getSpannableFromText(current.getNames(), ',', colorsSpannable);
+                    onRunOnUiThread.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            name.setText(text);
+                        }
+                    });
+                }
+            }).start();
             if(bmInCache != null)
                 Glide.with(icon).asBitmap().load(bmInCache).into(icon);
             else {
@@ -71,7 +117,8 @@ public class NotifiedAppListFragment extends AppListFragment {
                     current.setNotified(false);
                     appDbMgr.updateApplicationData(current.getUid(), current);
                     FirewallService.cancelNotification(current.getUid());
-                    reload();
+                    //Refresh
+                    sendRefreshCountNotifiedBroadcast();
                 }
             });
             allowInternet.setOnTouchListener(viewOnTouchListener());
@@ -83,12 +130,18 @@ public class NotifiedAppListFragment extends AppListFragment {
                     current.setNotified(false);
                     appDbMgr.updateApplicationData(current.getUid(), current);
                     FirewallService.cancelNotification(current.getUid());
-                    reload();
+                    //Refresh
+                    sendRefreshCountNotifiedBroadcast();
                 }
             });
             blockInternet.setOnTouchListener(viewOnTouchListener());
         }
         return convertView;
+    }
+
+    private void sendRefreshCountNotifiedBroadcast () {
+        Intent intent = new Intent(REFRESH_COUNT_NOTIFIED_APPS_ACTION);
+        LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
     }
 
     @Override
@@ -98,7 +151,7 @@ public class NotifiedAppListFragment extends AppListFragment {
 
     @Override
     public List<ApplicationDetails> getContent() {
-        content = appDbMgr.getNotifiedAppDetails();
+        content = appDbMgr.getNotifiedAppDetails(query);
         return content;
     }
 

@@ -33,6 +33,7 @@ import static java.util.Collections.sort;
 import static jlab.firewall.vpn.FirewallService.mapPackageAllowed;
 import static jlab.firewall.vpn.FirewallService.mapPackageInteract;
 import static jlab.firewall.vpn.FirewallService.mapPackageNotified;
+import static jlab.firewall.vpn.FirewallService.myUid;
 
 public class Utils {
 
@@ -82,7 +83,7 @@ public class Utils {
         ArrayList<ApplicationDetails> result = new ArrayList<>();
         for (int i = 0; i < appsInfo.size(); i++) {
             ApplicationInfo current = appsInfo.get(i);
-            if (hasInternet(current.packageName, context)) {
+            if (current.uid != myUid && hasInternet(current.packageName, context)) {
                 CharSequence name = pm.getApplicationLabel(current);
                 if (name != null)
                     current.name = name.toString();

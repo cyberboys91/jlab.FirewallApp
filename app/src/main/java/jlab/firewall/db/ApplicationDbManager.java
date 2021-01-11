@@ -78,7 +78,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
         onCreate(sqLiteDatabase);
     }
 
-    public ArrayList<ApplicationDetails> getAllAppDetails() {
+    public ArrayList<ApplicationDetails> getAllAppDetails(String namesQuery) {
         SQLiteDatabase sqLiteDatabase = getReadableDatabase();
         ArrayList<ApplicationDetails> result = new ArrayList<>();
         Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null, null, null, null, null, null);
@@ -91,14 +91,15 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                     internet = cursor.getInt(cursor.getColumnIndex(ApplicationContract.INTERNET_PERMISSION)),
                     interact = cursor.getInt(cursor.getColumnIndex(ApplicationContract.USER_INTERACT)),
                     notified = cursor.getInt(cursor.getColumnIndex(ApplicationContract.NOTIFIED));
-            result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
-                    internet > 0, notified > 0, interact > 0));
+            if (namesQuery == null || namesQuery.isEmpty() || name.toLowerCase().contains(namesQuery))
+                result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
+                        internet > 0, notified > 0, interact > 0));
         }
         cursor.close();
         return result;
     }
 
-    public ArrayList<ApplicationDetails> getNotifiedAppDetails() {
+    public ArrayList<ApplicationDetails> getNotifiedAppDetails(String namesQuery) {
         SQLiteDatabase sqLiteDatabase = getReadableDatabase();
         ArrayList<ApplicationDetails> result = new ArrayList<>();
         Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
@@ -113,8 +114,9 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                     internet = cursor.getInt(cursor.getColumnIndex(ApplicationContract.INTERNET_PERMISSION)),
                     interact = cursor.getInt(cursor.getColumnIndex(ApplicationContract.USER_INTERACT)),
                     notified = cursor.getInt(cursor.getColumnIndex(ApplicationContract.NOTIFIED));
-            result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
-                    internet > 0, notified > 0, interact > 0));
+            if (namesQuery == null || namesQuery.isEmpty() || name.toLowerCase().contains(namesQuery))
+                result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
+                        internet > 0, notified > 0, interact > 0));
         }
         cursor.close();
         return result;

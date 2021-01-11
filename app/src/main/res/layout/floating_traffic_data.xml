@@ -28,7 +28,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:padding="5dp"
-                    android:textSize="11dp"
+                    android:textSize="@dimen/traffic_floating_text_size"
                     android:text="@string/total"
                     android:textColor="@color/green_bright"/>
 
@@ -39,7 +39,7 @@
                     android:paddingRight="5dp"
                     android:paddingLeft="0dp"
                     android:paddingStart="0dp"
-                    android:textSize="11dp"
+                    android:textSize="@dimen/traffic_floating_text_size"
                     android:text="↑0B↓0B"
                     android:textColor="@color/white"/>
 
@@ -50,7 +50,7 @@
                     android:paddingRight="0dp"
                     android:paddingLeft="5dp"
                     android:paddingStart="5dp"
-                    android:textSize="11dp"
+                    android:textSize="@dimen/traffic_floating_text_size"
                     android:text="@string/speed"
                     android:textColor="@color/green_bright"/>
 
@@ -61,7 +61,7 @@
                 android:id="@+id/tvTrafficDataSpeed"
                 android:padding="5dp"
                 android:paddingLeft="3dp"
-                android:textSize="11dp"
+                android:textSize="@dimen/traffic_floating_text_size"
                 android:text="↑0Bps↓0Bps"
                 android:textColor="@color/white"/>
 

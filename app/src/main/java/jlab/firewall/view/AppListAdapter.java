@@ -41,7 +41,6 @@ public class AppListAdapter extends ArrayAdapter<ApplicationDetails> {
     public void reload (List<ApplicationDetails> content) {
         clear();
         addAll(content);
-        notifyDataSetChanged();
     }
 
     public void setOnManagerContentListener(IOnManagerContentListener onGetViewListener) {

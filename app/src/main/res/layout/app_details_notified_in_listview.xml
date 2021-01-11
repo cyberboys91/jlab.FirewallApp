@@ -54,18 +54,21 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="10dp"
+                android:minHeight="30dp"
                 android:layout_marginEnd="7dp"
                 android:layout_marginRight="7dp"
+                app:cardCornerRadius="10dp"
+                app:contentPaddingTop="1dp"
+                app:contentPaddingBottom="2dp"
                 app:cardBackgroundColor="@color/green_bright">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
-                    android:padding="4dp"
+                    android:layout_margin="4dp"
                     android:text="@string/allow"
-                    android:textSize="@dimen/text_short_size_sp"
+                    android:textSize="@dimen/text_short_size_dp"
                     android:layout_gravity="center"/>
 
                 </android.support.v7.widget.CardView>
@@ -74,16 +77,19 @@
                 android:id="@+id/llBlockInternet"
                 android:layout_width="0dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="10dp"
                 android:layout_height="wrap_content"
+                android:minHeight="30dp"
+                app:cardCornerRadius="10dp"
+                app:contentPaddingTop="1dp"
+                app:contentPaddingBottom="2dp"
                 app:cardBackgroundColor="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/black"
-                    android:padding="4dp"
-                    android:textSize="@dimen/text_short_size_sp"
+                    android:layout_margin="4dp"
+                    android:textSize="@dimen/text_short_size_dp"
                     android:text="@string/block"
                     android:layout_gravity="center" />
 

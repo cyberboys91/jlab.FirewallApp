@@ -5,11 +5,11 @@
     <dimen name="tool_bar_height">60dp</dimen>
     <dimen name="text_big_size">18sp</dimen>
     <dimen name="bar_title_text_size">25sp</dimen>
-    <dimen name="text_total_size">25sp</dimen>
+    <dimen name="text_total_size_dp">20dp</dimen>
     <dimen name="middle_margin">10dp</dimen>
     <dimen name="text_middle_size">15sp</dimen>
-    <dimen name="text_short_size_sp">14sp</dimen>
     <dimen name="text_short_size_dp">14dp</dimen>
-    <dimen name="text_min_size_sp">12sp</dimen>
-    <dimen name="text_min_size_dp">12dp</dimen>
+    <dimen name="text_short_size_sp">14sp</dimen>
+    <dimen name="text_min_size_sp">13sp</dimen>
+    <dimen name="traffic_floating_text_size">11dp</dimen>
 </resources>

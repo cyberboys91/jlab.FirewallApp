@@ -3,7 +3,12 @@ package jlab.firewall.view;
 import android.os.Bundle;
 import jlab.firewall.R;
 import android.view.View;
+
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Semaphore;
+
 import android.view.ViewGroup;
 import android.content.Intent;
 import android.graphics.Color;
@@ -15,7 +20,6 @@ import android.content.BroadcastReceiver;
 import android.support.v7.widget.CardView;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import jlab.firewall.vpn.FirewallService;
 import lecho.lib.hellocharts.formatter.AxisValueFormatter;
@@ -23,6 +27,7 @@ import lecho.lib.hellocharts.model.Axis;
 import lecho.lib.hellocharts.model.AxisValue;
 import lecho.lib.hellocharts.model.Line;
 import lecho.lib.hellocharts.model.LineChartData;
+import lecho.lib.hellocharts.model.PointValue;
 import lecho.lib.hellocharts.view.LineChartView;
 import static jlab.firewall.vpn.FirewallService.downByteTotal;
 import static jlab.firewall.vpn.FirewallService.isRunning;
@@ -44,6 +49,7 @@ public class HomeFragment extends Fragment {
     private LineChartView chart;
     private LineChartData chartData;
     private TextView tvTextButton, tvUpByteTotal, tvDownByteTotal;
+    private Semaphore mutexRefreshTraffic = new Semaphore(1);
     private static final int COLOR_GREEN = Color.GREEN, COLOR_NEUTRAL = Color.parseColor("#2389af"),
         COLOR_TRANSPARENT = Color.argb(0, 255, 255, 255);
     private BroadcastReceiver onFirewallChangeStatusReceiver = new BroadcastReceiver () {
@@ -55,9 +61,11 @@ public class HomeFragment extends Fragment {
                     break;
                 case FirewallService.STARTED_VPN_ACTION:
                     changeStateButton(false);
+                    refreshTrafficData();
                     break;
                 case FirewallService.STOPPED_VPN_ACTION:
                     changeStateButton(true);
+                    refreshTrafficData();
                     break;
                 case FirewallService.NOT_PREPARED_VPN_ACTION:
                     changeStateButton(true);
@@ -69,18 +77,32 @@ public class HomeFragment extends Fragment {
     };
 
     private void refreshTrafficData() {
-        tvUpByteTotal.setText(getSizeString((double) upByteTotal.get(),
-                upByteTotal.get () > ONE_KB ? 2 : 0));
-        tvDownByteTotal.setText(getSizeString((double) downByteTotal.get(),
-                upByteTotal.get () > ONE_KB ? 2 : 0));
-        if (chart != null) {
-            ArrayList<Line> lines = new ArrayList<>();
-            lines.add(new Line(trafficDataUpSpeedPoints).setColor(COLOR_NEUTRAL)
-                    .setPointColor(COLOR_TRANSPARENT).setStrokeWidth(1).setFilled(true));
-            lines.add(new Line(trafficDataDownSpeedPoints).setColor(COLOR_GREEN)
-                    .setPointColor(COLOR_TRANSPARENT).setStrokeWidth(1).setFilled(true));
-            chartData.setLines(lines);
-            chart.setLineChartData(chartData);
+        try {
+            mutexRefreshTraffic.acquire();
+            tvUpByteTotal.setText(getSizeString((double) upByteTotal.get(),
+                    upByteTotal.get() > ONE_KB ? 2 : 0));
+            tvDownByteTotal.setText(getSizeString((double) downByteTotal.get(),
+                    upByteTotal.get() > ONE_KB ? 2 : 0));
+            if (chart != null) {
+                ArrayList<Line> lines = new ArrayList<>();
+
+                //Creando copia para evitar la modificación concurrente
+                ArrayList<PointValue> pointsLineUpSpeed = new ArrayList<>();
+                pointsLineUpSpeed.addAll(trafficDataUpSpeedPoints);
+                ArrayList<PointValue> pointsLineDownSpeed = new ArrayList<>();
+                pointsLineDownSpeed.addAll(trafficDataDownSpeedPoints);
+                //.
+                lines.add(new Line(pointsLineUpSpeed).setColor(COLOR_NEUTRAL)
+                        .setPointColor(COLOR_TRANSPARENT).setStrokeWidth(1).setFilled(true));
+                lines.add(new Line(pointsLineDownSpeed).setColor(COLOR_GREEN)
+                        .setPointColor(COLOR_TRANSPARENT).setStrokeWidth(1).setFilled(true));
+                chartData.setLines(lines);
+                chart.setLineChartData(chartData);
+            }
+        } catch (Exception ignored) {
+            ignored.printStackTrace();
+        } finally {
+            mutexRefreshTraffic.release();
         }
     }
 
@@ -105,7 +127,7 @@ public class HomeFragment extends Fragment {
         chart = view.findViewById(R.id.chart);
         chart.setInteractive(false);
         chartData = new LineChartData();
-        chartData.setAxisXBottom(new Axis().setName(getString(R.string.time))
+        chartData.setAxisXBottom(new Axis()
                 .setFormatter(new AxisValueFormatter() {
                     @Override
                     public int formatValueForManualAxis(char[] chars, AxisValue axisValue) {
@@ -120,7 +142,7 @@ public class HomeFragment extends Fragment {
                     }
                 }));
         chartData.setAxisYLeft(new Axis().setAutoGenerated(false));
-        chartData.setAxisYRight(new Axis().setName("Bps").setInside(true)
+        chartData.setAxisYRight(new Axis().setInside(true)
                 .setFormatter(new AxisValueFormatter() {
             @Override
             public int formatValueForManualAxis(char[] chars, AxisValue axisValue) {

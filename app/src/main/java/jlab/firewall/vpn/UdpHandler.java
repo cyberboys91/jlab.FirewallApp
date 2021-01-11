@@ -111,7 +111,8 @@ public class UdpHandler implements Runnable {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "error", e);
-                System.exit(0);
+                //TODO: jlab. Se crashea si se descomenta
+                //System.exit(0);
             } finally {
                 Log.d(TAG, "UdpHandler quit");
             }
@@ -193,7 +194,8 @@ public class UdpHandler implements Runnable {
             }
         } catch (Exception e) {
             Log.e(TAG, "error", e);
-            System.exit(0);
+            //TODO: jlab. Se crashea
+            //System.exit(0);
         }
     }
 }

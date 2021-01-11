@@ -41,4 +41,6 @@
     <color name="gray_bright">#de282b36</color>
     <color name="black">#000000</color>
     <color name="darken">#DDDDDD</color>
+    <color name="line_color">#ed969696</color>
+    <color name="floating_button_color">#4b4b4b</color>
 </resources>

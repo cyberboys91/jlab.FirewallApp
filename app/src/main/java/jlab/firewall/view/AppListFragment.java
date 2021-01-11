@@ -9,13 +9,13 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.SearchView;
 import android.text.Selection;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
@@ -32,6 +32,7 @@ import java.util.concurrent.Semaphore;
 import jlab.firewall.R;
 import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
+import jlab.firewall.vpn.FirewallService;
 import jlab.firewall.vpn.Utils;
 import static jlab.firewall.vpn.FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION;
 
@@ -44,14 +45,16 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     private static final int ALLOW_INTERNET_SWITCH_STATE = 2, BLOCK_INTERNET_SWITCH_STATE = 0,
             NEUTRAL_SWITCH_STATE = 1;
     private static final int RUN_ON_REFRESH_DETAILS_LISTENER = 9300, ON_LOAD_CONTENT_FINISH = 9301;
+    private static final String QUERY_KEY = "QUERY_KEY";
     protected AppListAdapter adapter;
     private SwipeRefreshLayout srlRefresh;
-    protected Semaphore semaphoreLoadIcon = new Semaphore(5);
+    protected Semaphore semaphoreLoadIcon = new Semaphore(3);
     protected ApplicationDbManager appDbMgr;
     protected TextView tvEmptyList;
     protected static int[] colorsSpannable = new int[]{R.color.darken
             , R.color.yellow, R.color.orange, R.color.green};
-
+    private SearchView svSearch;
+    protected String query;
     protected Runnable onRefreshDetailsListener = new Runnable() {
         @Override
         public void run() {
@@ -84,12 +87,15 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             return false;
         }
     });
+    private FloatingActionButton fbSearch;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_app_list, container, false);
         this.tvEmptyList = view.findViewById(R.id.tvEmptyList);
+        this.fbSearch = view.findViewById(R.id.fbSearch);
+        this.svSearch = view.findViewById(R.id.svSearch);
         this.srlRefresh = view.findViewById(R.id.srlRefresh);
         ListView lvAppList = view.findViewById(R.id.lvAppList);
         lvAppList.setAdapter(adapter);
@@ -99,7 +105,68 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                 reload();
             }
         });
+
+        this.svSearch.setQueryHint(getString(R.string.search_hint));
+        this.svSearch.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                svSearch.setVisibility(View.GONE);
+                fbSearch.setVisibility(View.VISIBLE);
+                return true;
+            }
+        });
+        this.svSearch.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(!hasFocus && (query == null || query.isEmpty())) {
+                    svSearch.setVisibility(View.GONE);
+                    fbSearch.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        fbSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (svSearch.getVisibility() != View.VISIBLE) {
+                    query = null;
+                    svSearch.setQuery("", true);
+                    svSearch.setVisibility(View.VISIBLE);
+                    fbSearch.setVisibility(View.INVISIBLE);
+                }
+                svSearch.onActionViewExpanded();
+                svSearch.requestFocus();
+            }
+        });
+        this.svSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                query = newText.toLowerCase();
+                reload();
+                return true;
+            }
+        });
+        if(this.svSearch != null) {
+            if (query != null && !query.isEmpty()) {
+                this.svSearch.setQuery(query, true);
+                this.svSearch.setVisibility(View.VISIBLE);
+                fbSearch.setVisibility(View.INVISIBLE);
+            } else {
+                this.svSearch.setVisibility(View.GONE);
+                fbSearch.setVisibility(View.VISIBLE);
+            }
+        }
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(QUERY_KEY, query);
     }
 
     @Override
@@ -108,6 +175,8 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         this.appDbMgr = new ApplicationDbManager(getContext());
         this.adapter = new AppListAdapter(getContext(), getContent());
         this.adapter.setOnManagerContentListener(this);
+        if (savedInstanceState != null && savedInstanceState.containsKey(QUERY_KEY))
+            this.query = savedInstanceState.getString(QUERY_KEY);
     }
 
     @Override
@@ -126,8 +195,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                     handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
                 }
             }).start();
-        } else
-            handler.sendEmptyMessage(RUN_ON_REFRESH_DETAILS_LISTENER);
+        }
     }
 
     @Override
@@ -160,14 +228,26 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         convertView = LayoutInflater.from(getContext())
                 .inflate(R.layout.app_details_in_listview, parent, false);
         final ApplicationDetails current = adapter.getItem(position);
-        TextView packNames = convertView.findViewById(R.id.tvPackagesName),
+        final TextView packNames = convertView.findViewById(R.id.tvPackagesName),
                 name = convertView.findViewById(R.id.tvName);
         final ImageView icon = convertView.findViewById(R.id.ivIcon);
         final SwitchMultiOptionButton swInternetStatus = convertView.findViewById(R.id.swInternetStatus);
         if (current != null) {
             packNames.setText(current.getPackNames());
-            name.setText(getSpannableFromText(current.getNames(), ',', colorsSpannable));
+            name.setText(current.getNames());
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final SpannableStringBuilder text = getSpannableFromText(current.getNames(), ',', colorsSpannable);
+                    onRunOnUiThread.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            name.setText(text);
+                        }
+                    });
+                }
+            }).start();
             if (bmInCache != null)
                 Glide.with(getContext()).asBitmap().load(bmInCache).into(icon);
             else {
@@ -219,6 +299,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                         default:
                             break;
                     }
+                    FirewallService.cancelNotification(current.getUid());
                     appDbMgr.updateApplicationData(current.getUid(), current);
                     LocalBroadcastManager.getInstance(getContext())
                             .sendBroadcast(new Intent(REFRESH_COUNT_NOTIFIED_APPS_ACTION));
@@ -256,7 +337,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
 
     @Override
     public List<ApplicationDetails> getContent() {
-        content = appDbMgr.getAllAppDetails();
+        content = appDbMgr.getAllAppDetails(query);
         return content;
     }
 
@@ -277,6 +358,14 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                     strBuilder.setSpan(colorSpan, indexSep, i, 0);
                     indexSep = i + 2;
                 }
+        if(query != null) {
+            int index = text.toLowerCase().indexOf(query);
+            if(index > -1) {
+                BackgroundColorSpan colorSpan = new BackgroundColorSpan(getResources()
+                        .getColor(R.color.neutral));
+                strBuilder.setSpan(colorSpan, index, index + query.length(), 0);
+            }
+        }
         Selection.selectAll(strBuilder);
         return strBuilder;
     }

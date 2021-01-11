@@ -21,7 +21,7 @@ import static jlab.firewall.vpn.FirewallService.loadAppData;
 public class SplashActivity extends AppCompatActivity {
     private ImageView ivIcon;
     private boolean finish = false;
-    private final long timeSleep = 500;
+    private final long timeSleep = 250;
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -59,9 +59,8 @@ public class SplashActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         if (!FirewallService.isRunning())
-                            loadAppData(SplashActivity.this, runnable);
-                        else
-                            runnable.run();
+                            loadAppData(getBaseContext());
+                        runnable.run();
                     }
                 }).start();
             }

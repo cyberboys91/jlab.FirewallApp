@@ -1,5 +1,6 @@
 package jlab.firewall.view;
 
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.app.ActionBar;
 import android.content.Context;
@@ -7,13 +8,15 @@ import android.app.FragmentTransaction;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import java.util.ArrayList;
 import jlab.firewall.R;
+
+import static jlab.firewall.vpn.FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION;
 
 public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.TabListener,
         ViewPager.OnPageChangeListener {
@@ -43,7 +46,7 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
         }
     }
 
-    public void reloadListFragment (final int position) {
+    private void reloadListFragment(final int position) {
         if (position >= 0 && position < mFragments.size()
                 && mFragments.get(position) instanceof OnReloadListener)
             ((OnReloadListener) mFragments.get(position)).reload();
@@ -68,6 +71,14 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
         }
     }
 
+    public void refreshCountNotified (int position) {
+        if (position >= 0 && position < mFragments.size()) {
+            Fragment fragment = mFragments.get(position);
+            if (fragment instanceof OnReloadListener)
+                addTitleBadgeCountViewAppNotified(position, (OnReloadListener) fragment);
+        }
+    }
+
     public void addTab(ActionBar.Tab tab, Class<?> clss, Bundle args) {
         TabInfo info = new TabInfo(clss, args);
         tab.setTag(info);
@@ -75,17 +86,10 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
         mTabs.add(info);
         final int position = mFragments.size();
         final Fragment fragment = Fragment.instantiate(mContext, info.clss.getName(), info.args);
-        if (fragment instanceof OnReloadListener && ((OnReloadListener) fragment).hasDetails()) {
-            ((OnReloadListener) fragment).setOnRefreshDetailsListener(new Runnable() {
-                @Override
-                public void run() {
-                    addTitleBadgeCountViewAppNotified(position, (OnReloadListener) fragment);
-                }
-            });
-            addTitleBadgeCountViewAppNotified(position, (OnReloadListener) fragment);
-        }
         mFragments.add(fragment);
         mActionBar.addTab(tab);
+        if (fragment instanceof OnReloadListener && ((OnReloadListener) fragment).hasDetails())
+            addTitleBadgeCountViewAppNotified(position, (OnReloadListener) fragment);
         notifyDataSetChanged();
     }
 

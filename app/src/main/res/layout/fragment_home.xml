@@ -26,7 +26,7 @@
             android:textColor="@color/white"
             android:padding="4dp"
             android:text="@string/start_vpn"
-            android:textSize="@dimen/text_middle_size"
+            android:textSize="@dimen/text_short_size_dp"
             android:layout_gravity="center"/>
 
     </android.support.v7.widget.CardView>
@@ -36,164 +36,133 @@
         android:layout_height="wrap_content">
 
         <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_marginLeft="@dimen/activity_horizontal_margin"
-        android:layout_marginRight="@dimen/activity_horizontal_margin"
-        android:layout_marginTop="@dimen/activity_horizontal_margin">
-
-        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/middle_margin"
-            android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/arrow_up"
-                    android:textSize="@dimen/text_total_size"
-                    android:textColor="@color/neutral"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="@dimen/text_total_size"
-                    android:textColor="@color/darken"
-                    android:text="@string/not_traffic_bytes"
-                    android:id="@+id/tvUpByteTotal"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_gravity="center"
-                    android:ellipsize="end"
-                    android:maxLines="1"/>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/arrow_down"
-                    android:textSize="@dimen/text_total_size"
-                    android:textColor="@color/native_green"
-                    android:textStyle="bold"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/tvDownByteTotal"
-                    android:text="@string/not_traffic_bytes"
-                    android:textSize="@dimen/text_total_size"
-                    android:textColor="@color/darken"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginStart="10dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:layout_gravity="center"/>
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
             android:layout_marginTop="@dimen/activity_horizontal_margin"
             android:paddingBottom="25dp">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp">
-
-                    <lecho.lib.hellocharts.view.LineChartView
-                        android:id="@+id/chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp" />
-
-                </LinearLayout>
-
-            <LinearLayout
+            <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_margin="13dp"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true">
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="@dimen/middle_margin"
+                app:contentPadding="@dimen/middle_margin"
+                app:cardCornerRadius="30dp"
+                app:contentPaddingTop="20dp"
+                app:cardElevation="0dp">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
 
-                    <View
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:layout_gravity="center"
-                        android:layout_marginRight="5dp"
-                        android:layout_marginEnd="5dp"
-                        android:background="@color/neutral"/>
-
-                    <TextView
+                    <RelativeLayout
                         android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp">
+
+                            <lecho.lib.hellocharts.view.LineChartView
+                                android:id="@+id/chart"
+                                android:layout_width="match_parent"
+                                android:layout_height="200dp" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:textColor="@color/darken"
+                            android:textSize="@dimen/text_short_size_dp"
+                            android:text="@string/speed_bps"
+                            android:layout_centerHorizontal="true"/>
+
+                    </RelativeLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:textColor="@color/darken"
-                        android:textSize="@dimen/text_min_size_dp"
-                        android:text="@string/arrow_up"/>
+                        android:layout_marginTop="20dp"
+                        android:paddingBottom="20dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bar_separator_right">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/arrow_up"
+                                android:textSize="@dimen/text_total_size_dp"
+                                android:textColor="@color/neutral"
+                                android:textStyle="bold"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="@dimen/text_total_size_dp"
+                                android:textColor="@color/darken"
+                                android:text="@string/not_traffic_bytes"
+                                android:id="@+id/tvUpByteTotal"
+                                android:layout_marginLeft="10dp"
+                                android:layout_marginStart="10dp"
+                                android:layout_gravity="center"
+                                android:ellipsize="end"
+                                android:maxLines="1"/>
+
+                        </LinearLayout>
+
+                        <RelativeLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bar_separator_left">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/tvDownByteTotal"
+                                android:layout_toLeftOf="@+id/tvDownArrow"
+                                android:layout_toStartOf="@id/tvDownArrow"
+                                android:text="@string/not_traffic_bytes"
+                                android:textSize="@dimen/text_total_size_dp"
+                                android:textColor="@color/darken"
+                                android:layout_marginLeft="10dp"
+                                android:layout_marginStart="10dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/tvDownArrow"
+                                android:text="@string/arrow_down"
+                                android:textSize="@dimen/text_total_size_dp"
+                                android:textColor="@color/native_green"
+                                android:textStyle="bold"
+                                android:layout_marginLeft="10dp"
+                                android:layout_marginStart="10dp"
+                                android:layout_alignParentEnd="true"
+                                android:layout_alignParentRight="true"/>
+
+                        </RelativeLayout>
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+            </android.support.v7.widget.CardView>
 
-                    <View
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:layout_gravity="center"
-                        android:layout_marginRight="5dp"
-                        android:layout_marginEnd="5dp"
-                        android:background="@color/native_green"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:textColor="@color/darken"
-                        android:textSize="@dimen/text_min_size_dp"
-                        android:text="@string/arrow_down"/>
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textColor="@color/darken"
-                android:textSize="@dimen/text_short_size_sp"
-                android:text="@string/speed"
-                android:layout_centerHorizontal="true"/>
-
-        </RelativeLayout>
-
-    </LinearLayout>
+        </LinearLayout>
 
     </ScrollView>
 
