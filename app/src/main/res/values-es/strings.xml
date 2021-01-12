@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">FireWall</string>
+    <string name="start_vpn">INICIAR</string>
+    <string name="starting_vpn">INICIANDO…</string>
+    <string name="stop_vpn">DETENER</string>
+    <string name="stopping_vpn">DETENIENDO…</string>
+    <string name="apps_req_internet_access">algunas apps solicitan internet</string>
+    <string name="allow">PERMITIR</string>
+    <string name="block">DENEGAR</string>
+    <string name="rate_app">Calificar esta app</string>
+    <string name="about">Acerca de</string>
+    <string name="close">Cerrar</string>
+    <string name="app_list">APPS</string>
+    <string name="accept">OK</string>
+    <string name="cancel">Cancelar</string>
+    <string name="contact">Contactar</string>
+    <string name="mail">jlab.apps@gmail.com</string>
+    <string name="app_mail_not_found">No se encontró una aplicación de correo.</string>
+    <string name="about_content"><b>FireWall v1.0</b>, contactar a: <i> jlab.apps@gmail.com</i></string>
+    <string name="home">INICIO</string>
+    <string name="started_vpn_service">el servicio FireWall está corriendo…</string>
+    <string name="stopped_vpn_service">el servicio FireWall está detenido…</string>
+    <string name="total">Total</string>
+    <string name="speed">Vel.</string>
+    <string name="app_list_request">ACCESOS</string>
+    <string name="empty_list">Sin elementos</string>
+    <string name="speed_bps">Velocidad (Bps)</string>
+    <string name="arrow_up">↑</string>
+    <string name="arrow_down">↓</string>
+    <string name="not_prepared_vpn_service">el servicio FireWall no está preparado para iniciar</string>
+    <string name="not_traffic_bytes">0B</string>
+    <string name="search">Buscar</string>
+    <string name="search_hint">Buscar nombre</string>
+    <string name="notified">Notified</string>
+</resources>
