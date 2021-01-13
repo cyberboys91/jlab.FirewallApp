@@ -6,13 +6,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.VpnService;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -22,7 +22,6 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
 
 import jlab.firewall.R;
 import jlab.firewall.view.AppListFragment;
@@ -43,9 +42,11 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     public static final int ALL_PERMISSION_REQUEST_CODE = 9100,
             SHOW_NOTIFIED_APPS_REQUEST_CODE = 9101, CAN_DRAW_OVERLAY = 9102,
             VPN_REQUEST_CODE = 0x0F;
+    private static final String USER_DEFINE_CAN_DRAW_OVERLAY_KEY = "CAN_DRAW_OVERLAY_KEY";
     private ViewPager tabHost;
     private ActionBar actionBar;
     private TabsAdapter tabsAdapter;
+    private SharedPreferences preferences;
     private BroadcastReceiver onFirewallChangeStatusReceiver = new BroadcastReceiver () {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -88,7 +89,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         actionBar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
         actionBar.setDisplayShowTitleEnabled(true);
-
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         tabsAdapter = new TabsAdapter(this, tabHost);
         tabsAdapter.addTab(actionBar.newTab().setText(getString(R.string.home)),
                 HomeFragment.class, null);
@@ -134,12 +135,12 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     }
 
     private void startFirewall() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)
+                && !preferences.getBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, false)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, CAN_DRAW_OVERLAY);
-        }
-        else
+        } else
             startVPN();
     }
 
@@ -148,8 +149,13 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == VPN_REQUEST_CODE && resultCode == RESULT_OK)
             startService(new Intent(this, FirewallService.class));
-        else if (requestCode == CAN_DRAW_OVERLAY)
+        else if (requestCode == CAN_DRAW_OVERLAY) {
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, true);
+            editor.apply();
+            editor.commit();
             startVPN();
+        }
     }
 
     private void startVPN () {
