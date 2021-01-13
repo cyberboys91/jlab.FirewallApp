@@ -27,6 +27,8 @@
             android:padding="4dp"
             android:text="@string/start_vpn"
             android:textSize="@dimen/text_short_size_dp"
+            android:fontFamily="@string/font_family_text"
+            android:textStyle="bold"
             android:layout_gravity="center"/>
 
     </android.support.v7.widget.CardView>
@@ -81,6 +83,7 @@
                             android:textColor="@color/darken"
                             android:textSize="@dimen/text_short_size_dp"
                             android:text="@string/speed_bps"
+                            android:fontFamily="@string/font_family_text"
                             android:layout_centerHorizontal="true"/>
 
                     </RelativeLayout>
@@ -104,6 +107,7 @@
                                 android:text="@string/arrow_up"
                                 android:textSize="@dimen/text_total_size_dp"
                                 android:textColor="@color/neutral"
+                                android:fontFamily="@string/font_family_text"
                                 android:textStyle="bold"/>
 
                             <TextView
@@ -112,6 +116,7 @@
                                 android:textSize="@dimen/text_total_size_dp"
                                 android:textColor="@color/darken"
                                 android:text="@string/not_traffic_bytes"
+                                android:fontFamily="@string/font_family_text"
                                 android:id="@+id/tvUpByteTotal"
                                 android:layout_marginLeft="10dp"
                                 android:layout_marginStart="10dp"
@@ -133,6 +138,7 @@
                                 android:id="@+id/tvDownByteTotal"
                                 android:layout_toLeftOf="@+id/tvDownArrow"
                                 android:layout_toStartOf="@id/tvDownArrow"
+                                android:fontFamily="@string/font_family_text"
                                 android:text="@string/not_traffic_bytes"
                                 android:textSize="@dimen/text_total_size_dp"
                                 android:textColor="@color/darken"
@@ -148,6 +154,7 @@
                                 android:text="@string/arrow_down"
                                 android:textSize="@dimen/text_total_size_dp"
                                 android:textColor="@color/native_green"
+                                android:fontFamily="@string/font_family_text"
                                 android:textStyle="bold"
                                 android:layout_marginLeft="10dp"
                                 android:layout_marginStart="10dp"

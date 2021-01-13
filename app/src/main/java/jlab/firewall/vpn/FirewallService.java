@@ -1,10 +1,8 @@
 package jlab.firewall.vpn;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Person;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,9 +10,7 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
-import android.graphics.drawable.Icon;
 import android.net.TrafficStats;
-import android.net.Uri;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,7 +18,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
-import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.ArrayMap;
@@ -52,7 +47,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 import jlab.firewall.R;
-import jlab.firewall.activity.BubbleNotifiedActivity;
 import jlab.firewall.activity.MainActivity;
 import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
@@ -85,6 +79,9 @@ public class FirewallService extends VpnService {
             STOP_VPN_ACTION = "jlab.action.STOP_VPN_ACTION",
             NOT_PREPARED_VPN_ACTION = "jlab.action.NOT_PREPARED_VPN_ACTION";
     public static final int myUid = Process.myUid();
+    public static int notificationMessageUid;
+    public static Message notificationMessage;
+    public static Semaphore mutexNotificator = new Semaphore(1);
     private static Map<String, Integer> mapAddress = new ArrayMap<>();
     private static final int REQUEST_INTERNET_NOTIFICATION = 9200,
             REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9403,
@@ -104,9 +101,8 @@ public class FirewallService extends VpnService {
     private TextView tvFloatingTrafficSpeed, tvFloatingTrafficTotal;
     private WindowManager windowMgr;
     private PackageManager packageManager;
-    private Semaphore semaphoreNotificator = new Semaphore(1);
     private boolean refreshTrafficDataAux = false;
-    private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps";
+    private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps", CHANNEL_ID;
     private BroadcastReceiver startVpnReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -127,7 +123,7 @@ public class FirewallService extends VpnService {
             }
         }
     };
-    public static ApplicationDetails lastAppNotified;
+    private static int lastUidNotified, lastCountNotified;
     private Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -140,10 +136,15 @@ public class FirewallService extends VpnService {
                     handler.removeMessages(REFRESH_TRAFFIC_DATA_FLOATING_VIEW);
                     return true;
                 case NOTIFY_INTERNET_REQUEST_ACCESS:
-                    lastAppNotified = msg.getData().getParcelable(APP_DETAILS_NOTIFICATION_KEY);
-                    String name = msg.getData().getString(APP_DETAILS_NAME_NOTIFICATION_KEY);
+                    ApplicationDetails notifiedApp = msg.getData().getParcelable(APP_DETAILS_NOTIFICATION_KEY);
+                    int countNotified = mapPackageNotified.size();
+                    if (notifiedApp != null && (lastUidNotified != notifiedApp.getUid()
+                            || countNotified != lastCountNotified)) {
+                        lastUidNotified = notifiedApp.getUid();
+                        lastCountNotified = countNotified;
+                        String name = msg.getData().getString(APP_DETAILS_NAME_NOTIFICATION_KEY);
 
-                    //TODO: Implementar burbujas en version 2.0
+                        //TODO: Implementar burbujas en version 2.0
                     /*if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                         Intent bubbleIntent = new Intent(getBaseContext(), BubbleNotifiedActivity.class);
                         PendingIntent bubPendingIntent = PendingIntent.getActivity(getBaseContext(),
@@ -188,10 +189,11 @@ public class FirewallService extends VpnService {
                                 .setContentTitle(name)
                                 .setAutoCancel(true)
                                 .setSmallIcon(R.drawable.img_not)
-                                .setNumber(mapPackageNotified.size())
-                                .setLargeIcon(Utils.getIconForApp(lastAppNotified.getPrincipalPackName(),
+                                .setNumber(countNotified)
+                                .setLargeIcon(Utils.getIconForApp(notifiedApp.getPrincipalPackName(),
                                         getBaseContext()))
                                 .setContentIntent(getPendingIntentNotificationClicked()).build());
+                    }
 
                     handler.removeMessages(NOTIFY_INTERNET_REQUEST_ACCESS);
                     LocalBroadcastManager.getInstance(getBaseContext())
@@ -203,7 +205,6 @@ public class FirewallService extends VpnService {
             return false;
         }
     });
-    private static String CHANNEL_ID;
 
     private void loadAddress () {
         mapAddress.clear();
@@ -262,6 +263,7 @@ public class FirewallService extends VpnService {
                     LocalBroadcastManager.getInstance(this)
                             .sendBroadcast(new Intent(STARTED_VPN_ACTION));
                     loadTrafficDataView();
+                    startNotificatorThread();
                     Log.i(TAG, "Started");
                 } catch (Exception e) {
                     Log.e(TAG, "Error starting service", e);
@@ -273,6 +275,29 @@ public class FirewallService extends VpnService {
                 LocalBroadcastManager.getInstance(this)
                         .sendBroadcast(new Intent(NOT_PREPARED_VPN_ACTION));
         }
+    }
+
+    private void startNotificatorThread() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!Thread.interrupted() && isRunning()) {
+                    try {
+                        Thread.sleep(1000);
+                        mutexNotificator.acquire();
+                        if (notificationMessage != null) {
+                            handler.sendMessage(notificationMessage);
+                            notificationMessage = null;
+                            notificationMessageUid = -1;
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } finally {
+                        mutexNotificator.release();
+                    }
+                }
+            }
+        }).start();
     }
 
     private void loadTrafficDataView() {
@@ -427,7 +452,7 @@ public class FirewallService extends VpnService {
     }
 
     public static void cancelNotification (int uid) {
-        if (notMgr != null && lastAppNotified != null && lastAppNotified.getUid() == uid)
+        if (notMgr != null && lastUidNotified == uid)
             notMgr.cancel(REQUEST_INTERNET_NOTIFICATION);
     }
 
@@ -474,45 +499,40 @@ public class FirewallService extends VpnService {
         return uid != 0;
     }
 
-    private void notifyUid(int uid) {
-        if(!Utils.isInteract(uid))
-            showIndeterminateNotification(uid);
-    }
-
-    private void showIndeterminateNotification(final int uid) {
+    private void notifyUid(final int uid) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    semaphoreNotificator.acquire();
-                    ApplicationDetails appDetails = appMgr.getApplicationForId(uid);
-                    if (appDetails != null && appDetails.getPrincipalPackName() != null) {
-                        appDetails.setNotified(true);
-                        appMgr.updateApplicationData(appDetails.getUid(), appDetails);
+                    mutexNotificator.acquire();
+                    if (!Utils.isInteract(uid)) {
+                        ApplicationDetails appDetails = appMgr.getApplicationForId(uid);
+                        if (appDetails != null && appDetails.getPrincipalPackName() != null) {
+                            appDetails.setNotified(true);
+                            appMgr.updateApplicationData(appDetails.getUid(), appDetails);
 
-                        ApplicationInfo appInfo = null;
-                        try {
-                            appInfo = packageManager.getApplicationInfo(appDetails
-                                    .getPrincipalPackName(), PackageManager.GET_META_DATA);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        if(!semaphoreNotificator.hasQueuedThreads()) {
-                            Message message = new Message();
-                            message.what = NOTIFY_INTERNET_REQUEST_ACCESS;
+                            ApplicationInfo appInfo = null;
+                            try {
+                                appInfo = packageManager.getApplicationInfo(appDetails
+                                        .getPrincipalPackName(), PackageManager.GET_META_DATA);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            notificationMessage = new Message();
+                            notificationMessageUid = uid;
+                            notificationMessage.what = NOTIFY_INTERNET_REQUEST_ACCESS;
                             Bundle bundle = new Bundle();
                             bundle.putString(APP_DETAILS_NAME_NOTIFICATION_KEY, appInfo != null
                                     ? packageManager.getApplicationLabel(appInfo).toString()
                                     : appDetails.getPrincipalPackName());
                             bundle.putParcelable(APP_DETAILS_NOTIFICATION_KEY, appDetails);
-                            message.setData(bundle);
-                            handler.sendMessage(message);
+                            notificationMessage.setData(bundle);
                         }
                     }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                } catch (Exception ignored) {
+                    ignored.printStackTrace();
                 } finally {
-                    semaphoreNotificator.release();
+                    mutexNotificator.release();
                 }
             }
         }).start();

@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.VpnService;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
@@ -21,6 +22,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import java.util.ArrayList;
+import java.util.prefs.Preferences;
+
 import jlab.firewall.R;
 import jlab.firewall.view.AppListFragment;
 import jlab.firewall.view.HomeFragment;

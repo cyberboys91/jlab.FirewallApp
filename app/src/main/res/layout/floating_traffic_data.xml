@@ -30,6 +30,7 @@
                     android:padding="5dp"
                     android:textSize="@dimen/traffic_floating_text_size"
                     android:text="@string/total"
+                    android:fontFamily="@string/font_family_text"
                     android:textColor="@color/green_bright"/>
 
                 <TextView android:layout_height="wrap_content"
@@ -41,6 +42,7 @@
                     android:paddingStart="0dp"
                     android:textSize="@dimen/traffic_floating_text_size"
                     android:text="↑0B↓0B"
+                    android:fontFamily="@string/font_family_text"
                     android:textColor="@color/white"/>
 
                 <TextView
@@ -52,6 +54,7 @@
                     android:paddingStart="5dp"
                     android:textSize="@dimen/traffic_floating_text_size"
                     android:text="@string/speed"
+                    android:fontFamily="@string/font_family_text"
                     android:textColor="@color/green_bright"/>
 
             </LinearLayout>
@@ -61,12 +64,15 @@
                 android:id="@+id/tvTrafficDataSpeed"
                 android:padding="5dp"
                 android:paddingLeft="3dp"
+                android:paddingStart="3dp"
+                android:paddingEnd="0dp"
+                android:paddingRight="0dp"
                 android:textSize="@dimen/traffic_floating_text_size"
                 android:text="↑0Bps↓0Bps"
+                android:fontFamily="@string/font_family_text"
                 android:textColor="@color/white"/>
 
         </LinearLayout>
-
 
     </android.support.v7.widget.CardView>
 

@@ -25,6 +25,9 @@ import jlab.firewall.vpn.Utils;
 
 import static jlab.firewall.view.SwitchMultiOptionButton.viewOnTouchListener;
 import static jlab.firewall.vpn.FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION;
+import static jlab.firewall.vpn.FirewallService.notificationMessage;
+import static jlab.firewall.vpn.FirewallService.notificationMessageUid;
+import static jlab.firewall.vpn.FirewallService.mutexNotificator;
 
 /**
  * Created by Javier on 02/01/2021.
@@ -38,6 +41,8 @@ public class NotifiedAppListFragment extends AppListFragment {
             switch (intent.getAction()) {
                 case REFRESH_COUNT_NOTIFIED_APPS_ACTION:
                     reload();
+                    break;
+                default:
                     break;
             }
         }
@@ -115,7 +120,17 @@ public class NotifiedAppListFragment extends AppListFragment {
                     current.setInternet(true);
                     current.setInteract(true);
                     current.setNotified(false);
-                    appDbMgr.updateApplicationData(current.getUid(), current);
+                    try {
+                        mutexNotificator.acquire();
+                        if(current.getUid() == notificationMessageUid)
+                            notificationMessage = null;
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    finally {
+                        appDbMgr.updateApplicationData(current.getUid(), current);
+                        mutexNotificator.release();
+                    }
                     FirewallService.cancelNotification(current.getUid());
                     //Refresh
                     sendRefreshCountNotifiedBroadcast();
@@ -128,7 +143,17 @@ public class NotifiedAppListFragment extends AppListFragment {
                     current.setInternet(false);
                     current.setInteract(true);
                     current.setNotified(false);
-                    appDbMgr.updateApplicationData(current.getUid(), current);
+                    try {
+                        mutexNotificator.acquire();
+                        if(current.getUid() == notificationMessageUid)
+                            notificationMessage = null;
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    finally {
+                        appDbMgr.updateApplicationData(current.getUid(), current);
+                        mutexNotificator.release();
+                    }
                     FirewallService.cancelNotification(current.getUid());
                     //Refresh
                     sendRefreshCountNotifiedBroadcast();

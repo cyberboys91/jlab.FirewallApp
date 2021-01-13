@@ -35,6 +35,9 @@ import jlab.firewall.db.ApplicationDetails;
 import jlab.firewall.vpn.FirewallService;
 import jlab.firewall.vpn.Utils;
 import static jlab.firewall.vpn.FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION;
+import static jlab.firewall.vpn.FirewallService.notificationMessage;
+import static jlab.firewall.vpn.FirewallService.notificationMessageUid;
+import static jlab.firewall.vpn.FirewallService.mutexNotificator;
 
 /**
  * Created by Javier on 28/12/2020.
@@ -48,9 +51,11 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     private static final String QUERY_KEY = "QUERY_KEY";
     protected AppListAdapter adapter;
     private SwipeRefreshLayout srlRefresh;
-    protected Semaphore semaphoreLoadIcon = new Semaphore(3);
+    protected Semaphore semaphoreLoadIcon = new Semaphore(3),
+        semaphoreReload = new Semaphore(1);
     protected ApplicationDbManager appDbMgr;
     protected TextView tvEmptyList;
+    protected List<ApplicationDetails> content = new ArrayList<>();
     protected static int[] colorsSpannable = new int[]{R.color.darken
             , R.color.yellow, R.color.orange, R.color.green};
     private SearchView svSearch;
@@ -65,7 +70,6 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         public void runOnUiThread(Runnable runnable) {
         }
     };
-    protected List<ApplicationDetails> content = new ArrayList<>();
     protected Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -106,10 +110,10 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             }
         });
 
-        this.svSearch.setQueryHint(getString(R.string.search_hint));
         this.svSearch.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
             public boolean onClose() {
+                query = null;
                 svSearch.setVisibility(View.GONE);
                 fbSearch.setVisibility(View.VISIBLE);
                 return true;
@@ -129,7 +133,8 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             public void onClick(View v) {
                 if (svSearch.getVisibility() != View.VISIBLE) {
                     query = null;
-                    svSearch.setQuery("", true);
+                    if (!svSearch.getQuery().toString().isEmpty())
+                        svSearch.setQuery("", false);
                     svSearch.setVisibility(View.VISIBLE);
                     fbSearch.setVisibility(View.INVISIBLE);
                 }
@@ -152,7 +157,9 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         });
         if(this.svSearch != null) {
             if (query != null && !query.isEmpty()) {
-                this.svSearch.setQuery(query, true);
+                if (!this.svSearch.getQuery()
+                        .toString().equals(query))
+                    this.svSearch.setQuery(query, false);
                 this.svSearch.setVisibility(View.VISIBLE);
                 fbSearch.setVisibility(View.INVISIBLE);
             } else {
@@ -180,19 +187,20 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        reload();
-    }
-
-    @Override
     public void reload() {
         if (srlRefresh != null) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    content = getContent();
-                    handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
+                    try {
+                        semaphoreReload.acquire();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } finally {
+                        content = getContent();
+                        handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
+                        semaphoreReload.release();
+                    }
                 }
             }).start();
         }
@@ -299,8 +307,17 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                         default:
                             break;
                     }
+                    try {
+                        mutexNotificator.acquire();
+                        if(current.getUid() == notificationMessageUid)
+                            notificationMessage = null;
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } finally {
+                        appDbMgr.updateApplicationData(current.getUid(), current);
+                        mutexNotificator.release();
+                    }
                     FirewallService.cancelNotification(current.getUid());
-                    appDbMgr.updateApplicationData(current.getUid(), current);
                     LocalBroadcastManager.getInstance(getContext())
                             .sendBroadcast(new Intent(REFRESH_COUNT_NOTIFIED_APPS_ACTION));
                 }
