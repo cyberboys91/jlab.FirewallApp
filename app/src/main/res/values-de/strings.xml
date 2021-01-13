@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">FireWall</string>
+    <string name="font_family_text">sans-serif</string>
+    <string name="font_family_button">sans-serif-medium</string>
+    <string name="start_vpn">START</string>
+    <string name="starting_vpn">START…</string>
+    <string name="stop_vpn">HALT</string>
+    <string name="stopping_vpn">HALT…</string>
+    <string name="apps_req_internet_access">einige Apps fordern das Internet an</string>
+    <string name="allow">ERMÖGLICHEN</string>
+    <string name="block">BLOCK</string>
+    <string name="rate_app">Bewerte diese App</string>
+    <string name="about">Über diese App</string>
+    <string name="close">Schließen</string>
+    <string name="app_list">APPS</string>
+    <string name="accept">OK</string>
+    <string name="cancel">Stornieren</string>
+    <string name="contact">Kontakt</string>
+    <string name="mail">jlab.apps@gmail.com</string>
+    <string name="app_mail_not_found">Sie haben keine E-Mail-Anwendung.</string>
+    <string name="about_content"><b>FireWall v1.0</b>, kontakt zu: <i> jlab.apps@gmail.com</i></string>
+    <string name="home">STARTSEITE</string>
+    <string name="started_vpn_service">der FireWall-Dienst wird ausgeführt…</string>
+    <string name="stopped_vpn_service">der FireWall-Dienst wird gestoppt…</string>
+    <string name="total">Total</string>
+    <string name="speed">Geschw.</string>
+    <string name="app_list_request">ZUGRIFF</string>
+    <string name="empty_list">Keine Elemente.</string>
+    <string name="speed_bps">Geschw. (Bps)</string>
+    <string name="arrow_up">↑</string>
+    <string name="arrow_down">↓</string>
+    <string name="not_prepared_vpn_service">der FireWall-Dienst ist nicht für die Ausführung vorbereitet.</string>
+    <string name="not_traffic_bytes">0B</string>
+    <string name="search_hint">Name suchen</string>
+    <string name="notified">Benachrichtigt</string>
+</resources>

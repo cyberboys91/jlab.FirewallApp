@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">Межсетевой экран</string>
+    <string name="font_family_text">sans-serif</string>
+    <string name="font_family_button">sans-serif-medium</string>
+    <string name="start_vpn">НАЧАЛО</string>
+    <string name="starting_vpn">НАЧАЛО…</string>
+    <string name="stop_vpn">СТОП</string>
+    <string name="stopping_vpn">СТОП…</string>
+    <string name="apps_req_internet_access">некоторые приложения запрашивают интернет</string>
+    <string name="allow">ПОЗВОЛЯТЬ</string>
+    <string name="block">БЛОК</string>
+    <string name="rate_app">Оцените это приложение</string>
+    <string name="about">Об этом приложении</string>
+    <string name="close">Закрыть</string>
+    <string name="app_list">ПРИЛОЖЕНИЯ</string>
+    <string name="accept">OK</string>
+    <string name="cancel">Закрыть</string>
+    <string name="contact">Связаться с нами</string>
+    <string name="mail">jlab.apps@gmail.com</string>
+    <string name="app_mail_not_found">У вас нет почтового приложения.</string>
+    <string name="about_content"><b>Межсетевой экран v1.0</b>, Связаться с нами: <i> jlab.apps@gmail.com</i></string>
+    <string name="home">ОСНОВНОЙ</string>
+    <string name="started_vpn_service">служба FireWall работает…</string>
+    <string name="stopped_vpn_service">служба FireWall остановлена…</string>
+    <string name="total">Всего</string>
+    <string name="speed">Скорость</string>
+    <string name="app_list_request">ДОСТУП</string>
+    <string name="empty_list">Без элементов</string>
+    <string name="speed_bps">Скорость (Bps)</string>
+    <string name="arrow_up">↑</string>
+    <string name="arrow_down">↓</string>
+    <string name="not_prepared_vpn_service">сервис FireWall не готов к запуску</string>
+    <string name="not_traffic_bytes">0B</string>
+    <string name="search_hint">Имя поиска</string>
+    <string name="notified">Уведомлен</string>
+</resources>

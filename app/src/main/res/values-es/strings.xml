@@ -31,7 +31,6 @@
     <string name="arrow_down">↓</string>
     <string name="not_prepared_vpn_service">el servicio FireWall no está preparado para iniciar</string>
     <string name="not_traffic_bytes">0B</string>
-    <string name="search">Buscar</string>
     <string name="search_hint">Buscar nombre</string>
     <string name="notified">Notified</string>
 </resources>

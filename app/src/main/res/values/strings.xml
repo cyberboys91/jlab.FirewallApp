@@ -25,13 +25,12 @@
     <string name="total">Total</string>
     <string name="speed">Speed</string>
     <string name="app_list_request">ACCESS</string>
-    <string name="empty_list">Empty</string>
+    <string name="empty_list">No Elements</string>
     <string name="speed_bps">Speed (Bps)</string>
     <string name="arrow_up">↑</string>
     <string name="arrow_down">↓</string>
     <string name="not_prepared_vpn_service">the FireWall service not is prepared for run</string>
     <string name="not_traffic_bytes">0B</string>
-    <string name="search">Search</string>
     <string name="search_hint">Search name</string>
     <string name="notified">Notified</string>
 </resources>
