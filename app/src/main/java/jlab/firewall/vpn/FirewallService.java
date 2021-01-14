@@ -18,9 +18,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.util.ArrayMap;
+import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.collection.ArrayMap;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -144,7 +144,7 @@ public class FirewallService extends VpnService {
                         lastCountNotified = countNotified;
                         String name = msg.getData().getString(APP_DETAILS_NAME_NOTIFICATION_KEY);
 
-                        //TODO: Implementar burbujas en version 2.0
+                        //TODO: Add Bubble in version 2.0
                     /*if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                         Intent bubbleIntent = new Intent(getBaseContext(), BubbleNotifiedActivity.class);
                         PendingIntent bubPendingIntent = PendingIntent.getActivity(getBaseContext(),

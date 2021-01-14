@@ -1,22 +1,18 @@
 package jlab.firewall.view;
 
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.app.ActionBar;
 import android.content.Context;
 import android.app.FragmentTransaction;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewPager;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 import java.util.ArrayList;
 import jlab.firewall.R;
-
-import static jlab.firewall.vpn.FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION;
 
 public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.TabListener,
         ViewPager.OnPageChangeListener {

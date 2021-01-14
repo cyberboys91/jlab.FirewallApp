@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.support.v4.app.NotificationManagerCompat;
+import androidx.core.app.NotificationManagerCompat;
 import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
 import static jlab.firewall.vpn.Utils.hasInternet;

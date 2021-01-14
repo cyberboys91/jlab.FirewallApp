@@ -10,7 +10,7 @@ import android.os.Looper;
 import android.widget.ImageView;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import static jlab.firewall.vpn.FirewallService.loadAppData;
 
 

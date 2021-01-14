@@ -2,6 +2,8 @@
     <string name="app_name">फ़ायरवॉल</string>
     <string name="font_family_text">sans-serif</string>
     <string name="font_family_button">sans-serif-medium</string>
+    <string name="app_ad_unit_id">ca-app-pub-6420027936185714~5378663037</string>
+    <string name="banner_ad_unit_id">ca-app-pub-6420027936185714/4065581369</string>
     <string name="start_vpn">शुरू</string>
     <string name="starting_vpn">शुरुआत…</string>
     <string name="stop_vpn">रुकें</string>

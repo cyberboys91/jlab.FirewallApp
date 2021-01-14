@@ -13,16 +13,22 @@ import android.net.VpnService;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewPager;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.viewpager.widget.ViewPager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+//TODO: Add ads in Version 2.0
+//import com.google.android.gms.ads.AdRequest;
+//import com.google.android.gms.ads.AdView;
+//import com.google.android.gms.ads.MobileAds;
+//import com.google.android.gms.ads.initialization.InitializationStatus;
+//import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import java.util.ArrayList;
-
 import jlab.firewall.R;
 import jlab.firewall.view.AppListFragment;
 import jlab.firewall.view.HomeFragment;
@@ -106,6 +112,20 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         intentFilter.addAction(FirewallService.NOT_PREPARED_VPN_ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(onFirewallChangeStatusReceiver,
                 new IntentFilter(intentFilter));
+
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        //TODO: Add ads in Version 2.0
+//        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+//            @Override
+//            public void onInitializationComplete(InitializationStatus initializationStatus) {
+//                AdView adView = findViewById(R.id.adView);
+//                adView.loadAd(new AdRequest.Builder().build());
+//            }
+//        });
     }
 
     @Override

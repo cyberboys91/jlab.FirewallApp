@@ -1,6 +1,23 @@
-<android.support.v4.view.ViewPager
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/vpContent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-</android.support.v4.view.ViewPager>
+    android:layout_height="match_parent"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/vpContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+    </androidx.viewpager.widget.ViewPager>
+
+<!--    TODO: Add ads in Version 2.0-->
+<!--    <com.google.android.gms.ads.AdView-->
+<!--        android:id="@+id/adView"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        ads:adSize="BANNER"-->
+<!--        ads:adUnitId="ca-app-pub-3940256099942544/6300978111"-->
+<!--        android:layout_gravity="center"/>-->
+
+</LinearLayout>
