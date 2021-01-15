@@ -48,7 +48,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:padding="5dp">
 
             <androidx.cardview.widget.CardView
@@ -68,7 +68,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
-                    android:layout_margin="4dp"
+                    android:padding="4dp"
                     android:text="@string/allow"
                     android:textSize="@dimen/text_min_size_dp"
                     android:fontFamily="@string/font_family_button"
