@@ -23,7 +23,7 @@
     <string name="about_content"><b>FireWall v1.0</b>, 연락: <i> jlab.apps@gmail.com</i></string>
     <string name="home">홈 페이지</string>
     <string name="started_vpn_service">FireWall 서비스가 실행 중입니다…</string>
-    <string name="stopped_vpn_service">FireWall 서비스가 중지되었습니다.…</string>
+    <string name="stopped_vpn_service">FireWall 서비스가 중지되었습니다…</string>
     <string name="total">합계</string>
     <string name="speed">속도</string>
     <string name="app_list_request">접속하다</string>

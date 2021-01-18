@@ -22,8 +22,8 @@
     <string name="app_mail_not_found">Você não tem um aplicativo de e-mail.</string>
     <string name="about_content"><b>FireWall v1.0</b>, Contato: <i> jlab.apps@gmail.com</i></string>
     <string name="home">PAG. INICIAL</string>
-    <string name="started_vpn_service">o serviço FireWall está em execução ...</string>
-    <string name="stopped_vpn_service">o serviço FireWall foi interrompido ...</string>
+    <string name="started_vpn_service">o serviço FireWall está em execução…</string>
+    <string name="stopped_vpn_service">o serviço FireWall foi interrompido…</string>
     <string name="total">Total</string>
     <string name="speed">Rapidez</string>
     <string name="app_list_request">ACESSO</string>

@@ -22,6 +22,7 @@
     <string name="about_content"><b>ファイアウォール v1.0</b>, 連絡先: <i> jlab.apps@gmail.com</i></string>
     <string name="home">ホームページ</string>
     <string name="started_vpn_service">ファイアウォールサービスが実行されています…</string>
+    <string name="stopped_vpn_service">ファイアウォールサービスが停止しています…</string>
     <string name="total">合計</string>
     <string name="speed">速度</string>
     <string name="app_list_request">アクセス</string>
@@ -34,5 +35,4 @@
     <string name="search_hint">検索名</string>
     <string name="notified">通知</string>
     <string name="rate_app">このアプリを評価する</string>
-    <string name="stopped_vpn_service">ファイアウォールサービスが停止しています…</string>
 </resources>
