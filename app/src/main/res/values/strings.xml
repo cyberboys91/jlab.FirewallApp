@@ -9,7 +9,7 @@
     <string name="stop_vpn">STOP</string>
     <string name="stopping_vpn">STOPPING…</string>
     <string name="apps_req_internet_access">some apps request internet</string>
-    <string name="allow">ALLOW</string>
+    <string name="allow">PERMITIR</string>
     <string name="block">BLOCK</string>
     <string name="rate_app">Rate this app</string>
     <string name="about">About</string>
