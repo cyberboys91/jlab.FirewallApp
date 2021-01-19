@@ -6,8 +6,6 @@ package jlab.firewall.vpn;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.BlockingQueue;
-import static jlab.firewall.vpn.FirewallService.downByteSpeed;
-import static jlab.firewall.vpn.FirewallService.downByteTotal;
 import static jlab.firewall.vpn.FirewallService.isRunning;
 
 public class WriteVpnThread implements Runnable {
@@ -22,7 +20,7 @@ public class WriteVpnThread implements Runnable {
 
     @Override
     public void run() {
-        while (isRunning()) {
+        while (!Thread.interrupted() && isRunning()) {
             try {
                 ByteBuffer bufferFromNetwork = networkToDeviceQueue.take();
                 bufferFromNetwork.flip();

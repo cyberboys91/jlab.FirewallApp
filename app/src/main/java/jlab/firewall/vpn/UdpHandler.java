@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import static jlab.firewall.vpn.FirewallService.isRunning;
 
 /**
  *
@@ -69,9 +70,9 @@ public class UdpHandler implements Runnable {
         @Override
         public void run() {
             try {
-                while (true) {
+                while (!Thread.interrupted() && isRunning()) {
                     int readyChannels = selector.select();
-                    while (true) {
+                    while (!Thread.interrupted() && isRunning()) {
                         UdpTunnel tunnel = tunnelQueue.poll();
                         if (tunnel == null) {
                             break;
@@ -148,8 +149,7 @@ public class UdpHandler implements Runnable {
             Thread t = new Thread(new UdpDownWorker(selector, networkToDeviceQueue, tunnelQueue));
             t.start();
 
-
-            while (true) {
+            while (!Thread.interrupted() && isRunning()) {
                 Packet packet = queue.take();
 
                 InetAddress destinationAddress = packet.ip4Header.destinationAddress;

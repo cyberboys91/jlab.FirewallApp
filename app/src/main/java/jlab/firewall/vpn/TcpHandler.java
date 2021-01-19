@@ -13,6 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import static jlab.firewall.vpn.FirewallService.isRunning;
 
 public class TcpHandler implements Runnable {
 
@@ -222,7 +223,7 @@ public class TcpHandler implements Runnable {
 
 
         private void loop() {
-            while (true) {
+            while (!Thread.interrupted() && isRunning()) {
                 Packet packet = null;
                 try {
                     packet = tunnel.tunnelInputQueue.take();
@@ -359,7 +360,7 @@ public class TcpHandler implements Runnable {
             String quitType = "rst";
 
             try {
-                while (true) {
+                while (!Thread.interrupted() && isRunning()) {
                     buffer.clear();
                     int countRead = tunnel.destSocket.read(buffer);
                     synchronized (tunnel) {
@@ -419,7 +420,7 @@ public class TcpHandler implements Runnable {
     @Override
     public void run() {
 
-        while (true) {
+        while (!Thread.interrupted() && isRunning()) {
             try {
                 Packet currentPacket = queue.take();
 
@@ -433,7 +434,7 @@ public class TcpHandler implements Runnable {
                 String ipAndPort = new StringBuilder(destinationAddress.getHostAddress()).append(":")
                         .append(destinationPort).append(":").append(sourcePort).toString();
 
-                while (true) {
+                while (!Thread.interrupted() && isRunning()) {
                     String s = this.tunnelCloseMsgQueue.poll();
                     if (s == null) {
                         break;

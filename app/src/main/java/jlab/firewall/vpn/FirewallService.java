@@ -255,8 +255,12 @@ public class FirewallService extends VpnService {
                         @Override
                         public void run() {
                             loadAppData(getBaseContext());
-                            executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
-                                    deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
+                            try {
+                                executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
+                                        deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
+                            }catch (Exception ignored) {
+                                ignored.printStackTrace();
+                            }
                         }
                     }).start();
 
@@ -419,26 +423,31 @@ public class FirewallService extends VpnService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        isRunning = false;
-        if (floatingTrafficDataView != null)
-            windowMgr.removeView(floatingTrafficDataView);
-        LocalBroadcastManager.getInstance(getBaseContext())
-                .unregisterReceiver(startVpnReceiver);
-        LocalBroadcastManager.getInstance(this)
-                .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
-        cleanup();
-        Log.i(TAG, "Stopped");
+        try {
+            isRunning = false;
+            LocalBroadcastManager.getInstance(getBaseContext())
+                    .unregisterReceiver(startVpnReceiver);
+            LocalBroadcastManager.getInstance(this)
+                    .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
+            try {
+                if (floatingTrafficDataView != null)
+                    windowMgr.removeViewImmediate(floatingTrafficDataView);
+            } catch (Exception ignored) {
+                ignored.printStackTrace();
+            }
+            cleanup();
+            Log.i(TAG, "Stopped");
+        } catch (Exception ignored) {
+            ignored.printStackTrace();
+        }
     }
 
     private void cleanup() {
-        try {
-            deviceToNetworkTCPQueue = null;
-            deviceToNetworkUDPQueue = null;
-            networkToDeviceQueue = null;
-            closeResources(vpnInterface);
-        }catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
+        deviceToNetworkTCPQueue = null;
+        deviceToNetworkUDPQueue = null;
+        networkToDeviceQueue = null;
+        closeResources(vpnInterface);
+        executorService.shutdown();
     }
 
     private static void closeResources(Closeable... resources) {
@@ -551,7 +560,7 @@ public class FirewallService extends VpnService {
             boolean refreshSpeed = false;
             long lastUpByteTotal = upByteTotal.get(),
                     lastDownByteTotal = downByteTotal.get();
-            while (true) {
+            while (!Thread.interrupted() && isRunning()) {
                 try {
                     Thread.sleep(500);
                     if (Thread.interrupted() || !isRunning()) {
