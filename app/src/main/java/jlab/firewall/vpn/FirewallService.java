@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.net.TrafficStats;
 import android.net.VpnService;
@@ -84,8 +85,8 @@ public class FirewallService extends VpnService {
     public static Semaphore mutexNotificator = new Semaphore(1);
     private static Map<String, Integer> mapAddress = new ArrayMap<>();
     private static final int REQUEST_INTERNET_NOTIFICATION = 9200,
-            REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9403,
-            MAX_COUNT_POINTS = 100;
+            REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9203,
+            RUNNING_NOTIFICATION = 9204, MAX_COUNT_POINTS = 100;
     private static NotificationManager notMgr;
     private ApplicationDbManager appMgr;
     public static AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
@@ -188,11 +189,11 @@ public class FirewallService extends VpnService {
                                 .setContentText(getBaseContext().getString(R.string.apps_req_internet_access))
                                 .setContentTitle(name)
                                 .setAutoCancel(true)
-                                .setSmallIcon(R.drawable.img_not)
+                                .setSmallIcon(R.drawable.img_req_internet_not)
                                 .setNumber(countNotified)
                                 .setLargeIcon(Utils.getIconForApp(notifiedApp.getPrincipalPackName(),
                                         getBaseContext()))
-                                .setContentIntent(getPendingIntentNotificationClicked()).build());
+                                .setContentIntent(getPendingIntentNotificationClicked(1)).build());
                     }
 
                     handler.removeMessages(NOTIFY_INTERNET_REQUEST_ACCESS);
@@ -223,6 +224,15 @@ public class FirewallService extends VpnService {
         intentFilter.addAction(STOP_VPN_ACTION);
         LocalBroadcastManager.getInstance(getBaseContext()).registerReceiver(startVpnReceiver,
                 intentFilter);
+        startForeground(RUNNING_NOTIFICATION,
+                new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
+                        .setContentText(getBaseContext().getString(R.string.started_vpn_service))
+                        .setContentTitle(getString(R.string.app_name))
+                        .setAutoCancel(false)
+                        .setSmallIcon(R.drawable.img_running_not)
+                        .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+                                R.drawable.icon))
+                        .setContentIntent(getPendingIntentNotificationClicked(0)).build());
     }
 
     public void startIfCan() {
@@ -547,9 +557,9 @@ public class FirewallService extends VpnService {
         }).start();
     }
 
-    private PendingIntent getPendingIntentNotificationClicked() {
+    private PendingIntent getPendingIntentNotificationClicked(int selectedTab) {
         Intent intent = new Intent(getBaseContext(), MainActivity.class);
-        intent.putExtra(SELECTED_TAB_KEY, 1);
+        intent.putExtra(SELECTED_TAB_KEY, selectedTab);
         return PendingIntent.getActivity(getBaseContext(), SHOW_NOTIFIED_APPS_REQUEST_CODE
                 , intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
