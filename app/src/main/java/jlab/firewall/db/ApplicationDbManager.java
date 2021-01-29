@@ -2,13 +2,10 @@ package jlab.firewall.db;
 
 import java.util.List;
 import java.util.ArrayList;
-
 import android.database.Cursor;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
-import static java.util.Arrays.sort;
 import static jlab.firewall.vpn.Utils.addToAllowedList;
 import static jlab.firewall.vpn.Utils.addToInteractList;
 import static jlab.firewall.vpn.Utils.addToNotifiedList;
@@ -81,21 +78,27 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
     public ArrayList<ApplicationDetails> getAllAppDetails(String namesQuery) {
         SQLiteDatabase sqLiteDatabase = getReadableDatabase();
         ArrayList<ApplicationDetails> result = new ArrayList<>();
-        Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null, null, null, null, null, null);
-        while (cursor.moveToNext()) {
-            String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
-                    packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
-                    name = cursor.getString(cursor.getColumnIndex(ApplicationContract.NAMES));
-            int uid = cursor.getInt(cursor.getColumnIndex(ApplicationContract._ID)),
-                    count = cursor.getInt(cursor.getColumnIndex(ApplicationContract.COUNT)),
-                    internet = cursor.getInt(cursor.getColumnIndex(ApplicationContract.INTERNET_PERMISSION)),
-                    interact = cursor.getInt(cursor.getColumnIndex(ApplicationContract.USER_INTERACT)),
-                    notified = cursor.getInt(cursor.getColumnIndex(ApplicationContract.NOTIFIED));
-            if (namesQuery == null || namesQuery.isEmpty() || name.toLowerCase().contains(namesQuery))
-                result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
-                        internet > 0, notified > 0, interact > 0));
+        Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
+                null, null, null, null, null);
+        try {
+            while (cursor.moveToNext()) {
+                String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
+                        packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
+                        name = cursor.getString(cursor.getColumnIndex(ApplicationContract.NAMES));
+                int uid = cursor.getInt(cursor.getColumnIndex(ApplicationContract._ID)),
+                        count = cursor.getInt(cursor.getColumnIndex(ApplicationContract.COUNT)),
+                        internet = cursor.getInt(cursor.getColumnIndex(ApplicationContract.INTERNET_PERMISSION)),
+                        interact = cursor.getInt(cursor.getColumnIndex(ApplicationContract.USER_INTERACT)),
+                        notified = cursor.getInt(cursor.getColumnIndex(ApplicationContract.NOTIFIED));
+                if (namesQuery == null || namesQuery.isEmpty() || name.toLowerCase().contains(namesQuery))
+                    result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
+                            internet > 0, notified > 0, interact > 0));
+            }
+        } catch (Exception ignored) {
+            ignored.printStackTrace();
+        } finally {
+            cursor.close();
         }
-        cursor.close();
         return result;
     }
 
@@ -105,20 +108,25 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
         Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
                 ApplicationContract.NOTIFIED + " LIKE ?"
                 , new String[]{String.valueOf(1)}, null, null, null);
-        while (cursor.moveToNext()) {
-            String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
-                    packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
-                    name = cursor.getString(cursor.getColumnIndex(ApplicationContract.NAMES));
-            int uid = cursor.getInt(cursor.getColumnIndex(ApplicationContract._ID)),
-                    count = cursor.getInt(cursor.getColumnIndex(ApplicationContract.COUNT)),
-                    internet = cursor.getInt(cursor.getColumnIndex(ApplicationContract.INTERNET_PERMISSION)),
-                    interact = cursor.getInt(cursor.getColumnIndex(ApplicationContract.USER_INTERACT)),
-                    notified = cursor.getInt(cursor.getColumnIndex(ApplicationContract.NOTIFIED));
-            if (namesQuery == null || namesQuery.isEmpty() || name.toLowerCase().contains(namesQuery))
-                result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
-                        internet > 0, notified > 0, interact > 0));
+        try {
+            while (cursor.moveToNext()) {
+                String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
+                        packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
+                        name = cursor.getString(cursor.getColumnIndex(ApplicationContract.NAMES));
+                int uid = cursor.getInt(cursor.getColumnIndex(ApplicationContract._ID)),
+                        count = cursor.getInt(cursor.getColumnIndex(ApplicationContract.COUNT)),
+                        internet = cursor.getInt(cursor.getColumnIndex(ApplicationContract.INTERNET_PERMISSION)),
+                        interact = cursor.getInt(cursor.getColumnIndex(ApplicationContract.USER_INTERACT)),
+                        notified = cursor.getInt(cursor.getColumnIndex(ApplicationContract.NOTIFIED));
+                if (namesQuery == null || namesQuery.isEmpty() || name.toLowerCase().contains(namesQuery))
+                    result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
+                            internet > 0, notified > 0, interact > 0));
+            }
+        } catch (Exception ignored) {
+            ignored.printStackTrace();
+        } finally {
+            cursor.close();
         }
-        cursor.close();
         return result;
     }
 
@@ -148,21 +156,26 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
     public ApplicationDetails getApplicationForId (int uid) {
         SQLiteDatabase sqLiteDatabase = getReadableDatabase();
         Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
-                ApplicationContract._ID + " LIKE ?", new String[] {String.valueOf(uid)},
+                ApplicationContract._ID + " LIKE ?", new String[]{String.valueOf(uid)},
                 null, null, null);
-        if (cursor.moveToFirst()) {
-            String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
-                    packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
-                    name = cursor.getString(cursor.getColumnIndex(ApplicationContract.NAMES));
-            int count = cursor.getInt(cursor.getColumnIndex(ApplicationContract.COUNT)),
-                    internet = cursor.getInt(cursor.getColumnIndex(ApplicationContract.INTERNET_PERMISSION)),
-                    interact = cursor.getInt(cursor.getColumnIndex(ApplicationContract.USER_INTERACT)),
-                    notified = cursor.getInt(cursor.getColumnIndex(ApplicationContract.NOTIFIED));
+        try {
+            if (cursor.moveToFirst()) {
+                String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
+                        packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
+                        name = cursor.getString(cursor.getColumnIndex(ApplicationContract.NAMES));
+                int count = cursor.getInt(cursor.getColumnIndex(ApplicationContract.COUNT)),
+                        internet = cursor.getInt(cursor.getColumnIndex(ApplicationContract.INTERNET_PERMISSION)),
+                        interact = cursor.getInt(cursor.getColumnIndex(ApplicationContract.USER_INTERACT)),
+                        notified = cursor.getInt(cursor.getColumnIndex(ApplicationContract.NOTIFIED));
+                cursor.close();
+                return new ApplicationDetails(uid, count, pPackName, packName, name,
+                        internet > 0, notified > 0, interact > 0);
+            }
+        } catch (Exception ignored) {
+            ignored.printStackTrace();
+        } finally {
             cursor.close();
-            return new ApplicationDetails(uid, count, pPackName, packName, name,
-                    internet > 0, notified > 0, interact > 0);
         }
-        cursor.close();
         return null;
     }
 

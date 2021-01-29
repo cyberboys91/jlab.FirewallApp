@@ -20,6 +20,7 @@ public class NetConnections {
     private static final String zeroHostV4 = "00000000";
     private static final int TCP_PROTOCOL_INT = 6, UDP_PROTOCOL_INT = 17;
     public static final int LENGTH_PREFIX_HEX_ADDRESS_VERSION_6 = 24;
+    private static ConnectivityManager connectivityManager;
 
     public static int getUid(Context context, Protocol protocol, InetAddress localHost, int localPort,
                              InetAddress remoteHost, int remotePort) {
@@ -81,13 +82,14 @@ public class NetConnections {
         if (protocol != 6 /* TCP */ && protocol != 17 /* UDP */)
             return -1;
 
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
-        if (cm == null)
+        if (connectivityManager == null)
+            connectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
+        if (connectivityManager == null)
             return -1;
 
         InetSocketAddress local = new InetSocketAddress(saddr, sport);
         InetSocketAddress remote = new InetSocketAddress(daddr, dport);
-        return cm.getConnectionOwnerUid(protocol, local, remote);
+        return connectivityManager.getConnectionOwnerUid(protocol, local, remote);
     }
 
     private static String completeLength(String src, int length) {

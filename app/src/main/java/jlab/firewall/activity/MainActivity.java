@@ -143,6 +143,12 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                 requestPermissions.add(Manifest.permission.INTERNET);
                 request = true;
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions.add(Manifest.permission.FOREGROUND_SERVICE);
+                request = true;
+            }
             if (request)
                 requestAllPermission(requestPermissions);
         }
@@ -182,14 +188,18 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Intent vpnIntent = VpnService.prepare(getBaseContext());
-                if (vpnIntent != null)
-                    startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
-                else if (!isWaiting())
-                    onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
-                else
-                    LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
-                            Intent(START_VPN_ACTION));
+                try {
+                    Intent vpnIntent = VpnService.prepare(MainActivity.this);
+                    if (vpnIntent != null)
+                        startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
+                    else if (!isWaiting())
+                        onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
+                    else
+                        LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
+                                Intent(START_VPN_ACTION));
+                } catch (Exception ignored) {
+                    ignored.printStackTrace();
+                }
             }
         }).start();
     }

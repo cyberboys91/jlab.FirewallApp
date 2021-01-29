@@ -1,5 +1,6 @@
 package jlab.firewall.vpn;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -22,7 +23,6 @@ import android.os.ParcelFileDescriptor;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.collection.ArrayMap;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -82,7 +82,8 @@ public class FirewallService extends VpnService {
     public static final int myUid = Process.myUid();
     public static int notificationMessageUid;
     public static Message notificationMessage;
-    public static Semaphore mutexNotificator = new Semaphore(1);
+    public static Semaphore mutexNotificator = new Semaphore(1),
+        mutextLoadAppData = new Semaphore(1);
     private static Map<String, Integer> mapAddress = new ArrayMap<>();
     private static final int REQUEST_INTERNET_NOTIFICATION = 9200,
             REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9203,
@@ -184,16 +185,19 @@ public class FirewallService extends VpnService {
                                 .setBubbleMetadata(bubbleData).addPerson(chatBot).build());
                     }
                     else*/
-
                         notMgr.notify(REQUEST_INTERNET_NOTIFICATION, new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
                                 .setContentText(getBaseContext().getString(R.string.apps_req_internet_access))
                                 .setContentTitle(name)
                                 .setAutoCancel(true)
                                 .setSmallIcon(R.drawable.img_req_internet_not)
                                 .setNumber(countNotified)
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .setDefaults(NotificationCompat.DEFAULT_ALL)
                                 .setLargeIcon(Utils.getIconForApp(notifiedApp.getPrincipalPackName(),
                                         getBaseContext()))
-                                .setContentIntent(getPendingIntentNotificationClicked(1)).build());
+                                .setContentIntent(getPendingIntentNotificationClicked(1))
+                                .setFullScreenIntent(getPendingIntentNotificationClicked(1),
+                                        true).build());
                     }
 
                     handler.removeMessages(NOTIFY_INTERNET_REQUEST_ACCESS);
@@ -224,15 +228,6 @@ public class FirewallService extends VpnService {
         intentFilter.addAction(STOP_VPN_ACTION);
         LocalBroadcastManager.getInstance(getBaseContext()).registerReceiver(startVpnReceiver,
                 intentFilter);
-        startForeground(RUNNING_NOTIFICATION,
-                new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
-                        .setContentText(getBaseContext().getString(R.string.started_vpn_service))
-                        .setContentTitle(getString(R.string.app_name))
-                        .setAutoCancel(false)
-                        .setSmallIcon(R.drawable.img_running_not)
-                        .setLargeIcon(BitmapFactory.decodeResource(getResources(),
-                                R.drawable.icon))
-                        .setContentIntent(getPendingIntentNotificationClicked(0)).build());
     }
 
     public void startIfCan() {
@@ -264,8 +259,8 @@ public class FirewallService extends VpnService {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            loadAppData(getBaseContext());
                             try {
+                                loadAppData(getBaseContext());
                                 executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
                                         deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
                             }catch (Exception ignored) {
@@ -278,9 +273,20 @@ public class FirewallService extends VpnService {
                             .sendBroadcast(new Intent(STARTED_VPN_ACTION));
                     loadTrafficDataView();
                     startNotificatorThread();
-                    Log.i(TAG, "Started");
+                    //TODO: disable log
+                    //Log.i(TAG, "Started");
+                    startForeground(RUNNING_NOTIFICATION,
+                            new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
+                                    .setContentText(getBaseContext().getString(R.string.started_vpn_service))
+                                    .setContentTitle(getString(R.string.app_name))
+                                    .setAutoCancel(false)
+                                    .setSmallIcon(R.drawable.img_running_not)
+                                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+                                            R.drawable.icon))
+                                    .setContentIntent(getPendingIntentNotificationClicked(0)).build());
                 } catch (Exception e) {
-                    Log.e(TAG, "Error starting service", e);
+                    //TODO: disable log
+                    //Log.e(TAG, "Error starting service", e);
                     LocalBroadcastManager.getInstance(this)
                             .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
                     cleanup();
@@ -446,7 +452,10 @@ public class FirewallService extends VpnService {
                 ignored.printStackTrace();
             }
             cleanup();
-            Log.i(TAG, "Stopped");
+            if (notMgr != null)
+                notMgr.cancel(RUNNING_NOTIFICATION);
+            //TODO: disable log
+            //Log.i(TAG, "Stopped");
         } catch (Exception ignored) {
             ignored.printStackTrace();
         }
@@ -476,34 +485,41 @@ public class FirewallService extends VpnService {
     }
 
     public static void loadAppData (Context context) {
-        mapPackageNotified = new ArrayList<>();
-        mapPackageAllowed = new ArrayList<>();
-        mapPackageInteract = new ArrayList<>();
-        ArrayList<Integer> allUid = new ArrayList<>();
-        List<ApplicationDetails> allApps = getPackagesInternetPermission(context, allUid);
-        ApplicationDbManager appDbMgr = new ApplicationDbManager(context);
-        List<ApplicationDetails> appsDetails = appDbMgr.getAllAppDetails(null);
-        int countUid = allUid.size();
-        for (ApplicationDetails app : appsDetails) {
-            int indexSearch = binarySearch(allUid, app.getUid());
-            if (indexSearch < 0 || indexSearch >= countUid)
-                appDbMgr.deleteAplicationData(app.getUid());
-            else {
-                allUid.remove(indexSearch);
-                allApps.remove(indexSearch);
+        try {
+            mutextLoadAppData.acquire();
+            mapPackageNotified = new ArrayList<>();
+            mapPackageAllowed = new ArrayList<>();
+            mapPackageInteract = new ArrayList<>();
+            ArrayList<Integer> allUid = new ArrayList<>();
+            List<ApplicationDetails> allApps = getPackagesInternetPermission(context, allUid);
+            ApplicationDbManager appDbMgr = new ApplicationDbManager(context);
+            List<ApplicationDetails> appsDetails = appDbMgr.getAllAppDetails(null);
+            int countUid = allUid.size();
+            for (ApplicationDetails app : appsDetails) {
+                int indexSearch = binarySearch(allUid, app.getUid());
+                if (indexSearch < 0 || indexSearch >= countUid)
+                    appDbMgr.deleteAplicationData(app.getUid());
+                else {
+                    allUid.remove(indexSearch);
+                    allApps.remove(indexSearch);
 
-                if (app.hasInternet() && !mapPackageAllowed.contains(app.getUid()))
-                    mapPackageAllowed.add(app.getUid());
-                if (app.notified() && !mapPackageNotified.contains(app.getUid()))
-                    mapPackageNotified.add(app.getUid());
-                if (app.interact() && !mapPackageInteract.contains(app.getUid()))
-                    mapPackageInteract.add(app.getUid());
+                    if (app.hasInternet() && !mapPackageAllowed.contains(app.getUid()))
+                        mapPackageAllowed.add(app.getUid());
+                    if (app.notified() && !mapPackageNotified.contains(app.getUid()))
+                        mapPackageNotified.add(app.getUid());
+                    if (app.interact() && !mapPackageInteract.contains(app.getUid()))
+                        mapPackageInteract.add(app.getUid());
+                }
             }
+            appDbMgr.addApps(allApps);
+            sort(mapPackageAllowed);
+            sort(mapPackageNotified);
+            sort(mapPackageInteract);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            mutextLoadAppData.release();
         }
-        appDbMgr.addApps(allApps);
-        sort(mapPackageAllowed);
-        sort(mapPackageNotified);
-        sort(mapPackageInteract);
     }
 
     private boolean isBlockedUid(int uid) {
@@ -635,7 +651,8 @@ public class FirewallService extends VpnService {
 
         @Override
         public void run() {
-            Log.i(TAG, "Started");
+            //TODO: disable log
+            //Log.i(TAG, "Started");
 
             downBytesInStart = getDownBytesTotalForService();
             upBytesInStart = getUpBytesTotalForService();
@@ -660,7 +677,7 @@ public class FirewallService extends VpnService {
                     if (readBytes > 0) {
                         bufferToNetwork.flip();
                         Packet packet = new Packet(bufferToNetwork);
-                        if (packet.isUDP() &&  !isBlockedUid(NetConnections.getUid(getBaseContext(),
+                        if (packet.isUDP() && !isBlockedUid(NetConnections.getUid(getBaseContext(),
                                 NetConnections.Protocol.udp, packet.ip4Header.sourceAddress
                                 , packet.udpHeader.sourcePort, packet.ip4Header.destinationAddress
                                 , packet.udpHeader.destinationPort))) {
@@ -680,7 +697,8 @@ public class FirewallService extends VpnService {
                     }
                 }
             } catch (IOException e) {
-                Log.w(TAG, e.toString(), e);
+                //TODO: disable log
+                //Log.w(TAG, e.toString(), e);
             } finally {
                 closeResources(vpnInput, vpnOutput);
             }

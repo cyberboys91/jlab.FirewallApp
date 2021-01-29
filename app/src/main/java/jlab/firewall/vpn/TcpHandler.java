@@ -2,7 +2,6 @@ package jlab.firewall.vpn;
 
 import android.net.VpnService;
 import android.os.Build;
-import android.util.Log;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -122,12 +121,14 @@ public class TcpHandler implements Runnable {
                 remote.socket().connect(address, 5000);
                 Long te = System.currentTimeMillis();
 
-                Log.i(TAG, String.format("connectRemote %d cost %d  remote %s", tunnel.tunnelId, te - ts, tunnel.destinationAddress.toString()));
+                //TODO: disable log
+                //Log.i(TAG, String.format("connectRemote %d cost %d  remote %s", tunnel.tunnelId, te - ts, tunnel.destinationAddress.toString()));
                 tunnel.destSocket = remote;
 
                 startDownStream();
-            } catch (Exception e) {
-                Log.e(TAG, e.getMessage(), e);
+            } catch (Exception | OutOfMemoryError e) {
+                //TODO: disable log
+                //Log.e(TAG, e.getMessage(), e);
             }
         }
 
@@ -138,7 +139,8 @@ public class TcpHandler implements Runnable {
             if (tunnel.tcbStatus == TCBStatus.SYN_SENT) {
                 tunnel.tcbStatus = TCBStatus.SYN_RECEIVED;
             }
-            Log.i(TAG, String.format("handleSyn  %d %d", tunnel.tunnelId, packet.packId));
+            //TODO: disable log
+            //Log.i(TAG, String.format("handleSyn  %d %d", tunnel.tunnelId, packet.packId));
             Packet.TCPHeader tcpHeader = packet.tcpHeader;
             if (synCount == 0) {
                 tunnel.mySequenceNum = 1;
@@ -191,7 +193,8 @@ public class TcpHandler implements Runnable {
         }
 
         private void handleFin(Packet packet) {
-            Log.i(TAG, String.format("handleFin %d", tunnel.tunnelId));
+            //TODO: disable log
+            //Log.i(TAG, String.format("handleFin %d", tunnel.tunnelId));
             tunnel.myAcknowledgementNum = packet.tcpHeader.sequenceNumber + 1;
             tunnel.theirAcknowledgementNum = packet.tcpHeader.acknowledgementNumber;
             sendTcpPack(tunnel, (byte) (Packet.TCPHeader.ACK), null);
@@ -202,7 +205,8 @@ public class TcpHandler implements Runnable {
         }
 
         private void handleRst(Packet packet) {
-            Log.i(TAG, String.format("handleRst %d", tunnel.tunnelId));
+            //TODO: disable log
+            //Log.i(TAG, String.format("handleRst %d", tunnel.tunnelId));
             try {
                 synchronized (tunnel) {
                     if (tunnel.destSocket != null) {
@@ -211,7 +215,8 @@ public class TcpHandler implements Runnable {
 
                 }
             } catch (IOException e) {
-                Log.e(TAG, "close error", e);
+                //TODO: disable log
+                //Log.e(TAG, "close error", e);
             }
 
             synchronized (tunnel) {
@@ -264,7 +269,8 @@ public class TcpHandler implements Runnable {
                     return;
                 }
             }
-            Log.i(TAG, String.format("UpStreamWorker quit"));
+            //TODO: disable log
+            //Log.i(TAG, String.format("UpStreamWorker quit"));
         }
 
         @Override
@@ -284,7 +290,8 @@ public class TcpHandler implements Runnable {
 
     private static void closeDownStream(TcpTunnel tunnel) {
         synchronized (tunnel) {
-            Log.i(TAG, String.format("closeDownStream %d", tunnel.tunnelId));
+            //TODO: disable log
+            //Log.i(TAG, String.format("closeDownStream %d", tunnel.tunnelId));
             try {
                 if (tunnel.destSocket != null && tunnel.destSocket.isOpen()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -307,7 +314,8 @@ public class TcpHandler implements Runnable {
 
     private static void closeUpStream(TcpTunnel tunnel) {
         synchronized (tunnel) {
-            Log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
+            //TODO: disable log
+            //Log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
             try {
                 if (tunnel.destSocket != null && tunnel.destSocket.isOpen()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -321,7 +329,8 @@ public class TcpHandler implements Runnable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
+            //TODO: disable log
+            //Log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
             tunnel.upActive = false;
             if (isClosedTunnel(tunnel)) {
                 tunnel.tunnelCloseMsgQueue.add(tunnel.tunnelKey);
@@ -331,7 +340,8 @@ public class TcpHandler implements Runnable {
 
     private static void closeRst(TcpTunnel tunnel) {
         synchronized (tunnel) {
-            Log.i(TAG, String.format("closeRst %d", tunnel.tunnelId));
+            //TODO: disable log
+            //Log.i(TAG, String.format("closeRst %d", tunnel.tunnelId));
             try {
                 if (tunnel.destSocket != null && tunnel.destSocket.isOpen()) {
                     tunnel.destSocket.close();
@@ -378,14 +388,17 @@ public class TcpHandler implements Runnable {
                     }
                 }
             } catch (ClosedChannelException e) {
-                Log.w(TAG, String.format("channel closed %s", e.getMessage()));
+                //TODO: disable log
+                //Log.w(TAG, String.format("channel closed %s", e.getMessage()));
                 quitType = "rst";
             } catch (IOException e) {
-                Log.e(TAG, e.getMessage(), e);
+                //TODO: disable log
+                //Log.e(TAG, e.getMessage(), e);
                 quitType = "rst";
             } catch (Exception e) {
                 quitType = "rst";
-                Log.e(TAG, "DownStreamWorker fail", e);
+                //TODO: disable log
+                //Log.e(TAG, "DownStreamWorker fail", e);
             }
             //Log.i(TAG, String.format("DownStreamWorker quit %d", tunnel.tunnelId));
             synchronized (tunnel) {
@@ -440,7 +453,8 @@ public class TcpHandler implements Runnable {
                         break;
                     } else {
                         tunnels.remove(ipAndPort);
-                        Log.i(TAG, String.format("remove tunnel %s", ipAndPort));
+                        //TODO: disable log
+                        //Log.i(TAG, String.format("remove tunnel %s", ipAndPort));
                     }
                 }
 

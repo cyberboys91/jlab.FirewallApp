@@ -1,7 +1,6 @@
 package jlab.firewall.vpn;
 
 import android.net.VpnService;
-import android.util.Log;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -81,7 +80,8 @@ public class UdpHandler implements Runnable {
                                 SelectionKey key = tunnel.channel.register(selector, SelectionKey.OP_READ, tunnel);
                                 key.interestOps(SelectionKey.OP_READ);
                             } catch (IOException e) {
-                                Log.d(TAG, "register fail", e);
+                                //TODO: disable log
+                                //Log.d(TAG, "register fail", e);
                             }
                         }
                     }
@@ -105,17 +105,20 @@ public class UdpHandler implements Runnable {
                                 UdpTunnel tunnel = (UdpTunnel) key.attachment();
                                 sendUdpPack(tunnel, data);
                             } catch (IOException e) {
-                                Log.e(TAG, "error", e);
+                                //TODO: disable log
+                                //Log.e(TAG, "error", e);
                             }
                         }
                     }
                 }
             } catch (Exception e) {
-                Log.e(TAG, "error", e);
+                //TODO: disable log
+                //Log.e(TAG, "error", e);
                 //TODO: jlab. Se crashea si se descomenta
                 //System.exit(0);
             } finally {
-                Log.d(TAG, "UdpHandler quit");
+                //TODO: disable log
+                //Log.d(TAG, "UdpHandler quit");
             }
 
 
@@ -187,13 +190,15 @@ public class UdpHandler implements Runnable {
                     while (packet.backingBuffer.hasRemaining())
                         outputChannel.write(buffer);
                 } catch (IOException e) {
-                    Log.e(TAG, "udp write error", e);
+                    //TODO: disable log
+                    //Log.e(TAG, "udp write error", e);
                     outputChannel.close();
                     udpSockets.remove(ipAndPort);
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "error", e);
+            //TODO: disable log
+            //Log.e(TAG, "error", e);
             //TODO: jlab. Se crashea
             //System.exit(0);
         }
