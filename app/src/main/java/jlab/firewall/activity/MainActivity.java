@@ -74,7 +74,8 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                         break;
                 }
             } catch (Exception ignored) {
-                ignored.printStackTrace();
+                //TODO: disable log
+                //ignored.printStackTrace();
             }
         }
     };
@@ -198,7 +199,8 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                         LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
                                 Intent(START_VPN_ACTION));
                 } catch (Exception ignored) {
-                    ignored.printStackTrace();
+                    //TODO: disable log
+                    //ignored.printStackTrace();
                 }
             }
         }).start();

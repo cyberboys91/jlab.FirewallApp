@@ -31,7 +31,8 @@ public class SplashActivity extends AppCompatActivity {
                     try {
                         Thread.sleep(timeSleep);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //TODO: disable log
+                        //e.printStackTrace();
                     }
                     if(!finish) {
                         Intent intent = new Intent(getBaseContext(), MainActivity.class);

@@ -195,7 +195,8 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                     try {
                         semaphoreReload.acquire();
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //TODO: disable log
+                        //e.printStackTrace();
                     } finally {
                         content = getContent();
                         handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
@@ -265,7 +266,8 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                         try {
                             semaphoreLoadIcon.acquire();
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            //TODO: disable log
+                            //e.printStackTrace();
                         } finally {
                             final Bitmap bm = current.getIcon(getContext());
                             onRunOnUiThread.runOnUiThread(new Runnable() {
@@ -276,7 +278,8 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                                                 .into(icon);
                                         icon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fast_fade_in));
                                     } catch (Exception ignored) {
-                                        ignored.printStackTrace();
+                                        //TODO: disable log
+                                        //ignored.printStackTrace();
                                     }
                                 }
                             });
@@ -312,7 +315,8 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                         if(current.getUid() == notificationMessageUid)
                             notificationMessage = null;
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //TODO: disable log
+                        //e.printStackTrace();
                     } finally {
                         appDbMgr.updateApplicationData(current.getUid(), current);
                         mutexNotificator.release();

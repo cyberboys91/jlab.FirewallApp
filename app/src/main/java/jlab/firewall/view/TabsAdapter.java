@@ -14,6 +14,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import jlab.firewall.R;
 
+import static jlab.firewall.vpn.Utils.showCountBadger;
+
 public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.TabListener,
         ViewPager.OnPageChangeListener {
     private static final int MAX_COUNT_ALLOW_IN_TITLE = 999;
@@ -61,6 +63,7 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
                         .setText(count < MAX_COUNT_ALLOW_IN_TITLE
                                 ? String.valueOf(count)
                                 : String.valueOf(MAX_COUNT_ALLOW_IN_TITLE) + "+");
+            showCountBadger(mContext, null, count);
             customTitleView.findViewById(R.id.rlBadgeWrapper).setVisibility(count > 0
                     ? View.VISIBLE : View.GONE);
             mActionBar.getTabAt(position).setCustomView(customTitleView);

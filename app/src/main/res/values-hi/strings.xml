@@ -2,8 +2,6 @@
     <string name="app_name">फ़ायरवॉल</string>
     <string name="font_family_text">sans-serif</string>
     <string name="font_family_button">sans-serif-medium</string>
-    <string name="app_ad_unit_id">ca-app-pub-6420027936185714~5378663037</string>
-    <string name="banner_ad_unit_id">ca-app-pub-6420027936185714/4065581369</string>
     <string name="start_vpn">शुरू</string>
     <string name="starting_vpn">शुरुआत…</string>
     <string name="stop_vpn">रुकें</string>
@@ -16,7 +14,6 @@
     <string name="close">बाहर जाओ</string>
     <string name="app_list">ऐप्स</string>
     <string name="accept">ठीक</string>
-    <string name="cancel">रद्द करना</string>
     <string name="contact">संपर्क करें</string>
     <string name="mail">jlab.apps@gmail.com</string>
     <string name="app_mail_not_found">आपके पास ईमेल एप्लिकेशन नहीं है।</string>

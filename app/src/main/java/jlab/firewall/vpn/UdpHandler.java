@@ -120,8 +120,6 @@ public class UdpHandler implements Runnable {
                 //TODO: disable log
                 //Log.d(TAG, "UdpHandler quit");
             }
-
-
         }
     }
 
@@ -131,17 +129,12 @@ public class UdpHandler implements Runnable {
         this.vpnService = vpnService;
     }
 
-    private static final String TAG = UdpHandler.class.getSimpleName();
-
-
     Map<String, DatagramChannel> udpSockets = new HashMap();
-
 
     private static class UdpTunnel {
         InetSocketAddress local;
         InetSocketAddress remote;
         DatagramChannel channel;
-
     }
 
     @Override
@@ -194,6 +187,7 @@ public class UdpHandler implements Runnable {
                     //Log.e(TAG, "udp write error", e);
                     outputChannel.close();
                     udpSockets.remove(ipAndPort);
+                    NetConnections.removeFromCache(ipAndPort);
                 }
             }
         } catch (Exception e) {

@@ -28,7 +28,8 @@ public class WriteVpnThread implements Runnable {
                 while (bufferFromNetwork.hasRemaining())
                     vpnOutput.write(bufferFromNetwork);
             } catch (Exception e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
         }
     }

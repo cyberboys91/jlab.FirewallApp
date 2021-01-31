@@ -7,6 +7,8 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.os.Build;
+import android.util.LruCache;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -21,12 +23,33 @@ public class NetConnections {
     private static final int TCP_PROTOCOL_INT = 6, UDP_PROTOCOL_INT = 17;
     public static final int LENGTH_PREFIX_HEX_ADDRESS_VERSION_6 = 24;
     private static ConnectivityManager connectivityManager;
+    private static final LruCache<String, Integer> cache = new LruCache<>(100);
+
+    public static void removeFromCache (String connection) {
+        cache.remove(connection);
+    }
+
+    public static void freeCache () {
+        cache.evictAll();
+    }
 
     public static int getUid(Context context, Protocol protocol, InetAddress localHost, int localPort,
                              InetAddress remoteHost, int remotePort) {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            return getUidQ(context, getProtocolInt(protocol), localHost, localPort, remoteHost, remotePort);
+        String connection = new StringBuilder(remoteHost.getHostAddress()).append(":")
+                .append(remotePort).append(":").append(localPort).toString();
+
+        Integer uid = cache.get(connection);
+        if(uid != null)
+            return uid;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            uid = getUidQ(context, getProtocolInt(protocol), localHost,
+                    localPort, remoteHost, remotePort);
+            if (uid != -1)
+                cache.put(connection, uid);
+            return uid;
+        }
 
         try {
             String line, localPortStr = completeLength(Integer.toHexString(localPort).toUpperCase(), 4),
@@ -42,7 +65,10 @@ public class NetConnections {
                 if (isConnection(true, line, localHostStr, remoteHostStr, localPortStr, remotePortStr)) {
                     String[] split = line.split("\\s+");
                     reader.close();
-                    return Integer.parseInt(split[7]);
+                    uid = Integer.parseInt(split[7]);
+                    if (uid != -1)
+                        cache.put(connection, uid);
+                    return uid;
                 }
             }
             reader.close();
@@ -55,12 +81,16 @@ public class NetConnections {
                 if (isConnection(false, line, localHostStr, remoteHostStr, localPortStr, remotePortStr)) {
                     String[] split = line.split("\\s+");
                     reader.close();
-                    return Integer.parseInt(split[7]);
+                    uid = Integer.parseInt(split[7]);
+                    if (uid != -1)
+                        cache.put(connection, uid);
+                    return uid;
                 }
             }
             reader.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            //TODO: disable log
+            //e.printStackTrace();
         }
         return -1;
     }
@@ -104,7 +134,6 @@ public class NetConnections {
     private static boolean isConnection(boolean isV6, String connection, String localHost, String remoteHost,
                                         String localPort, String remotePort) {
         HexDataPacket hexDataPacket = new HexDataPacket(isV6, connection);
-
 
         //Comparacion de netguard
         /*if (_sport == sport &&

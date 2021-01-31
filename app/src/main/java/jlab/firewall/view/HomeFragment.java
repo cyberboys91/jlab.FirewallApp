@@ -98,7 +98,8 @@ public class HomeFragment extends Fragment {
                 chart.setLineChartData(chartData);
             }
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
         } finally {
             mutexRefreshTraffic.release();
         }
@@ -212,7 +213,8 @@ public class HomeFragment extends Fragment {
                 vpnButton.setEnabled(true);
             }
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
         }
     }
 

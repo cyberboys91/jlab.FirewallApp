@@ -5,6 +5,7 @@ package jlab.firewall.vpn;
  */
 
 import android.app.Activity;
+import android.app.Notification;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -26,6 +27,8 @@ import java.util.List;
 import com.google.android.material.snackbar.Snackbar;
 import jlab.firewall.R;
 import jlab.firewall.db.ApplicationDetails;
+import me.leolin.shortcutbadger.ShortcutBadger;
+
 import static java.util.Collections.binarySearch;
 import static java.util.Collections.sort;
 import static jlab.firewall.vpn.FirewallService.mapPackageAllowed;
@@ -43,26 +46,26 @@ public class Utils {
                 == PackageManager.PERMISSION_GRANTED);
     }
 
-    public static boolean isBlocked (int uid) {
+    public static boolean isBlocked(int uid) {
         return !hasAccess(uid);
     }
 
-    public static boolean isNotified (int uid) {
+    public static boolean isNotified(int uid) {
         int indexSearch = binarySearch(mapPackageNotified, uid);
         return indexSearch >= 0 && indexSearch < mapPackageNotified.size();
     }
 
-    public static boolean isInteract (int uid) {
+    public static boolean isInteract(int uid) {
         int indexSearch = binarySearch(mapPackageInteract, uid);
         return indexSearch >= 0 && indexSearch < mapPackageInteract.size();
     }
 
-    public static boolean hasAccess (int uid) {
+    public static boolean hasAccess(int uid) {
         int indexSearch = binarySearch(mapPackageAllowed, uid);
         return indexSearch >= 0 && indexSearch < mapPackageAllowed.size();
     }
 
-    public static void removeFromMapsIfExist (int uid) {
+    public static void removeFromMapsIfExist(int uid) {
         int indexSearch = binarySearch(mapPackageNotified, uid);
         if (indexSearch >= 0 && indexSearch < mapPackageNotified.size())
             mapPackageNotified.remove(indexSearch);
@@ -74,8 +77,8 @@ public class Utils {
             mapPackageAllowed.remove(indexSearch);
     }
 
-    public static List<ApplicationDetails> getPackagesInternetPermission (Context context,
-                                                                          ArrayList<Integer> allUid) {
+    public static List<ApplicationDetails> getPackagesInternetPermission(Context context,
+                                                                         ArrayList<Integer> allUid) {
         PackageManager pm = context.getPackageManager();
         List<ApplicationInfo> appsInfo = pm.getInstalledApplications(0);
         ArrayList<ApplicationDetails> result = new ArrayList<>();
@@ -104,7 +107,7 @@ public class Utils {
         return result;
     }
 
-    public static Bitmap getIconForApp (String packageName, Context context) {
+    public static Bitmap getIconForApp(String packageName, Context context) {
         Bitmap result = getIconForAppInCache(packageName);
         boolean inCache = result != null;
         if (!inCache)
@@ -114,7 +117,8 @@ public class Utils {
                 if (icon != null)
                     result = getBitmapFromDrawable(icon);
             } catch (Exception ignored) {
-                ignored.printStackTrace();
+                //TODO: disable log
+                //ignored.printStackTrace();
             }
         if (result == null)
             result = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
@@ -133,48 +137,48 @@ public class Utils {
         return bm;
     }
 
-    public static Bitmap getIconForAppInCache (String packageName) {
+    public static Bitmap getIconForAppInCache(String packageName) {
         return iconsCache.get(packageName);
     }
 
-    public static void freeMemory () {
+    public static void freeMemory() {
         iconsCache.evictAll();
     }
 
-    public static void addToAllowedList (int uid) {
+    public static void addToAllowedList(int uid) {
         if (isBlocked(uid)) {
             mapPackageAllowed.add(uid);
             sort(mapPackageAllowed);
         }
     }
 
-    public static void addToNotifiedList (int uid) {
+    public static void addToNotifiedList(int uid) {
         if (!isNotified(uid)) {
             mapPackageNotified.add(uid);
             sort(mapPackageNotified);
         }
     }
 
-    public static void addToInteractList (int uid) {
+    public static void addToInteractList(int uid) {
         if (!isInteract(uid)) {
             mapPackageInteract.add(uid);
             sort(mapPackageInteract);
         }
     }
 
-    public static void removeFromNotifiedList (int uid) {
+    public static void removeFromNotifiedList(int uid) {
         int index = binarySearch(mapPackageNotified, uid);
         if (index >= 0 && index < mapPackageNotified.size())
             mapPackageNotified.remove(index);
     }
 
-    public static void removeFromInteractList (int uid) {
+    public static void removeFromInteractList(int uid) {
         int index = binarySearch(mapPackageInteract, uid);
         if (index >= 0 && index < mapPackageInteract.size())
             mapPackageInteract.remove(index);
     }
 
-    public static void removeFromAllowedList (int uid) {
+    public static void removeFromAllowedList(int uid) {
         int index = binarySearch(mapPackageAllowed, uid);
         if (index >= 0 && index < mapPackageAllowed.size())
             mapPackageAllowed.remove(index);
@@ -187,7 +191,8 @@ public class Utils {
         try {
             activity.startActivity(goToMarket);
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
             activity.startActivity(new Intent(Intent.ACTION_VIEW,
                     Uri.parse(String.format("https://play.google.com/store/apps/details?id=%s"
                             , activity.getPackageName()))));
@@ -207,14 +212,16 @@ public class Utils {
                                 activity.startActivity(new Intent(Intent.ACTION_SENDTO)
                                         .setData(Uri.parse(String.format("mailto:%s", activity.getString(R.string.mail)))));
                             } catch (Exception ignored) {
-                                ignored.printStackTrace();
+                                //TODO: disable log
+                                //ignored.printStackTrace();
                                 Utils.showSnackBar(R.string.app_mail_not_found, viewForSnack);
                             }
                         }
                     })
                     .show();
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
         }
     }
 
@@ -278,7 +285,7 @@ public class Utils {
         StringBuilder result = new StringBuilder();
         if (seconds >= 86400) {
             seconds /= 86400;
-            result.append((int)seconds).append("d");
+            result.append((int) seconds).append("d");
             return result.toString();
         }
         if (seconds >= 3600) {
@@ -293,5 +300,16 @@ public class Utils {
         }
         result.append((int) (seconds)).append("s");
         return result.toString();
+    }
+
+    public static void showCountBadger(Context context, Notification notification, int count) {
+        try {
+            ShortcutBadger.applyCount(context, count);
+            if (notification != null)
+                ShortcutBadger.applyNotification(context, notification, count);
+        } catch (Exception ignored) {
+            //TODO: disable log
+            //ignored.printStackTrace();
+        }
     }
 }

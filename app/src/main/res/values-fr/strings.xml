@@ -2,8 +2,6 @@
     <string name="app_name">Pare-feu</string>
     <string name="font_family_text">sans-serif</string>
     <string name="font_family_button">sans-serif-medium</string>
-    <string name="app_ad_unit_id">ca-app-pub-6420027936185714~5378663037</string>
-    <string name="banner_ad_unit_id">ca-app-pub-6420027936185714/4065581369</string>
     <string name="start_vpn">DÉBUT</string>
     <string name="starting_vpn">DÉBUT…</string>
     <string name="stop_vpn">ARRÊTEZ</string>
@@ -16,7 +14,6 @@
     <string name="close">Sortie</string>
     <string name="app_list">APPS</string>
     <string name="accept">OK</string>
-    <string name="cancel">Cancel</string>
     <string name="contact">Contact</string>
     <string name="mail">jlab.apps@gmail.com</string>
     <string name="app_mail_not_found">Vous n\'avez pas d\'application de messagerie.</string>

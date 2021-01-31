@@ -60,6 +60,7 @@ import static jlab.firewall.activity.MainActivity.VPN_REQUEST_CODE;
 import static jlab.firewall.vpn.Utils.getPackagesInternetPermission;
 import static jlab.firewall.vpn.Utils.getSizeString;
 import static jlab.firewall.vpn.Utils.isBlocked;
+import static jlab.firewall.vpn.Utils.showCountBadger;
 
 public class FirewallService extends VpnService {
 
@@ -117,7 +118,8 @@ public class FirewallService extends VpnService {
                         vpnInterface.close();
                         stopSelf();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        //TODO: disable log
+                        //e.printStackTrace();
                     }
                     break;
                 default:
@@ -185,7 +187,7 @@ public class FirewallService extends VpnService {
                                 .setBubbleMetadata(bubbleData).addPerson(chatBot).build());
                     }
                     else*/
-                        notMgr.notify(REQUEST_INTERNET_NOTIFICATION, new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
+                        Notification notification = new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
                                 .setContentText(getBaseContext().getString(R.string.apps_req_internet_access))
                                 .setContentTitle(name)
                                 .setAutoCancel(true)
@@ -197,7 +199,10 @@ public class FirewallService extends VpnService {
                                         getBaseContext()))
                                 .setContentIntent(getPendingIntentNotificationClicked(1))
                                 .setFullScreenIntent(getPendingIntentNotificationClicked(1),
-                                        true).build());
+                                        true)
+                                .build();
+                        notMgr.notify(REQUEST_INTERNET_NOTIFICATION, notification);
+                        showCountBadger(getBaseContext(), notification, countNotified);
                     }
 
                     handler.removeMessages(NOTIFY_INTERNET_REQUEST_ACCESS);
@@ -237,8 +242,8 @@ public class FirewallService extends VpnService {
                 try {
                     CHANNEL_ID = String.format("%s.%s", getString(R.string.app_name),
                             getString(R.string.app_list_request));
-                    appMgr = new ApplicationDbManager(getBaseContext());
                     packageManager = getBaseContext().getPackageManager();
+                    appMgr = new ApplicationDbManager(getBaseContext());
                     notMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
@@ -264,7 +269,8 @@ public class FirewallService extends VpnService {
                                 executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
                                         deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
                             }catch (Exception ignored) {
-                                ignored.printStackTrace();
+                                //TODO: disable log
+                                //ignored.printStackTrace();
                             }
                         }
                     }).start();
@@ -311,7 +317,8 @@ public class FirewallService extends VpnService {
                             notificationMessageUid = -1;
                         }
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //TODO: disable log
+                        //e.printStackTrace();
                     } finally {
                         mutexNotificator.release();
                     }
@@ -381,7 +388,8 @@ public class FirewallService extends VpnService {
                 });
             }
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
         }
     }
 
@@ -411,7 +419,8 @@ public class FirewallService extends VpnService {
                 vpnInterface = builder.establish();
                 return vpnInterface != null;
             } catch (Exception ignored) {
-                ignored.printStackTrace();
+                //TODO: disable log
+                //ignored.printStackTrace();
             }
         }
         return false;
@@ -449,15 +458,18 @@ public class FirewallService extends VpnService {
                 if (floatingTrafficDataView != null)
                     windowMgr.removeViewImmediate(floatingTrafficDataView);
             } catch (Exception ignored) {
-                ignored.printStackTrace();
+                //TODO: disable log
+                //ignored.printStackTrace();
             }
             cleanup();
             if (notMgr != null)
                 notMgr.cancel(RUNNING_NOTIFICATION);
+            NetConnections.freeCache();
             //TODO: disable log
             //Log.i(TAG, "Stopped");
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
         }
     }
 
@@ -516,7 +528,8 @@ public class FirewallService extends VpnService {
             sort(mapPackageNotified);
             sort(mapPackageInteract);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            //TODO: disable log
+            //e.printStackTrace();
         } finally {
             mutextLoadAppData.release();
         }
@@ -551,7 +564,8 @@ public class FirewallService extends VpnService {
                                 appInfo = packageManager.getApplicationInfo(appDetails
                                         .getPrincipalPackName(), PackageManager.GET_META_DATA);
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                //TODO: disable log
+                                //e.printStackTrace();
                             }
                             notificationMessage = new Message();
                             notificationMessageUid = uid;
@@ -565,7 +579,8 @@ public class FirewallService extends VpnService {
                         }
                     }
                 } catch (Exception ignored) {
-                    ignored.printStackTrace();
+                    //TODO: disable log
+                    //ignored.printStackTrace();
                 } finally {
                     mutexNotificator.release();
                 }
@@ -624,7 +639,8 @@ public class FirewallService extends VpnService {
                     handler.sendEmptyMessage(REFRESH_TRAFFIC_DATA_FLOATING_VIEW);
                     refreshSpeed = !refreshSpeed;
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //TODO: disable log
+                    //e.printStackTrace();
                 }
             }
         }
@@ -664,6 +680,7 @@ public class FirewallService extends VpnService {
             trafficDataUpSpeedPoints.clear();
             x = 0;
             refreshTrafficData.start();
+            NetConnections.freeCache();
 
             FileChannel vpnInput = new FileInputStream(vpnFileDescriptor).getChannel();
             FileChannel vpnOutput = new FileOutputStream(vpnFileDescriptor).getChannel();
@@ -692,7 +709,8 @@ public class FirewallService extends VpnService {
                         try {
                             Thread.sleep(10);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            //TODO: disable log
+                            //e.printStackTrace();
                         }
                     }
                 }

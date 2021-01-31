@@ -263,9 +263,11 @@ public class TcpHandler implements Runnable {
 //                        }
                     }
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //TODO: disable log
+                    //e.printStackTrace();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    //TODO: disable log
+                    //e.printStackTrace();
                     return;
                 }
             }
@@ -279,7 +281,8 @@ public class TcpHandler implements Runnable {
                 connectRemote();
                 loop();
             } catch (Exception e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
         }
     }
@@ -302,7 +305,8 @@ public class TcpHandler implements Runnable {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
             sendTcpPack(tunnel, (byte) (Packet.TCPHeader.FIN | Packet.TCPHeader.ACK), null);
             tunnel.downActive = false;
@@ -327,7 +331,8 @@ public class TcpHandler implements Runnable {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
             //TODO: disable log
             //Log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
@@ -348,7 +353,8 @@ public class TcpHandler implements Runnable {
                     tunnel.destSocket = null;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
             sendTcpPack(tunnel, (byte) Packet.TCPHeader.RST, null);
             tunnel.upActive = false;
@@ -409,9 +415,7 @@ public class TcpHandler implements Runnable {
                 } else if (quitType.equals("rst")) {
                     closeRst(tunnel);
                 }
-
             }
-
         }
     }
 
@@ -453,6 +457,7 @@ public class TcpHandler implements Runnable {
                         break;
                     } else {
                         tunnels.remove(ipAndPort);
+                        NetConnections.removeFromCache(ipAndPort);
                         //TODO: disable log
                         //Log.i(TAG, String.format("remove tunnel %s", ipAndPort));
                     }
@@ -467,7 +472,8 @@ public class TcpHandler implements Runnable {
                 //
                 tcpTunnel.tunnelInputQueue.offer(currentPacket);
             } catch (Exception e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
         }
     }

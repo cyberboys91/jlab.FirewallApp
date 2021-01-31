@@ -2,8 +2,6 @@
     <string name="app_name">ファイアウォール</string>
     <string name="font_family_text">sans-serif</string>
     <string name="font_family_button">sans-serif-medium</string>
-    <string name="app_ad_unit_id">ca-app-pub-6420027936185714~5378663037</string>
-    <string name="banner_ad_unit_id">ca-app-pub-6420027936185714/4065581369</string>
     <string name="start_vpn">開始</string>
     <string name="starting_vpn">開始…</string>
     <string name="stop_vpn">停止</string>
@@ -15,7 +13,6 @@
     <string name="close">出口</string>
     <string name="app_list">APPS</string>
     <string name="accept">OK</string>
-    <string name="cancel">キャンセル</string>
     <string name="contact">連絡先</string>
     <string name="mail">jlab.apps@gmail.com</string>
     <string name="app_mail_not_found">メール申し込みはありません。</string>

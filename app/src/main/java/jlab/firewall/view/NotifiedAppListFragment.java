@@ -96,7 +96,8 @@ public class NotifiedAppListFragment extends AppListFragment {
                         try {
                             semaphoreLoadIcon.acquire();
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            //TODO: disable log
+                            //e.printStackTrace();
                         } finally {
                             final Bitmap bm = current.getIcon(getContext());
                             onRunOnUiThread.runOnUiThread(new Runnable() {
@@ -125,7 +126,8 @@ public class NotifiedAppListFragment extends AppListFragment {
                         if(current.getUid() == notificationMessageUid)
                             notificationMessage = null;
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //TODO: disable log
+                        //e.printStackTrace();
                     }
                     finally {
                         appDbMgr.updateApplicationData(current.getUid(), current);
@@ -148,7 +150,8 @@ public class NotifiedAppListFragment extends AppListFragment {
                         if(current.getUid() == notificationMessageUid)
                             notificationMessage = null;
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        //TODO: disable log
+                        //e.printStackTrace();
                     }
                     finally {
                         appDbMgr.updateApplicationData(current.getUid(), current);

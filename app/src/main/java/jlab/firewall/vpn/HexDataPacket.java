@@ -10,15 +10,7 @@ class HexDataPacket {
     private String remoteHost;
     private String localPort;
     private String remotePort;
-
-    public HexDataPacket(String localConn, String remoteConn) {
-        String [] split = localConn.split(":");
-        this.localHost = split[0];
-        this.localPort = split[1];
-        split = remoteConn.split(":");
-        this.remoteHost = split[0];
-        this.remotePort = split[1];
-    }
+    private int uid = -1;
 
     public HexDataPacket(boolean isV6, String completeTrace) {
         int startIndex;
@@ -56,5 +48,9 @@ class HexDataPacket {
 
     public String getRemoteHost() {
         return remoteHost;
+    }
+
+    public int getUID() {
+        return uid;
     }
 }

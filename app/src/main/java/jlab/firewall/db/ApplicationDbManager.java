@@ -43,7 +43,8 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                     + ApplicationContract.NOTIFIED + " INT NOT NULL)");
             addApps(db);
         } catch (Exception e) {
-            e.printStackTrace();
+            //TODO: disable log
+            //e.printStackTrace();
         }
     }
 
@@ -95,7 +96,8 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                             internet > 0, notified > 0, interact > 0));
             }
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
         } finally {
             cursor.close();
         }
@@ -123,7 +125,8 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                             internet > 0, notified > 0, interact > 0));
             }
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
         } finally {
             cursor.close();
         }
@@ -172,7 +175,8 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                         internet > 0, notified > 0, interact > 0);
             }
         } catch (Exception ignored) {
-            ignored.printStackTrace();
+            //TODO: disable log
+            //ignored.printStackTrace();
         } finally {
             cursor.close();
         }

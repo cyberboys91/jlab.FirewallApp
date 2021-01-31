@@ -2,8 +2,6 @@
     <string name="app_name">FireWall</string>
     <string name="font_family_text">sans-serif</string>
     <string name="font_family_button">sans-serif-medium</string>
-    <string name="app_ad_unit_id">ca-app-pub-6420027936185714~5378663037</string>
-    <string name="banner_ad_unit_id">ca-app-pub-6420027936185714/4065581369</string>
     <string name="start_vpn">BAŞLAT</string>
     <string name="starting_vpn">BAŞLAT…</string>
     <string name="stop_vpn">DUR</string>
@@ -16,7 +14,6 @@
     <string name="close">çıkış</string>
     <string name="app_list">APPS</string>
     <string name="accept">OK</string>
-    <string name="cancel">İptal etmek</string>
     <string name="contact">İletişim</string>
     <string name="mail">jlab.apps@gmail.com</string>
     <string name="app_mail_not_found">E-posta uygulamanız yok.</string>

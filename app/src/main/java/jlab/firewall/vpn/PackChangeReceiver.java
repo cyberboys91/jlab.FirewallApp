@@ -58,7 +58,9 @@ public class PackChangeReceiver extends BroadcastReceiver {
 
     private ApplicationDetails getOnlyInternetApps(int uid, PackageManager packMgr,
                                      Context context) {
-        String names = "", pPackName = "", packNames = "";
+        StringBuilder names = new StringBuilder(),
+                pPackName = new StringBuilder(),
+                packNames = new StringBuilder();
         int count = 0;
         String[] packagesForUid = packMgr.getPackagesForUid(uid);
         if(packagesForUid != null) {
@@ -69,17 +71,19 @@ public class PackChangeReceiver extends BroadcastReceiver {
                         ApplicationInfo appInfo = packMgr.getApplicationInfo(packName,
                                 PackageManager.GET_META_DATA);
                         if (pPackName.length() == 0)
-                            pPackName = packName;
-                        names += (names.length() != 0 ? ", " : "")
-                                + packMgr.getApplicationLabel(appInfo);
-                        packNames += (packNames.length() != 0 ? ", " : "") + packName;
+                            pPackName = new StringBuilder(packName);
+                        names.append(names.length() != 0 ? ", " : "")
+                                .append(packMgr.getApplicationLabel(appInfo));
+                        packNames.append(packNames.length() != 0 ? ", " : "")
+                                .append(packName);
                     } catch (PackageManager.NameNotFoundException e) {
-                        e.printStackTrace();
+                        //TODO: disable log
+                        //e.printStackTrace();
                     }
                 }
             }
-            return new ApplicationDetails(uid, count, pPackName,
-                    packNames, names, false, false, false);
+            return new ApplicationDetails(uid, count, pPackName.toString(),
+                    packNames.toString(), names.toString(), false, false, false);
         }
         return null;
     }
