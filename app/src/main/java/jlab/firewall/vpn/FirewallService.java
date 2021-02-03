@@ -236,7 +236,7 @@ public class FirewallService extends VpnService {
     }
 
     public void startIfCan() {
-        if(!isRunning) {
+        if (!isRunning) {
             isWaiting = !setupVPN();
             if (!isWaiting)
                 try {
@@ -268,9 +268,16 @@ public class FirewallService extends VpnService {
                                 loadAppData(getBaseContext());
                                 executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
                                         deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
-                            }catch (Exception ignored) {
+                            } catch (Exception | OutOfMemoryError ignored) {
                                 //TODO: disable log
                                 //ignored.printStackTrace();
+                                try {
+                                    vpnInterface.close();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                } finally {
+                                    stopSelf();
+                                }
                             }
                         }
                     }).start();
@@ -595,7 +602,7 @@ public class FirewallService extends VpnService {
                 , intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    private Thread refreshTrafficData = new Thread(new Runnable() {
+    private final Thread refreshTrafficData = new Thread(new Runnable() {
         @Override
         public void run() {
             boolean refreshSpeed = false;
@@ -714,16 +721,12 @@ public class FirewallService extends VpnService {
                         }
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException | OutOfMemoryError e) {
                 //TODO: disable log
                 //Log.w(TAG, e.toString(), e);
             } finally {
                 closeResources(vpnInput, vpnOutput);
             }
         }
-    }
-
-    public interface IPostRunningListener {
-        void run (boolean running);
     }
 }

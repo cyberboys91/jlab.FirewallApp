@@ -34,7 +34,7 @@ public class TcpHandler implements Runnable {
         public long theirAcknowledgementNum = 0;
 
         public TCBStatus tcbStatus = TCBStatus.SYN_SENT;
-        public BlockingQueue<Packet> tunnelInputQueue = new ArrayBlockingQueue<Packet>(1024);
+        public BlockingQueue<Packet> tunnelInputQueue = new ArrayBlockingQueue<>(1024);
         public InetSocketAddress sourceAddress;
         public InetSocketAddress destinationAddress;
         public SocketChannel destSocket;
@@ -339,6 +339,7 @@ public class TcpHandler implements Runnable {
             tunnel.upActive = false;
             if (isClosedTunnel(tunnel)) {
                 tunnel.tunnelCloseMsgQueue.add(tunnel.tunnelKey);
+
             }
         }
     }
