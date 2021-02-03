@@ -117,9 +117,9 @@ public class TcpHandler implements Runnable {
                 tunnel.vpnService.protect(remote.socket());
                 InetSocketAddress address = tunnel.destinationAddress;
 
-                Long ts = System.currentTimeMillis();
+//                Long ts = System.currentTimeMillis();
                 remote.socket().connect(address, 5000);
-                Long te = System.currentTimeMillis();
+//                Long te = System.currentTimeMillis();
 
                 //TODO: disable log
                 //Log.i(TAG, String.format("connectRemote %d cost %d  remote %s", tunnel.tunnelId, te - ts, tunnel.destinationAddress.toString()));
@@ -312,6 +312,9 @@ public class TcpHandler implements Runnable {
             tunnel.downActive = false;
             if (isClosedTunnel(tunnel)) {
                 tunnel.tunnelCloseMsgQueue.add(tunnel.tunnelKey);
+                NetConnections.removeFromCache(new StringBuilder(tunnel.destinationAddress.getAddress().getHostAddress()).append(":")
+                        .append(tunnel.destinationAddress.getPort()).append(":")
+                        .append(tunnel.sourceAddress.getPort()).toString());
             }
         }
     }
@@ -339,7 +342,9 @@ public class TcpHandler implements Runnable {
             tunnel.upActive = false;
             if (isClosedTunnel(tunnel)) {
                 tunnel.tunnelCloseMsgQueue.add(tunnel.tunnelKey);
-
+                NetConnections.removeFromCache(new StringBuilder(tunnel.destinationAddress.getAddress().getHostAddress()).append(":")
+                        .append(tunnel.destinationAddress.getPort()).append(":")
+                        .append(tunnel.sourceAddress.getPort()).toString());
             }
         }
     }
@@ -360,6 +365,9 @@ public class TcpHandler implements Runnable {
             sendTcpPack(tunnel, (byte) Packet.TCPHeader.RST, null);
             tunnel.upActive = false;
             tunnel.downActive = false;
+            NetConnections.removeFromCache(new StringBuilder(tunnel.destinationAddress.getAddress().getHostAddress()).append(":")
+                    .append(tunnel.destinationAddress.getPort()).append(":")
+                    .append(tunnel.sourceAddress.getPort()).toString());
         }
     }
 

@@ -23,7 +23,7 @@ public class NetConnections {
     private static final int TCP_PROTOCOL_INT = 6, UDP_PROTOCOL_INT = 17;
     public static final int LENGTH_PREFIX_HEX_ADDRESS_VERSION_6 = 24;
     private static ConnectivityManager connectivityManager;
-    private static final LruCache<String, Integer> cache = new LruCache<>(100);
+    private static final LruCache<String, Integer> cache = new LruCache<>(200);
 
     public static void removeFromCache (String connection) {
         cache.remove(connection);
