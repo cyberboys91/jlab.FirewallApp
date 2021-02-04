@@ -1,5 +1,6 @@
 package jlab.firewall.vpn;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -84,7 +85,7 @@ public class FirewallService extends VpnService {
     public static int notificationMessageUid;
     public static Message notificationMessage;
     public static Semaphore mutexNotificator = new Semaphore(1),
-        mutextLoadAppData = new Semaphore(1);
+            mutextLoadAppData = new Semaphore(1);
     private static Map<String, Integer> mapAddress = new ArrayMap<>();
     private static final int REQUEST_INTERNET_NOTIFICATION = 9200,
             REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9203,
@@ -92,7 +93,7 @@ public class FirewallService extends VpnService {
     private static NotificationManager notMgr;
     private ApplicationDbManager appMgr;
     public static AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
-        downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
+            downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
     private long downBytesInStart, upBytesInStart, x;
     private static boolean isRunning, isWaiting;
     private ParcelFileDescriptor vpnInterface = null;
@@ -109,22 +110,23 @@ public class FirewallService extends VpnService {
     private BroadcastReceiver startVpnReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case START_VPN_ACTION:
-                    startIfCan();
-                    break;
-                case STOP_VPN_ACTION:
-                    try {
-                        vpnInterface.close();
-                        stopSelf();
-                    } catch (Exception e) {
-                        //TODO: disable log
-                        //e.printStackTrace();
-                    }
-                    break;
-                default:
-                    break;
-            }
+            if (intent != null && intent.getAction() != null)
+                switch (intent.getAction()) {
+                    case START_VPN_ACTION:
+                        startIfCan();
+                        break;
+                    case STOP_VPN_ACTION:
+                        try {
+                            vpnInterface.close();
+                            stopSelf();
+                        } catch (Exception e) {
+                            //TODO: disable log
+                            //e.printStackTrace();
+                        }
+                        break;
+                    default:
+                        break;
+                }
         }
     };
     private static int lastUidNotified, lastCountNotified;
@@ -236,7 +238,7 @@ public class FirewallService extends VpnService {
     }
 
     public void startIfCan() {
-        if(!isRunning) {
+        if (!isRunning) {
             isWaiting = !setupVPN();
             if (!isWaiting)
                 try {
@@ -268,9 +270,16 @@ public class FirewallService extends VpnService {
                                 loadAppData(getBaseContext());
                                 executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
                                         deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
-                            }catch (Exception ignored) {
+                            } catch (Exception | OutOfMemoryError ignored) {
                                 //TODO: disable log
                                 //ignored.printStackTrace();
+                                try {
+                                    vpnInterface.close();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                } finally {
+                                    stopSelf();
+                                }
                             }
                         }
                     }).start();
@@ -344,48 +353,51 @@ public class FirewallService extends VpnService {
                         PixelFormat.TRANSPARENT);
                 params.gravity = Gravity.TOP | Gravity.LEFT;
                 windowMgr = (WindowManager) getSystemService(WINDOW_SERVICE);
-                windowMgr.addView(floatingTrafficDataView, params);
-                floatingTrafficDataView.setOnTouchListener(new View.OnTouchListener() {
-                    private int initialX, initialY;
-                    float initialTouchX, initialTouchY;
-                    boolean totalViewWaitForGone = false, cancelTotalViewGone = false;
+                if(windowMgr != null) {
+                    windowMgr.addView(floatingTrafficDataView, params);
+                    floatingTrafficDataView.setOnTouchListener(new View.OnTouchListener() {
+                        private int initialX, initialY;
+                        float initialTouchX, initialTouchY;
+                        boolean totalViewWaitForGone = false, cancelTotalViewGone = false;
 
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-                        switch (event.getAction()) {
-                            case MotionEvent.ACTION_DOWN:
-                                initialX = params.x;
-                                initialY = params.y;
-                                initialTouchX = event.getRawX();
-                                initialTouchY = event.getRawY();
-                                llFloatingTrafficTotal.setVisibility(View.VISIBLE);
-                                cancelTotalViewGone = true;
-                                return true;
-                            case MotionEvent.ACTION_MOVE:
-                                params.x = initialX + (int) (event.getRawX() - initialTouchX);
-                                params.y = initialY + (int) (event.getRawY() - initialTouchY);
-                                windowMgr.updateViewLayout(floatingTrafficDataView, params);
-                                return true;
-                            case MotionEvent.ACTION_UP:
-                                cancelTotalViewGone = false;
-                                if (!totalViewWaitForGone) {
-                                    totalViewWaitForGone = true;
-                                    llFloatingTrafficTotal.postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            if (!cancelTotalViewGone)
-                                                llFloatingTrafficTotal.setVisibility(View.GONE);
-                                            totalViewWaitForGone = false;
-                                        }
-                                    }, 5000);
-                                }
-                                return true;
-                            default:
-                                break;
+                        @SuppressLint("ClickableViewAccessibility")
+                        @Override
+                        public boolean onTouch(View v, MotionEvent event) {
+                            switch (event.getAction()) {
+                                case MotionEvent.ACTION_DOWN:
+                                    initialX = params.x;
+                                    initialY = params.y;
+                                    initialTouchX = event.getRawX();
+                                    initialTouchY = event.getRawY();
+                                    llFloatingTrafficTotal.setVisibility(View.VISIBLE);
+                                    cancelTotalViewGone = true;
+                                    return true;
+                                case MotionEvent.ACTION_MOVE:
+                                    params.x = initialX + (int) (event.getRawX() - initialTouchX);
+                                    params.y = initialY + (int) (event.getRawY() - initialTouchY);
+                                    windowMgr.updateViewLayout(floatingTrafficDataView, params);
+                                    return true;
+                                case MotionEvent.ACTION_UP:
+                                    cancelTotalViewGone = false;
+                                    if (!totalViewWaitForGone) {
+                                        totalViewWaitForGone = true;
+                                        llFloatingTrafficTotal.postDelayed(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if (!cancelTotalViewGone)
+                                                    llFloatingTrafficTotal.setVisibility(View.GONE);
+                                                totalViewWaitForGone = false;
+                                            }
+                                        }, 5000);
+                                    }
+                                    return true;
+                                default:
+                                    break;
+                            }
+                            return false;
                         }
-                        return false;
-                    }
-                });
+                    });
+                }
             }
         } catch (Exception ignored) {
             //TODO: disable log
@@ -426,9 +438,13 @@ public class FirewallService extends VpnService {
         return false;
     }
 
-    private Builder addAllInetAddressToBuilder(Builder builder) {
-        for (String address : mapAddress.keySet())
-            builder.addAddress(address, mapAddress.get(address));
+    private Builder addAllInetAddressToBuilder(Builder builder)
+            throws NullPointerException, ClassCastException {
+        for (String address : mapAddress.keySet()) {
+            Integer prefix = mapAddress.get(address);
+            if (prefix != null)
+                builder.addAddress(address, prefix);
+        }
         return builder;
     }
 
@@ -595,7 +611,7 @@ public class FirewallService extends VpnService {
                 , intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    private Thread refreshTrafficData = new Thread(new Runnable() {
+    private final Thread refreshTrafficData = new Thread(new Runnable() {
         @Override
         public void run() {
             boolean refreshSpeed = false;
@@ -650,7 +666,6 @@ public class FirewallService extends VpnService {
         private final String TAG = VPNRunnable.class.getSimpleName();
 
         private FileDescriptor vpnFileDescriptor;
-
         private BlockingQueue<Packet> deviceToNetworkUDPQueue;
         private BlockingQueue<Packet> deviceToNetworkTCPQueue;
         private BlockingQueue<ByteBuffer> networkToDeviceQueue;
@@ -714,16 +729,12 @@ public class FirewallService extends VpnService {
                         }
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException | OutOfMemoryError e) {
                 //TODO: disable log
                 //Log.w(TAG, e.toString(), e);
             } finally {
                 closeResources(vpnInput, vpnOutput);
             }
         }
-    }
-
-    public interface IPostRunningListener {
-        void run (boolean running);
     }
 }

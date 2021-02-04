@@ -21,39 +21,26 @@ import static jlab.firewall.vpn.FirewallService.isRunning;
  *
  */
 public class UdpHandler implements Runnable {
-
-    BlockingQueue<Packet> queue;
-
-    BlockingQueue<ByteBuffer> networkToDeviceQueue;
     VpnService vpnService;
-
-    private Selector selector;
+    BlockingQueue<Packet> queue;
+    BlockingQueue<ByteBuffer> networkToDeviceQueue;
     private static final int HEADER_SIZE = Packet.IP4_HEADER_SIZE + Packet.UDP_HEADER_SIZE;
 
     private static class UdpDownWorker implements Runnable {
-
         BlockingQueue<ByteBuffer> networkToDeviceQueue;
         BlockingQueue<UdpTunnel> tunnelQueue;
         Selector selector;
-
         private static AtomicInteger ipId = new AtomicInteger();
 
-        private void sendUdpPack(UdpTunnel tunnel, byte[] data) throws IOException {
+        private void sendUdpPack(UdpTunnel tunnel, byte[] data) {
             int dataLen = 0;
-            if (data != null) {
+            if (data != null)
                 dataLen = data.length;
-            }
             Packet packet = IpUtil.buildUdpPacket(tunnel.remote, tunnel.local, ipId.addAndGet(1));
-
             ByteBuffer byteBuffer = ByteBufferPool.acquire();
-            //
             byteBuffer.position(HEADER_SIZE);
-            if (data != null) {
-                if (byteBuffer.remaining() < data.length) {
-                    System.currentTimeMillis();
-                }
+            if (data != null)
                 byteBuffer.put(data);
-            }
             packet.updateUDPBuffer(byteBuffer, dataLen);
             byteBuffer.position(HEADER_SIZE + dataLen);
             this.networkToDeviceQueue.offer(byteBuffer);
@@ -73,9 +60,9 @@ public class UdpHandler implements Runnable {
                     int readyChannels = selector.select();
                     while (!Thread.interrupted() && isRunning()) {
                         UdpTunnel tunnel = tunnelQueue.poll();
-                        if (tunnel == null) {
+                        if (tunnel == null)
                             break;
-                        } else {
+                        else {
                             try {
                                 SelectionKey key = tunnel.channel.register(selector, SelectionKey.OP_READ, tunnel);
                                 key.interestOps(SelectionKey.OP_READ);
@@ -114,11 +101,6 @@ public class UdpHandler implements Runnable {
             } catch (Exception e) {
                 //TODO: disable log
                 //Log.e(TAG, "error", e);
-                //TODO: jlab. Se crashea si se descomenta
-                //System.exit(0);
-            } finally {
-                //TODO: disable log
-                //Log.d(TAG, "UdpHandler quit");
             }
         }
     }
@@ -129,7 +111,7 @@ public class UdpHandler implements Runnable {
         this.vpnService = vpnService;
     }
 
-    Map<String, DatagramChannel> udpSockets = new HashMap();
+    Map<String, DatagramChannel> udpSockets = new HashMap<>();
 
     private static class UdpTunnel {
         InetSocketAddress local;
@@ -141,18 +123,16 @@ public class UdpHandler implements Runnable {
     public void run() {
         try {
             BlockingQueue<UdpTunnel> tunnelQueue = new ArrayBlockingQueue<>(100);
-            selector = Selector.open();
-            Thread t = new Thread(new UdpDownWorker(selector, networkToDeviceQueue, tunnelQueue));
-            t.start();
+            Selector selector = Selector.open();
+            new Thread(new UdpDownWorker(selector,
+                    networkToDeviceQueue, tunnelQueue)).start();
 
             while (!Thread.interrupted() && isRunning()) {
                 Packet packet = queue.take();
-
                 InetAddress destinationAddress = packet.ip4Header.destinationAddress;
                 Packet.UDPHeader header = packet.udpHeader;
-
+                //TODO: disable log
                 //Log.d(TAG, String.format("get pack %d udp %d ", packet.packId, header.length));
-
                 int destinationPort = header.destinationPort;
                 int sourcePort = header.sourcePort;
                 String ipAndPort = new StringBuilder(destinationAddress.getHostAddress())
@@ -163,17 +143,13 @@ public class UdpHandler implements Runnable {
                     vpnService.protect(outputChannel.socket());
                     outputChannel.socket().bind(null);
                     outputChannel.connect(new InetSocketAddress(destinationAddress, destinationPort));
-
                     outputChannel.configureBlocking(false);
-
                     UdpTunnel tunnel = new UdpTunnel();
                     tunnel.local = new InetSocketAddress(packet.ip4Header.sourceAddress, header.sourcePort);
                     tunnel.remote = new InetSocketAddress(packet.ip4Header.destinationAddress, header.destinationPort);
                     tunnel.channel = outputChannel;
                     tunnelQueue.offer(tunnel);
-
                     selector.wakeup();
-
                     udpSockets.put(ipAndPort, outputChannel);
                 }
 
@@ -182,7 +158,7 @@ public class UdpHandler implements Runnable {
                 try {
                     while (packet.backingBuffer.hasRemaining())
                         outputChannel.write(buffer);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     //TODO: disable log
                     //Log.e(TAG, "udp write error", e);
                     outputChannel.close();
