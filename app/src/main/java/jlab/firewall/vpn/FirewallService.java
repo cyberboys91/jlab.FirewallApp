@@ -97,16 +97,18 @@ public class FirewallService extends VpnService {
     private long downBytesInStart, upBytesInStart, x;
     private static boolean isRunning, isWaiting;
     private ParcelFileDescriptor vpnInterface = null;
-    private BlockingQueue<Packet> deviceToNetworkUDPQueue;
-    private BlockingQueue<Packet> deviceToNetworkTCPQueue;
-    private BlockingQueue<ByteBuffer> networkToDeviceQueue;
-    private ExecutorService executorService;
+    private BlockingQueue<Packet> deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(1000);
+    private BlockingQueue<Packet> deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(1000);
+    private BlockingQueue<ByteBuffer> networkToDeviceQueue = new ArrayBlockingQueue<>(1000);
+    private ExecutorService executorService = Executors.newFixedThreadPool(10);
     private View floatingTrafficDataView;
     private TextView tvFloatingTrafficSpeed, tvFloatingTrafficTotal;
     private WindowManager windowMgr;
     private PackageManager packageManager;
     private boolean refreshTrafficDataAux = false;
-    private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps", CHANNEL_ID;
+    private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps",
+            CHANNEL_ID = String.format("%s.%s", getString(R.string.app_name),
+            getString(R.string.app_list_request));
     private BroadcastReceiver startVpnReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -119,7 +121,7 @@ public class FirewallService extends VpnService {
                         try {
                             vpnInterface.close();
                             stopSelf();
-                        } catch (Exception e) {
+                        }  catch (Exception | OutOfMemoryError e) {
                             //TODO: disable log
                             //e.printStackTrace();
                         }
@@ -242,8 +244,6 @@ public class FirewallService extends VpnService {
             isWaiting = !setupVPN();
             if (!isWaiting)
                 try {
-                    CHANNEL_ID = String.format("%s.%s", getString(R.string.app_name),
-                            getString(R.string.app_list_request));
                     packageManager = getBaseContext().getPackageManager();
                     appMgr = new ApplicationDbManager(getBaseContext());
                     notMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -255,10 +255,6 @@ public class FirewallService extends VpnService {
                             channel.setAllowBubbles(true);
                         notMgr.createNotificationChannel(channel);
                     }
-                    deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(1000);
-                    deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(1000);
-                    networkToDeviceQueue = new ArrayBlockingQueue<>(1000);
-                    executorService = Executors.newFixedThreadPool(10);
                     executorService.submit(new UdpHandler(deviceToNetworkUDPQueue, networkToDeviceQueue, this));
                     executorService.submit(new TcpHandler(deviceToNetworkTCPQueue, networkToDeviceQueue, this));
                     isRunning = true;
@@ -275,7 +271,7 @@ public class FirewallService extends VpnService {
                                 //ignored.printStackTrace();
                                 try {
                                     vpnInterface.close();
-                                } catch (IOException e) {
+                                } catch (IOException | OutOfMemoryError e) {
                                     e.printStackTrace();
                                 } finally {
                                     stopSelf();
@@ -299,7 +295,7 @@ public class FirewallService extends VpnService {
                                     .setLargeIcon(BitmapFactory.decodeResource(getResources(),
                                             R.drawable.icon))
                                     .setContentIntent(getPendingIntentNotificationClicked(0)).build());
-                } catch (Exception e) {
+                }  catch (Exception | OutOfMemoryError e) {
                     //TODO: disable log
                     //Log.e(TAG, "Error starting service", e);
                     LocalBroadcastManager.getInstance(this)
@@ -325,7 +321,7 @@ public class FirewallService extends VpnService {
                             notificationMessage = null;
                             notificationMessageUid = -1;
                         }
-                    } catch (InterruptedException e) {
+                    }  catch (Exception | OutOfMemoryError e) {
                         //TODO: disable log
                         //e.printStackTrace();
                     } finally {
@@ -399,7 +395,7 @@ public class FirewallService extends VpnService {
                     });
                 }
             }
-        } catch (Exception ignored) {
+        }  catch (Exception | OutOfMemoryError ignored) {
             //TODO: disable log
             //ignored.printStackTrace();
         }
@@ -430,7 +426,7 @@ public class FirewallService extends VpnService {
                         .setSession(getPackageName());
                 vpnInterface = builder.establish();
                 return vpnInterface != null;
-            } catch (Exception ignored) {
+            }  catch (Exception | OutOfMemoryError ignored) {
                 //TODO: disable log
                 //ignored.printStackTrace();
             }
@@ -473,7 +469,7 @@ public class FirewallService extends VpnService {
             try {
                 if (floatingTrafficDataView != null)
                     windowMgr.removeViewImmediate(floatingTrafficDataView);
-            } catch (Exception ignored) {
+            }  catch (Exception | OutOfMemoryError ignored) {
                 //TODO: disable log
                 //ignored.printStackTrace();
             }
@@ -483,16 +479,16 @@ public class FirewallService extends VpnService {
             NetConnections.freeCache();
             //TODO: disable log
             //Log.i(TAG, "Stopped");
-        } catch (Exception ignored) {
+        } catch (Exception | OutOfMemoryError ignored) {
             //TODO: disable log
             //ignored.printStackTrace();
         }
     }
 
     private void cleanup() {
-        deviceToNetworkTCPQueue = null;
-        deviceToNetworkUDPQueue = null;
-        networkToDeviceQueue = null;
+        deviceToNetworkTCPQueue.clear();
+        deviceToNetworkUDPQueue.clear();
+        networkToDeviceQueue.clear();
         closeResources(vpnInterface);
         executorService.shutdown();
     }
@@ -501,7 +497,7 @@ public class FirewallService extends VpnService {
         for (Closeable resource : resources) {
             try {
                 resource.close();
-            } catch (Exception e) {
+            }  catch (Exception | OutOfMemoryError e) {
                 // Ignore
             }
         }
@@ -543,7 +539,7 @@ public class FirewallService extends VpnService {
             sort(mapPackageAllowed);
             sort(mapPackageNotified);
             sort(mapPackageInteract);
-        } catch (InterruptedException e) {
+        }  catch (Exception | OutOfMemoryError e) {
             //TODO: disable log
             //e.printStackTrace();
         } finally {
@@ -579,7 +575,7 @@ public class FirewallService extends VpnService {
                             try {
                                 appInfo = packageManager.getApplicationInfo(appDetails
                                         .getPrincipalPackName(), PackageManager.GET_META_DATA);
-                            } catch (Exception e) {
+                            }  catch (Exception | OutOfMemoryError e) {
                                 //TODO: disable log
                                 //e.printStackTrace();
                             }
@@ -594,7 +590,7 @@ public class FirewallService extends VpnService {
                             notificationMessage.setData(bundle);
                         }
                     }
-                } catch (Exception ignored) {
+                }  catch (Exception | OutOfMemoryError ignored) {
                     //TODO: disable log
                     //ignored.printStackTrace();
                 } finally {
@@ -654,7 +650,7 @@ public class FirewallService extends VpnService {
                             getSizeString(upByteSpeed.get(), 0), getSizeString(downByteSpeed.get(), 0));
                     handler.sendEmptyMessage(REFRESH_TRAFFIC_DATA_FLOATING_VIEW);
                     refreshSpeed = !refreshSpeed;
-                } catch (InterruptedException e) {
+                }  catch (Exception | OutOfMemoryError e) {
                     //TODO: disable log
                     //e.printStackTrace();
                 }
@@ -723,7 +719,7 @@ public class FirewallService extends VpnService {
                     } else {
                         try {
                             Thread.sleep(10);
-                        } catch (InterruptedException e) {
+                        }  catch (Exception | OutOfMemoryError e) {
                             //TODO: disable log
                             //e.printStackTrace();
                         }
