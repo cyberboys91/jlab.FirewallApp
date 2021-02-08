@@ -474,14 +474,15 @@ public class FirewallService extends VpnService {
                 //ignored.printStackTrace();
             }
             cleanup();
-            if (notMgr != null)
-                notMgr.cancel(RUNNING_NOTIFICATION);
             NetConnections.freeCache();
             //TODO: disable log
             //Log.i(TAG, "Stopped");
         } catch (Exception | OutOfMemoryError ignored) {
             //TODO: disable log
             //ignored.printStackTrace();
+        } finally {
+            if (notMgr != null)
+                notMgr.cancel(RUNNING_NOTIFICATION);
         }
     }
 
