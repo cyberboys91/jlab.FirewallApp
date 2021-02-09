@@ -23,7 +23,7 @@ public class TcpHandler implements Runnable {
         public long myAcknowledgementNum = 0;
         public long theirAcknowledgementNum = 0;
         public TCBStatus tcbStatus = TCBStatus.SYN_SENT;
-        public BlockingQueue<Packet> tunnelInputQueue = new ArrayBlockingQueue<>(1024);
+        public BlockingQueue<Packet> tunnelInputQueue = new ArrayBlockingQueue<>(100);
         public InetSocketAddress sourceAddress;
         public InetSocketAddress destinationAddress;
         public SocketChannel destSocket;
@@ -324,7 +324,7 @@ public class TcpHandler implements Runnable {
 
         @Override
         public void run() {
-            ByteBuffer buffer = ByteBuffer.allocate(4096);
+            ByteBuffer buffer = ByteBufferPool.acquire();
             boolean closeStream = false;
             try {
                 while (!Thread.interrupted() && isRunning()) {
@@ -371,7 +371,7 @@ public class TcpHandler implements Runnable {
         return tunnel;
     }
 
-    public BlockingQueue<String> tunnelCloseMsgQueue = new ArrayBlockingQueue<>(1024);
+    public BlockingQueue<String> tunnelCloseMsgQueue = new ArrayBlockingQueue<>(100);
 
     @Override
     public void run() {

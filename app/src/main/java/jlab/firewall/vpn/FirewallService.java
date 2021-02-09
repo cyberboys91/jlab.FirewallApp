@@ -97,18 +97,16 @@ public class FirewallService extends VpnService {
     private long downBytesInStart, upBytesInStart, x;
     private static boolean isRunning, isWaiting;
     private ParcelFileDescriptor vpnInterface = null;
-    private BlockingQueue<Packet> deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(1000);
-    private BlockingQueue<Packet> deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(1000);
-    private BlockingQueue<ByteBuffer> networkToDeviceQueue = new ArrayBlockingQueue<>(1000);
+    private BlockingQueue<Packet> deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(100);
+    private BlockingQueue<Packet> deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(100);
+    private BlockingQueue<ByteBuffer> networkToDeviceQueue = new ArrayBlockingQueue<>(100);
     private ExecutorService executorService = Executors.newFixedThreadPool(10);
     private View floatingTrafficDataView;
     private TextView tvFloatingTrafficSpeed, tvFloatingTrafficTotal;
     private WindowManager windowMgr;
     private PackageManager packageManager;
     private boolean refreshTrafficDataAux = false;
-    private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps",
-            CHANNEL_ID = String.format("%s.%s", getString(R.string.app_name),
-            getString(R.string.app_list_request));
+    private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps", CHANNEL_ID;
     private BroadcastReceiver startVpnReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -232,6 +230,19 @@ public class FirewallService extends VpnService {
     public void onCreate() {
         super.onCreate();
         loadAddress();
+        CHANNEL_ID = String.format("%s.%s", getString(R.string.app_name),
+                getString(R.string.app_list_request));
+        packageManager = getBaseContext().getPackageManager();
+        appMgr = new ApplicationDbManager(getBaseContext());
+        notMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                    getString(R.string.notified), NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription("");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                channel.setAllowBubbles(true);
+            notMgr.createNotificationChannel(channel);
+        }
         startIfCan();
         IntentFilter intentFilter = new IntentFilter(START_VPN_ACTION);
         intentFilter.addAction(STOP_VPN_ACTION);
@@ -244,17 +255,6 @@ public class FirewallService extends VpnService {
             isWaiting = !setupVPN();
             if (!isWaiting)
                 try {
-                    packageManager = getBaseContext().getPackageManager();
-                    appMgr = new ApplicationDbManager(getBaseContext());
-                    notMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                                getString(R.string.notified), NotificationManager.IMPORTANCE_DEFAULT);
-                        channel.setDescription("");
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-                            channel.setAllowBubbles(true);
-                        notMgr.createNotificationChannel(channel);
-                    }
                     executorService.submit(new UdpHandler(deviceToNetworkUDPQueue, networkToDeviceQueue, this));
                     executorService.submit(new TcpHandler(deviceToNetworkTCPQueue, networkToDeviceQueue, this));
                     isRunning = true;
@@ -324,6 +324,7 @@ public class FirewallService extends VpnService {
                     }  catch (Exception | OutOfMemoryError e) {
                         //TODO: disable log
                         //e.printStackTrace();
+                        System.gc();
                     } finally {
                         mutexNotificator.release();
                     }
@@ -654,6 +655,7 @@ public class FirewallService extends VpnService {
                 }  catch (Exception | OutOfMemoryError e) {
                     //TODO: disable log
                     //e.printStackTrace();
+                    System.gc();
                 }
             }
         }
