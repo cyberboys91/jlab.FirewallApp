@@ -97,9 +97,9 @@ public class FirewallService extends VpnService {
     private long downBytesInStart, upBytesInStart, x;
     private static boolean isRunning, isWaiting;
     private ParcelFileDescriptor vpnInterface = null;
-    private BlockingQueue<Packet> deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(100);
-    private BlockingQueue<Packet> deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(100);
-    private BlockingQueue<ByteBuffer> networkToDeviceQueue = new ArrayBlockingQueue<>(100);
+    private BlockingQueue<Packet> deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(1000);
+    private BlockingQueue<Packet> deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(1000);
+    private BlockingQueue<ByteBuffer> networkToDeviceQueue = new ArrayBlockingQueue<>(1000);
     private ExecutorService executorService = Executors.newFixedThreadPool(10);
     private View floatingTrafficDataView;
     private TextView tvFloatingTrafficSpeed, tvFloatingTrafficTotal;

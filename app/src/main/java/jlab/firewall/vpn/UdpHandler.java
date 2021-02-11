@@ -1,6 +1,7 @@
 package jlab.firewall.vpn;
 
 import android.net.VpnService;
+import android.util.Log;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -15,32 +16,44 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import static jlab.firewall.vpn.FirewallService.isRunning;
 
 /**
  *
  */
 public class UdpHandler implements Runnable {
-    VpnService vpnService;
+
     BlockingQueue<Packet> queue;
+
     BlockingQueue<ByteBuffer> networkToDeviceQueue;
+    VpnService vpnService;
+
+    private Selector selector;
     private static final int HEADER_SIZE = Packet.IP4_HEADER_SIZE + Packet.UDP_HEADER_SIZE;
 
     private static class UdpDownWorker implements Runnable {
+
         BlockingQueue<ByteBuffer> networkToDeviceQueue;
         BlockingQueue<UdpTunnel> tunnelQueue;
         Selector selector;
+
         private static AtomicInteger ipId = new AtomicInteger();
 
-        private void sendUdpPack(UdpTunnel tunnel, byte[] data) {
+        private void sendUdpPack(UdpTunnel tunnel, byte[] data) throws IOException {
             int dataLen = 0;
-            if (data != null)
+            if (data != null) {
                 dataLen = data.length;
+            }
             Packet packet = IpUtil.buildUdpPacket(tunnel.remote, tunnel.local, ipId.addAndGet(1));
+
             ByteBuffer byteBuffer = ByteBufferPool.acquire();
+            //
             byteBuffer.position(HEADER_SIZE);
-            if (data != null)
+            if (data != null) {
+                if (byteBuffer.remaining() < data.length) {
+                    System.currentTimeMillis();
+                }
                 byteBuffer.put(data);
+            }
             packet.updateUDPBuffer(byteBuffer, dataLen);
             byteBuffer.position(HEADER_SIZE + dataLen);
             this.networkToDeviceQueue.offer(byteBuffer);
@@ -56,19 +69,19 @@ public class UdpHandler implements Runnable {
         @Override
         public void run() {
             try {
-                while (!Thread.interrupted() && isRunning()) {
+                while (true) {
                     int readyChannels = selector.select();
-                    while (!Thread.interrupted() && isRunning()) {
+                    while (true) {
                         UdpTunnel tunnel = tunnelQueue.poll();
-                        if (tunnel == null)
+                        if (tunnel == null) {
                             break;
-                        else {
+                        } else {
                             try {
                                 SelectionKey key = tunnel.channel.register(selector, SelectionKey.OP_READ, tunnel);
                                 key.interestOps(SelectionKey.OP_READ);
+                                boolean isvalid = key.isValid();
                             } catch (IOException e) {
-                                //TODO: disable log
-                                //Log.d(TAG, "register fail", e);
+                                Log.d(TAG, "register fail", e);
                             }
                         }
                     }
@@ -84,24 +97,29 @@ public class UdpHandler implements Runnable {
                         if (key.isValid() && key.isReadable()) {
                             try {
                                 DatagramChannel inputChannel = (DatagramChannel) key.channel();
+
                                 ByteBuffer receiveBuffer = ByteBufferPool.acquire();
                                 inputChannel.read(receiveBuffer);
                                 receiveBuffer.flip();
+
                                 byte[] data = new byte[receiveBuffer.remaining()];
                                 receiveBuffer.get(data);
-                                UdpTunnel tunnel = (UdpTunnel) key.attachment();
-                                sendUdpPack(tunnel, data);
+                                sendUdpPack((UdpTunnel) key.attachment(), data);
                             } catch (IOException e) {
-                                //TODO: disable log
-                                //Log.e(TAG, "error", e);
+                                Log.e(TAG, "error", e);
                             }
+
                         }
                     }
                 }
             } catch (Exception e) {
-                //TODO: disable log
-                //Log.e(TAG, "error", e);
+                Log.e(TAG, "error", e);
+                System.exit(0);
+            } finally {
+                Log.d(TAG, "BioUdpHandler quit");
             }
+
+
         }
     }
 
@@ -111,45 +129,55 @@ public class UdpHandler implements Runnable {
         this.vpnService = vpnService;
     }
 
-    Map<String, DatagramChannel> udpSockets = new HashMap<>();
+    private static final String TAG = UdpHandler.class.getSimpleName();
+
+
+    Map<String, DatagramChannel> udpSockets = new HashMap();
+
 
     private static class UdpTunnel {
         InetSocketAddress local;
         InetSocketAddress remote;
         DatagramChannel channel;
+
     }
 
     @Override
     public void run() {
         try {
             BlockingQueue<UdpTunnel> tunnelQueue = new ArrayBlockingQueue<>(100);
-            Selector selector = Selector.open();
-            new Thread(new UdpDownWorker(selector,
-                    networkToDeviceQueue, tunnelQueue)).start();
+            selector = Selector.open();
+            Thread t = new Thread(new UdpDownWorker(selector, networkToDeviceQueue, tunnelQueue));
+            t.start();
 
-            while (!Thread.interrupted() && isRunning()) {
+
+            while (true) {
                 Packet packet = queue.take();
+
                 InetAddress destinationAddress = packet.ip4Header.destinationAddress;
                 Packet.UDPHeader header = packet.udpHeader;
-                //TODO: disable log
+
                 //Log.d(TAG, String.format("get pack %d udp %d ", packet.packId, header.length));
+
                 int destinationPort = header.destinationPort;
                 int sourcePort = header.sourcePort;
-                String ipAndPort = new StringBuilder(destinationAddress.getHostAddress())
-                        .append(":").append(destinationPort)
-                        .append(":").append(sourcePort).toString();
+                String ipAndPort = destinationAddress.getHostAddress() + ":" + destinationPort + ":" + sourcePort;
                 if (!udpSockets.containsKey(ipAndPort)) {
                     DatagramChannel outputChannel = DatagramChannel.open();
                     vpnService.protect(outputChannel.socket());
                     outputChannel.socket().bind(null);
                     outputChannel.connect(new InetSocketAddress(destinationAddress, destinationPort));
+
                     outputChannel.configureBlocking(false);
+
                     UdpTunnel tunnel = new UdpTunnel();
                     tunnel.local = new InetSocketAddress(packet.ip4Header.sourceAddress, header.sourcePort);
                     tunnel.remote = new InetSocketAddress(packet.ip4Header.destinationAddress, header.destinationPort);
                     tunnel.channel = outputChannel;
                     tunnelQueue.offer(tunnel);
+
                     selector.wakeup();
+
                     udpSockets.put(ipAndPort, outputChannel);
                 }
 
@@ -158,19 +186,15 @@ public class UdpHandler implements Runnable {
                 try {
                     while (packet.backingBuffer.hasRemaining())
                         outputChannel.write(buffer);
-                } catch (Exception e) {
-                    //TODO: disable log
-                    //Log.e(TAG, "udp write error", e);
+                } catch (IOException e) {
+                    Log.e(TAG, "udp write error", e);
                     outputChannel.close();
                     udpSockets.remove(ipAndPort);
-                    NetConnections.removeFromCache(ipAndPort);
                 }
             }
         } catch (Exception e) {
-            //TODO: disable log
-            //Log.e(TAG, "error", e);
-            //TODO: jlab. Se crashea
-            //System.exit(0);
+            Log.e(TAG, "error", e);
+            System.exit(0);
         }
     }
 }

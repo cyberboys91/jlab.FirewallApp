@@ -15,7 +15,6 @@ public class IpUtil {
         ip4Header.headerChecksum = 0;
         ip4Header.headerLength = 20;
 
-        //int ipId=0;
         int ipFlag = 0x40;
         int ipOff = 0;
 
@@ -42,7 +41,8 @@ public class IpUtil {
         packet.backingBuffer = byteBuffer;
         return packet;
     }
-    public static Packet buildTcpPacket(InetSocketAddress source, InetSocketAddress dest, byte flag, long ack, long seq, int ipId) {
+    public static Packet buildTcpPacket(InetSocketAddress source, InetSocketAddress dest, byte flag,
+                                        long ack, long seq, int ipId) {
         Packet packet = new Packet();
         packet.isTCP = true;
         packet.isUDP = false;
@@ -53,7 +53,6 @@ public class IpUtil {
         ip4Header.headerChecksum = 0;
         ip4Header.headerLength = 20;
 
-        //int ipId=0;
         int ipFlag = 0x40;
         int ipOff = 0;
 
