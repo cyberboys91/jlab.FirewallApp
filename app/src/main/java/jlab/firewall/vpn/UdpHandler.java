@@ -80,7 +80,7 @@ public class UdpHandler implements Runnable {
                                 SelectionKey key = tunnel.channel.register(selector, SelectionKey.OP_READ, tunnel);
                                 key.interestOps(SelectionKey.OP_READ);
                                 boolean isvalid = key.isValid();
-                            } catch (IOException e) {
+                            } catch (Exception | OutOfMemoryError e) {
                                 Log.d(TAG, "register fail", e);
                             }
                         }
@@ -105,18 +105,18 @@ public class UdpHandler implements Runnable {
                                 byte[] data = new byte[receiveBuffer.remaining()];
                                 receiveBuffer.get(data);
                                 sendUdpPack((UdpTunnel) key.attachment(), data);
-                            } catch (IOException e) {
+                            } catch (Exception | OutOfMemoryError e) {
                                 Log.e(TAG, "error", e);
                             }
 
                         }
                     }
                 }
-            } catch (Exception e) {
+            } catch (Exception | OutOfMemoryError e) {
                 Log.e(TAG, "error", e);
                 System.exit(0);
             } finally {
-                Log.d(TAG, "BioUdpHandler quit");
+                Log.d(TAG, "UdpHandler quit");
             }
 
 
@@ -175,9 +175,7 @@ public class UdpHandler implements Runnable {
                     tunnel.remote = new InetSocketAddress(packet.ip4Header.destinationAddress, header.destinationPort);
                     tunnel.channel = outputChannel;
                     tunnelQueue.offer(tunnel);
-
                     selector.wakeup();
-
                     udpSockets.put(ipAndPort, outputChannel);
                 }
 
@@ -186,13 +184,13 @@ public class UdpHandler implements Runnable {
                 try {
                     while (packet.backingBuffer.hasRemaining())
                         outputChannel.write(buffer);
-                } catch (IOException e) {
+                } catch (Exception | OutOfMemoryError e) {
                     Log.e(TAG, "udp write error", e);
                     outputChannel.close();
                     udpSockets.remove(ipAndPort);
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception | OutOfMemoryError e) {
             Log.e(TAG, "error", e);
             System.exit(0);
         }

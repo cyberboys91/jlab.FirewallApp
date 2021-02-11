@@ -125,7 +125,7 @@ public class TcpHandler implements Runnable {
                 tunnel.destSocket = remote;
 
                 startDownStream();
-            } catch (Exception e) {
+            } catch (Exception | OutOfMemoryError e) {
                 Log.e(TAG, e.getMessage(), e);
                 throw new ProxyException("connectRemote fail" + tunnel.destinationAddress.toString());
             }
@@ -209,7 +209,7 @@ public class TcpHandler implements Runnable {
                     }
 
                 }
-            } catch (IOException e) {
+            } catch (Exception | OutOfMemoryError e) {
                 Log.e(TAG, "close error", e);
             }
 
@@ -249,11 +249,8 @@ public class TcpHandler implements Runnable {
                             handleAck(packet);
                         }
                     }
-                } catch (InterruptedException e) {
+                } catch (Exception | OutOfMemoryError  e) {
                     e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return;
                 }
             }
             Log.i(TAG, String.format("UpStreamWorker quit"));
@@ -264,9 +261,7 @@ public class TcpHandler implements Runnable {
             try {
                 connectRemote();
                 loop();
-            } catch (ProxyException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
+            } catch (Exception | OutOfMemoryError e) {
                 e.printStackTrace();
             }
         }
@@ -288,7 +283,7 @@ public class TcpHandler implements Runnable {
                         tunnel.destSocket = null;
                     }
                 }
-            } catch (Exception e) {
+            } catch (Exception | OutOfMemoryError e) {
                 e.printStackTrace();
             }
             sendTcpPack(tunnel, (byte) (Packet.TCPHeader.FIN | Packet.TCPHeader.ACK), null);
@@ -312,7 +307,7 @@ public class TcpHandler implements Runnable {
                     }
                 }
 
-            } catch (Exception e) {
+            } catch (Exception | OutOfMemoryError e) {
                 e.printStackTrace();
             }
             Log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
@@ -331,7 +326,7 @@ public class TcpHandler implements Runnable {
                     tunnel.destSocket.close();
                     tunnel.destSocket = null;
                 }
-            } catch (Exception e) {
+            } catch (Exception | OutOfMemoryError e) {
                 e.printStackTrace();
             }
             sendTcpPack(tunnel, (byte) Packet.TCPHeader.RST, null);
@@ -349,9 +344,9 @@ public class TcpHandler implements Runnable {
 
         @Override
         public void run() {
-            ByteBuffer buffer = ByteBuffer.allocate(4 * 1024);
+            ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-            String quitType = "rst";
+            boolean isRstQuitType = true;
 
             try {
                 while (true) {
@@ -363,9 +358,10 @@ public class TcpHandler implements Runnable {
 
                     synchronized (tunnel) {
                         if (n == -1) {
-                            quitType = "fin";
+                            isRstQuitType = false;
                             break;
-                        } else {
+                        }
+                        else {
                             if (tunnel.tcbStatus != TCBStatus.CLOSE_WAIT) {
                                 buffer.flip();
                                 byte[] data = new byte[buffer.remaining()];
@@ -377,26 +373,20 @@ public class TcpHandler implements Runnable {
                 }
             } catch (ClosedChannelException e) {
                 Log.w(TAG, String.format("channel closed %s", e.getMessage()));
-                quitType = "rst";
+                isRstQuitType = true;
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage(), e);
-                quitType = "rst";
-            } catch (Exception e) {
-                quitType = "rst";
+                isRstQuitType = true;
+            } catch (Exception | OutOfMemoryError e) {
+                isRstQuitType = true;
                 Log.e(TAG, "DownStreamWorker fail", e);
             }
-            //Log.i(TAG, String.format("DownStreamWorker quit %d", tunnel.tunnelId));
             synchronized (tunnel) {
-                if (quitType.equals("fin")) {
+                if (!isRstQuitType)
                     closeDownStream(tunnel);
-                    //closeUpStream(tunnel);
-                    //closeRst(tunnel);
-                } else if (quitType.equals("rst")) {
+                else
                     closeRst(tunnel);
-                }
-
             }
-
         }
     }
 
@@ -425,7 +415,6 @@ public class TcpHandler implements Runnable {
                 InetAddress destinationAddress = currentPacket.ip4Header.destinationAddress;
 
                 Packet.TCPHeader tcpHeader = currentPacket.tcpHeader;
-                //Log.d(TAG, String.format("get pack %d tcp " + tcpHeader.printSimple() + " ", currentPacket.packId));
 
                 int destinationPort = tcpHeader.destinationPort;
                 int sourcePort = tcpHeader.sourcePort;
@@ -442,16 +431,14 @@ public class TcpHandler implements Runnable {
                     }
                 }
 
-
                 if (!tunnels.containsKey(ipAndPort)) {
                     TcpTunnel tcpTunnel = initTunnel(currentPacket);
                     tcpTunnel.tunnelKey = ipAndPort;
                     tunnels.put(ipAndPort, tcpTunnel);
                 }
                 TcpTunnel tcpTunnel = tunnels.get(ipAndPort);
-                //
                 tcpTunnel.tunnelInputQueue.offer(currentPacket);
-            } catch (Exception e) {
+            } catch (Exception | OutOfMemoryError e) {
                 e.printStackTrace();
             }
         }
