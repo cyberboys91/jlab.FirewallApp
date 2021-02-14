@@ -255,9 +255,9 @@ public class FirewallService extends VpnService {
             isWaiting = !setupVPN();
             if (!isWaiting)
                 try {
+                    isRunning = true;
                     executorService.submit(new UdpHandler(deviceToNetworkUDPQueue, networkToDeviceQueue, this));
                     executorService.submit(new TcpHandler(deviceToNetworkTCPQueue, networkToDeviceQueue, this));
-                    isRunning = true;
 
                     new Thread(new Runnable() {
                         @Override

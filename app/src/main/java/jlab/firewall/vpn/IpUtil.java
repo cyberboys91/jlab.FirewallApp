@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
 public class IpUtil {
+
     public static Packet buildUdpPacket(InetSocketAddress source, InetSocketAddress dest, int ipId) {
         Packet packet = new Packet();
         packet.isTCP = false;
@@ -33,14 +34,15 @@ public class IpUtil {
         udpHeader.destinationPort = dest.getPort();
         udpHeader.length = 0;
 
-        ByteBuffer byteBuffer = ByteBufferPool.acquire();
-        byteBuffer.flip();
+//        ByteBuffer byteBuffer = ByteBufferPool.acquire();
+//        byteBuffer.flip();
 
         packet.ip4Header = ip4Header;
         packet.udpHeader = udpHeader;
-        packet.backingBuffer = byteBuffer;
+//        packet.backingBuffer = byteBuffer;
         return packet;
     }
+
     public static Packet buildTcpPacket(InetSocketAddress source, InetSocketAddress dest, byte flag,
                                         long ack, long seq, int ipId) {
         Packet packet = new Packet();
@@ -79,12 +81,12 @@ public class IpUtil {
         tcpHeader.urgentPointer = 0;
         tcpHeader.window = 65535;
 
-        ByteBuffer byteBuffer = ByteBufferPool.acquire();
-        byteBuffer.flip();
+//        ByteBuffer byteBuffer = ByteBufferPool.acquire();
+//        byteBuffer.flip();
 
         packet.ip4Header = ip4Header;
         packet.tcpHeader = tcpHeader;
-        packet.backingBuffer = byteBuffer;
+//        packet.backingBuffer = byteBuffer;
         return packet;
     }
 }

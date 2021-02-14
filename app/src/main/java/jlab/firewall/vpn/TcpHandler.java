@@ -2,24 +2,24 @@ package jlab.firewall.vpn;
 
 import android.net.VpnService;
 import android.os.Build;
-import android.util.Log;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static jlab.firewall.vpn.FirewallService.isRunning;
+
 public class TcpHandler implements Runnable {
 
     BlockingQueue<Packet> queue;
 
     ConcurrentHashMap<String, TcpTunnel> tunnels = new ConcurrentHashMap();
-
 
     private static int HEADER_SIZE = Packet.IP4_HEADER_SIZE + Packet.TCP_HEADER_SIZE;
 
@@ -34,7 +34,7 @@ public class TcpHandler implements Runnable {
         public long theirAcknowledgementNum = 0;
 
         public TCBStatus tcbStatus = TCBStatus.SYN_SENT;
-        public BlockingQueue<Packet> tunnelInputQueue = new ArrayBlockingQueue<Packet>(1024);
+        public BlockingQueue<Packet> tunnelInputQueue = new ArrayBlockingQueue<>(1024);
         public InetSocketAddress sourceAddress;
         public InetSocketAddress destinationAddress;
         public SocketChannel destSocket;
@@ -69,7 +69,7 @@ public class TcpHandler implements Runnable {
         }
         Packet packet = IpUtil.buildTcpPacket(tunnel.destinationAddress, tunnel.sourceAddress, flag,
                 tunnel.myAcknowledgementNum, tunnel.mySequenceNum, tunnel.packId);
-        tunnel.packId += 1;
+        tunnel.packId++;
         ByteBuffer byteBuffer = ByteBufferPool.acquire();
         //
         byteBuffer.position(HEADER_SIZE);
@@ -106,8 +106,7 @@ public class TcpHandler implements Runnable {
 
 
         private void startDownStream() {
-            Thread t = new Thread(new DownStreamWorker(tunnel));
-            t.start();
+            new Thread(new DownStreamWorker(tunnel)).start();
         }
 
         private void connectRemote() {
@@ -117,17 +116,19 @@ public class TcpHandler implements Runnable {
                 tunnel.vpnService.protect(remote.socket());
                 InetSocketAddress address = tunnel.destinationAddress;
 
-                Long ts = System.currentTimeMillis();
-                remote.socket().connect(address, 5000);
-                Long te = System.currentTimeMillis();
+//                Long ts = System.currentTimeMillis();
+                remote.socket().connect(address, 10000);
+//                Long te = System.currentTimeMillis();
 
-                Log.i(TAG, String.format("connectRemote %d cost %d  remote %s", tunnel.tunnelId, te - ts, tunnel.destinationAddress.toString()));
+                //TODO: disable log
+                //log.i(TAG, String.format("connectRemote %d cost %d  remote %s", tunnel.tunnelId, te - ts, tunnel.destinationAddress.toString()));
                 tunnel.destSocket = remote;
 
                 startDownStream();
             } catch (Exception | OutOfMemoryError e) {
-                Log.e(TAG, e.getMessage(), e);
-                throw new ProxyException("connectRemote fail" + tunnel.destinationAddress.toString());
+                //TODO: disable log
+                //log.e(TAG, e.getMessage(), e);
+                throw new ConnectionException("connectRemote fail" + tunnel.destinationAddress.toString());
             }
         }
 
@@ -138,7 +139,8 @@ public class TcpHandler implements Runnable {
             if (tunnel.tcbStatus == TCBStatus.SYN_SENT) {
                 tunnel.tcbStatus = TCBStatus.SYN_RECEIVED;
             }
-            Log.i(TAG, String.format("handleSyn  %d %d", tunnel.tunnelId, packet.packId));
+            //TODO: disable log
+            //log.i(TAG, String.format("handleSyn  %d %d", tunnel.tunnelId, packet.packId));
             Packet.TCPHeader tcpHeader = packet.tcpHeader;
             if (synCount == 0) {
                 tunnel.mySequenceNum = 1;
@@ -162,17 +164,14 @@ public class TcpHandler implements Runnable {
 
         private void handleAck(Packet packet) throws IOException {
 
-            if (tunnel.tcbStatus == TCBStatus.SYN_RECEIVED) {
+            if (tunnel.tcbStatus == TCBStatus.SYN_RECEIVED)
                 tunnel.tcbStatus = TCBStatus.ESTABLISHED;
-
-            }
 
             Packet.TCPHeader tcpHeader = packet.tcpHeader;
             int payloadSize = packet.backingBuffer.remaining();
 
-            if (payloadSize == 0) {
+            if (payloadSize == 0)
                 return;
-            }
 
             long newAck = tcpHeader.sequenceNumber + payloadSize;
             if (newAck <= tunnel.myAcknowledgementNum)
@@ -190,7 +189,8 @@ public class TcpHandler implements Runnable {
         }
 
         private void handleFin(Packet packet) {
-            Log.i(TAG, String.format("handleFin %d", tunnel.tunnelId));
+            //TODO: disable log
+            //log.i(TAG, String.format("handleFin %d", tunnel.tunnelId));
             tunnel.myAcknowledgementNum = packet.tcpHeader.sequenceNumber + 1;
             tunnel.theirAcknowledgementNum = packet.tcpHeader.acknowledgementNumber;
             sendTcpPack(tunnel, (byte) (Packet.TCPHeader.ACK), null);
@@ -201,32 +201,37 @@ public class TcpHandler implements Runnable {
         }
 
         private void handleRst(Packet packet) {
-            Log.i(TAG, String.format("handleRst %d", tunnel.tunnelId));
+            //TODO: disable log
+            //log.i(TAG, String.format("handleRst %d", tunnel.tunnelId));
             try {
                 synchronized (tunnel) {
-                    if (tunnel.destSocket != null) {
+                    if (tunnel.destSocket != null)
                         tunnel.destSocket.close();
-                    }
-
                 }
             } catch (Exception | OutOfMemoryError e) {
-                Log.e(TAG, "close error", e);
+                //TODO: disable log
+                //log.e(TAG, "close error", e);
             }
 
             synchronized (tunnel) {
                 tunnel.upActive = false;
                 tunnel.downActive = false;
                 tunnel.tcbStatus = TCBStatus.CLOSE_WAIT;
+                NetConnections.removeFromCache(new StringBuilder(tunnel.destinationAddress
+                        .getAddress().getHostAddress()).append(":")
+                        .append(tunnel.destinationAddress.getPort()).append(":")
+                        .append(tunnel.sourceAddress.getPort()).toString());
             }
         }
 
 
         private void loop() {
-            while (true) {
+            while (!Thread.interrupted() && isRunning()) {
                 Packet packet = null;
                 try {
                     packet = tunnel.tunnelInputQueue.take();
 
+                    //TODO: disable log
                     //Log.i(TAG, "lastIdentification " + tunnel.lastIdentification);
                     synchronized (tunnel) {
                         boolean end = false;
@@ -250,10 +255,12 @@ public class TcpHandler implements Runnable {
                         }
                     }
                 } catch (Exception | OutOfMemoryError  e) {
-                    e.printStackTrace();
+                    //TODO: disable log
+                    //e.printStackTrace();
                 }
             }
-            Log.i(TAG, String.format("UpStreamWorker quit"));
+            //TODO: disable log
+            //log.i(TAG, String.format("UpStreamWorker quit"));
         }
 
         @Override
@@ -262,7 +269,8 @@ public class TcpHandler implements Runnable {
                 connectRemote();
                 loop();
             } catch (Exception | OutOfMemoryError e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
         }
     }
@@ -273,30 +281,36 @@ public class TcpHandler implements Runnable {
 
     private static void closeDownStream(TcpTunnel tunnel) {
         synchronized (tunnel) {
-            Log.i(TAG, String.format("closeDownStream %d", tunnel.tunnelId));
+            //TODO: disable log
+            //log.i(TAG, String.format("closeDownStream %d", tunnel.tunnelId));
             try {
                 if (tunnel.destSocket != null && tunnel.destSocket.isOpen()) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                         tunnel.destSocket.shutdownInput();
-                    } else {
+                    else {
                         tunnel.destSocket.close();
                         tunnel.destSocket = null;
                     }
                 }
             } catch (Exception | OutOfMemoryError e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
             sendTcpPack(tunnel, (byte) (Packet.TCPHeader.FIN | Packet.TCPHeader.ACK), null);
             tunnel.downActive = false;
             if (isClosedTunnel(tunnel)) {
                 tunnel.tunnelCloseMsgQueue.add(tunnel.tunnelKey);
+                NetConnections.removeFromCache(new StringBuilder(tunnel.destinationAddress.getAddress().getHostAddress()).append(":")
+                        .append(tunnel.destinationAddress.getPort()).append(":")
+                        .append(tunnel.sourceAddress.getPort()).toString());
             }
         }
     }
 
     private static void closeUpStream(TcpTunnel tunnel) {
         synchronized (tunnel) {
-            Log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
+            //TODO: disable log
+            //log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
             try {
                 if (tunnel.destSocket != null && tunnel.destSocket.isOpen()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -308,30 +322,40 @@ public class TcpHandler implements Runnable {
                 }
 
             } catch (Exception | OutOfMemoryError e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
-            Log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
+            //TODO: disable log
+            //log.i(TAG, String.format("closeUpStream %d", tunnel.tunnelId));
             tunnel.upActive = false;
             if (isClosedTunnel(tunnel)) {
                 tunnel.tunnelCloseMsgQueue.add(tunnel.tunnelKey);
+                NetConnections.removeFromCache(new StringBuilder(tunnel.destinationAddress.getAddress().getHostAddress()).append(":")
+                        .append(tunnel.destinationAddress.getPort()).append(":")
+                        .append(tunnel.sourceAddress.getPort()).toString());
             }
         }
     }
 
     private static void closeRst(TcpTunnel tunnel) {
         synchronized (tunnel) {
-            Log.i(TAG, String.format("closeRst %d", tunnel.tunnelId));
+            //TODO: disable log
+            //log.i(TAG, String.format("closeRst %d", tunnel.tunnelId));
             try {
                 if (tunnel.destSocket != null && tunnel.destSocket.isOpen()) {
                     tunnel.destSocket.close();
                     tunnel.destSocket = null;
                 }
             } catch (Exception | OutOfMemoryError e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
             sendTcpPack(tunnel, (byte) Packet.TCPHeader.RST, null);
             tunnel.upActive = false;
             tunnel.downActive = false;
+            NetConnections.removeFromCache(new StringBuilder(tunnel.destinationAddress.getAddress().getHostAddress()).append(":")
+                    .append(tunnel.destinationAddress.getPort()).append(":")
+                    .append(tunnel.sourceAddress.getPort()).toString());
         }
     }
 
@@ -344,15 +368,15 @@ public class TcpHandler implements Runnable {
 
         @Override
         public void run() {
-            ByteBuffer buffer = ByteBuffer.allocate(4096);
+            ByteBuffer buffer = ByteBufferPool.acquire();
 
             boolean isRstQuitType = true;
 
             try {
-                while (true) {
+                while (!Thread.interrupted() && isRunning()) {
                     buffer.clear();
                     if (tunnel.destSocket == null) {
-                        throw new ProxyException("tunnel maybe closed");
+                        throw new ConnectionException("tunnel maybe closed");
                     }
                     int n = tunnel.destSocket.read(buffer);
 
@@ -371,15 +395,9 @@ public class TcpHandler implements Runnable {
                         }
                     }
                 }
-            } catch (ClosedChannelException e) {
-                Log.w(TAG, String.format("channel closed %s", e.getMessage()));
-                isRstQuitType = true;
-            } catch (IOException e) {
-                Log.e(TAG, e.getMessage(), e);
-                isRstQuitType = true;
             } catch (Exception | OutOfMemoryError e) {
-                isRstQuitType = true;
-                Log.e(TAG, "DownStreamWorker fail", e);
+                //TODO: disable log
+                //e.printStackTrace();
             }
             synchronized (tunnel) {
                 if (!isRstQuitType)
@@ -397,8 +415,7 @@ public class TcpHandler implements Runnable {
         tunnel.vpnService = vpnService;
         tunnel.networkToDeviceQueue = networkToDeviceQueue;
         tunnel.tunnelCloseMsgQueue = tunnelCloseMsgQueue;
-        Thread t = new Thread(new UpStreamWorker(tunnel));
-        t.start();
+        new Thread(new UpStreamWorker(tunnel)).start();
 
         return tunnel;
     }
@@ -408,7 +425,7 @@ public class TcpHandler implements Runnable {
     @Override
     public void run() {
 
-        while (true) {
+        while (!Thread.interrupted() && isRunning()) {
             try {
                 Packet currentPacket = queue.take();
 
@@ -418,16 +435,18 @@ public class TcpHandler implements Runnable {
 
                 int destinationPort = tcpHeader.destinationPort;
                 int sourcePort = tcpHeader.sourcePort;
-                String ipAndPort = destinationAddress.getHostAddress() + ":" +
-                        destinationPort + ":" + sourcePort;
+                String ipAndPort = new StringBuilder(destinationAddress.getHostAddress()).append(":")
+                        .append(destinationPort).append(":").append(sourcePort).toString();
 
-                while (true) {
+                while (!Thread.interrupted() && isRunning()) {
                     String s = this.tunnelCloseMsgQueue.poll();
                     if (s == null) {
                         break;
                     } else {
                         tunnels.remove(ipAndPort);
-                        Log.i(TAG, String.format("remove tunnel %s", ipAndPort));
+                        NetConnections.removeFromCache(ipAndPort);
+                        //TODO: disable log
+                        //log.i(TAG, String.format("remove tunnel %s", ipAndPort));
                     }
                 }
 
@@ -439,7 +458,8 @@ public class TcpHandler implements Runnable {
                 TcpTunnel tcpTunnel = tunnels.get(ipAndPort);
                 tcpTunnel.tunnelInputQueue.offer(currentPacket);
             } catch (Exception | OutOfMemoryError e) {
-                e.printStackTrace();
+                //TODO: disable log
+                //e.printStackTrace();
             }
         }
     }

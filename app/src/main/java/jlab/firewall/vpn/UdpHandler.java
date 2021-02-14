@@ -17,9 +17,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- *
- */
+import static jlab.firewall.vpn.FirewallService.isRunning;
+
 public class UdpHandler implements Runnable {
 
     BlockingQueue<Packet> queue;
@@ -69,9 +68,9 @@ public class UdpHandler implements Runnable {
         @Override
         public void run() {
             try {
-                while (true) {
+                while (!Thread.interrupted() && isRunning()) {
                     int readyChannels = selector.select();
-                    while (true) {
+                    while (!Thread.interrupted() && isRunning()) {
                         UdpTunnel tunnel = tunnelQueue.poll();
                         if (tunnel == null) {
                             break;
@@ -81,7 +80,7 @@ public class UdpHandler implements Runnable {
                                 key.interestOps(SelectionKey.OP_READ);
                                 boolean isvalid = key.isValid();
                             } catch (Exception | OutOfMemoryError e) {
-                                Log.d(TAG, "register fail", e);
+                                //log.d(TAG, "register fail", e);
                             }
                         }
                     }
@@ -106,20 +105,19 @@ public class UdpHandler implements Runnable {
                                 receiveBuffer.get(data);
                                 sendUdpPack((UdpTunnel) key.attachment(), data);
                             } catch (Exception | OutOfMemoryError e) {
-                                Log.e(TAG, "error", e);
+                                //log.e(TAG, "error", e);
                             }
 
                         }
                     }
                 }
             } catch (Exception | OutOfMemoryError e) {
-                Log.e(TAG, "error", e);
-                System.exit(0);
+                //TODO: disable log
+                //log.e(TAG, "error", e);
+                //System.exit(0);
             } finally {
-                Log.d(TAG, "UdpHandler quit");
+                //log.d(TAG, "UdpHandler quit");
             }
-
-
         }
     }
 
@@ -131,15 +129,12 @@ public class UdpHandler implements Runnable {
 
     private static final String TAG = UdpHandler.class.getSimpleName();
 
-
     Map<String, DatagramChannel> udpSockets = new HashMap();
-
 
     private static class UdpTunnel {
         InetSocketAddress local;
         InetSocketAddress remote;
         DatagramChannel channel;
-
     }
 
     @Override
@@ -147,11 +142,9 @@ public class UdpHandler implements Runnable {
         try {
             BlockingQueue<UdpTunnel> tunnelQueue = new ArrayBlockingQueue<>(100);
             selector = Selector.open();
-            Thread t = new Thread(new UdpDownWorker(selector, networkToDeviceQueue, tunnelQueue));
-            t.start();
+            new Thread(new UdpDownWorker(selector, networkToDeviceQueue, tunnelQueue)).start();
 
-
-            while (true) {
+            while (!Thread.interrupted() && isRunning()) {
                 Packet packet = queue.take();
 
                 InetAddress destinationAddress = packet.ip4Header.destinationAddress;
@@ -161,7 +154,9 @@ public class UdpHandler implements Runnable {
 
                 int destinationPort = header.destinationPort;
                 int sourcePort = header.sourcePort;
-                String ipAndPort = destinationAddress.getHostAddress() + ":" + destinationPort + ":" + sourcePort;
+                String ipAndPort = new StringBuilder(destinationAddress.getHostAddress())
+                        .append(":").append(destinationPort)
+                        .append(":").append(sourcePort).toString();
                 if (!udpSockets.containsKey(ipAndPort)) {
                     DatagramChannel outputChannel = DatagramChannel.open();
                     vpnService.protect(outputChannel.socket());
@@ -185,14 +180,16 @@ public class UdpHandler implements Runnable {
                     while (packet.backingBuffer.hasRemaining())
                         outputChannel.write(buffer);
                 } catch (Exception | OutOfMemoryError e) {
-                    Log.e(TAG, "udp write error", e);
+                    //log.e(TAG, "udp write error", e);
                     outputChannel.close();
                     udpSockets.remove(ipAndPort);
+                    NetConnections.removeFromCache(ipAndPort);
                 }
             }
         } catch (Exception | OutOfMemoryError e) {
-            Log.e(TAG, "error", e);
-            System.exit(0);
+            //log.e(TAG, "error", e);
+            //TODO: disable log
+            //System.exit(0);
         }
     }
 }
