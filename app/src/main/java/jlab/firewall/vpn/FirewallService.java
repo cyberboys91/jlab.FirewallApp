@@ -24,6 +24,7 @@ import android.os.ParcelFileDescriptor;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.collection.ArrayMap;
+
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -100,7 +101,7 @@ public class FirewallService extends VpnService {
     private BlockingQueue<Packet> deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(1000);
     private BlockingQueue<Packet> deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(1000);
     private BlockingQueue<ByteBuffer> networkToDeviceQueue = new ArrayBlockingQueue<>(1000);
-    private ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private ExecutorService executorService = Executors.newFixedThreadPool(100);
     private View floatingTrafficDataView;
     private TextView tvFloatingTrafficSpeed, tvFloatingTrafficTotal;
     private WindowManager windowMgr;
@@ -258,8 +259,7 @@ public class FirewallService extends VpnService {
                     isRunning = true;
                     executorService.submit(new UdpHandler(deviceToNetworkUDPQueue, networkToDeviceQueue, this));
                     executorService.submit(new TcpHandler(deviceToNetworkTCPQueue, networkToDeviceQueue, this));
-
-                    new Thread(new Runnable() {
+                    executorService.submit(new Runnable() {
                         @Override
                         public void run() {
                             try {
@@ -278,7 +278,7 @@ public class FirewallService extends VpnService {
                                 }
                             }
                         }
-                    }).start();
+                    });
 
                     LocalBroadcastManager.getInstance(this)
                             .sendBroadcast(new Intent(STARTED_VPN_ACTION));
@@ -309,7 +309,7 @@ public class FirewallService extends VpnService {
     }
 
     private void startNotificatorThread() {
-        new Thread(new Runnable() {
+        executorService.submit(new Runnable() {
             @Override
             public void run() {
                 while (!Thread.interrupted() && isRunning()) {
@@ -330,7 +330,7 @@ public class FirewallService extends VpnService {
                     }
                 }
             }
-        }).start();
+        });
     }
 
     private void loadTrafficDataView() {
@@ -562,7 +562,7 @@ public class FirewallService extends VpnService {
     }
 
     private void notifyUid(final int uid) {
-        new Thread(new Runnable() {
+        executorService.submit(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -599,7 +599,7 @@ public class FirewallService extends VpnService {
                     mutexNotificator.release();
                 }
             }
-        }).start();
+        });
     }
 
     private PendingIntent getPendingIntentNotificationClicked(int selectedTab) {
@@ -609,7 +609,7 @@ public class FirewallService extends VpnService {
                 , intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    private final Thread refreshTrafficData = new Thread(new Runnable() {
+    private final Runnable refreshTrafficData = new Runnable() {
         @Override
         public void run() {
             boolean refreshSpeed = false;
@@ -659,7 +659,7 @@ public class FirewallService extends VpnService {
                 }
             }
         }
-    });
+    };
 
     private class VPNRunnable implements Runnable {
         private final String TAG = VPNRunnable.class.getSimpleName();
@@ -693,12 +693,12 @@ public class FirewallService extends VpnService {
             trafficDataDownSpeedPoints.clear();
             trafficDataUpSpeedPoints.clear();
             x = 0;
-            refreshTrafficData.start();
             NetConnections.freeCache();
 
             FileChannel vpnInput = new FileInputStream(vpnFileDescriptor).getChannel();
             FileChannel vpnOutput = new FileOutputStream(vpnFileDescriptor).getChannel();
-            new Thread(new WriteVpnThread(vpnOutput, networkToDeviceQueue)).start();
+            executorService.submit(new WriteVpnRunnable(vpnOutput, networkToDeviceQueue));
+            executorService.submit(refreshTrafficData);
 
             try {
                 ByteBuffer bufferToNetwork;
@@ -721,7 +721,7 @@ public class FirewallService extends VpnService {
                         }
                     } else {
                         try {
-                            Thread.sleep(10);
+                            Thread.sleep(50);
                         }  catch (Exception | OutOfMemoryError e) {
                             //TODO: disable log
                             //e.printStackTrace();

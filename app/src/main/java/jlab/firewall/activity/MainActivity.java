@@ -85,7 +85,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tabHost = findViewById(R.id.vpContent);
-        HomeFragment.startVPN = new Runnable() {
+        HomeFragment.startFirewall = new Runnable() {
             @Override
             public void run() {
                 startFirewall();
@@ -224,22 +224,16 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.mnRateApp:
-                //rate
-                rateApp(this);
-                break;
-            case R.id.mnAbout:
-                //about
-                showAboutDialog(this, this.tabHost);
-                break;
-            case R.id.mnClose:
-                //close
-                finish();
-                break;
-            default:
-                break;
-        }
+        int id = item.getItemId();
+        if (id == R.id.mnRateApp)
+            //rate
+            rateApp(this);
+        else if (id == R.id.mnAbout)
+            //about
+            showAboutDialog(this, this.tabHost);
+        else if (id == R.id.mnClose)
+            //close
+            finish();
         return super.onOptionsItemSelected(item);
     }
 }

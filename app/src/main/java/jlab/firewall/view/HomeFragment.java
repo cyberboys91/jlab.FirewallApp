@@ -42,7 +42,7 @@ import static jlab.firewall.vpn.Utils.getTimeString;
 public class HomeFragment extends Fragment {
 
     private CardView vpnButton;
-    public static Runnable startVPN;
+    public static Runnable startFirewall;
     private final int ONE_KB = 1024;
     private LineChartView chart;
     private LineChartData chartData;
@@ -173,10 +173,10 @@ public class HomeFragment extends Fragment {
     }
 
     private void startFirewallService() {
-        if (startVPN != null && !FirewallService.isRunning()) {
+        if (startFirewall != null && !FirewallService.isRunning()) {
             vpnButton.setEnabled(false);
             tvTextButton.setText(R.string.starting_vpn);
-            startVPN.run();
+            startFirewall.run();
         }
     }
 

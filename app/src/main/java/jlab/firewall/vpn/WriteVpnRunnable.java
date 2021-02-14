@@ -8,12 +8,12 @@ import java.nio.channels.FileChannel;
 import java.util.concurrent.BlockingQueue;
 import static jlab.firewall.vpn.FirewallService.isRunning;
 
-public class WriteVpnThread implements Runnable {
+public class WriteVpnRunnable implements Runnable {
 
     private FileChannel vpnOutput;
     private BlockingQueue<ByteBuffer> networkToDeviceQueue;
 
-    WriteVpnThread(FileChannel vpnOutput, BlockingQueue<ByteBuffer> networkToDeviceQueue) {
+    WriteVpnRunnable(FileChannel vpnOutput, BlockingQueue<ByteBuffer> networkToDeviceQueue) {
         this.vpnOutput = vpnOutput;
         this.networkToDeviceQueue = networkToDeviceQueue;
     }
