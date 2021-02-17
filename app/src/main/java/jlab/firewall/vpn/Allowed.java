@@ -19,24 +19,17 @@ package jlab.firewall.vpn;
     Copyright 2015-2019 by Marcel Bokhorst (M66B)
 */
 
-public class Packet {
-    public long time;
-    public int version;
-    public int protocol;
-    public String flags;
-    public String saddr;
-    public int sport;
-    public String daddr;
-    public int dport;
-    public String data;
-    public int uid;
-    public boolean allowed;
+public class Allowed {
+    public String raddr;
+    public int rport;
 
-    public Packet() {
+    public Allowed() {
+        this.raddr = null;
+        this.rport = 0;
     }
 
-    @Override
-    public String toString() {
-        return "uid=" + uid + " v" + version + " p" + protocol + " " + daddr + "/" + dport;
+    public Allowed(String raddr, int rport) {
+        this.raddr = raddr;
+        this.rport = rport;
     }
 }

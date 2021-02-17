@@ -1,6 +1,7 @@
 package jlab.firewall.vpn;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -13,6 +14,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
+import android.net.ConnectivityManager;
 import android.net.TrafficStats;
 import android.net.VpnService;
 import android.os.Build;
@@ -34,12 +36,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.os.Process;
 import java.io.Closeable;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +47,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import jlab.firewall.R;
 import jlab.firewall.activity.MainActivity;
 import jlab.firewall.db.ApplicationDbManager;
@@ -98,9 +98,6 @@ public class FirewallService extends VpnService {
     private long downBytesInStart, upBytesInStart, x;
     private static boolean isRunning, isWaiting;
     private ParcelFileDescriptor vpnInterface = null;
-    private BlockingQueue<Packet> deviceToNetworkUDPQueue = new ArrayBlockingQueue<>(1000);
-    private BlockingQueue<Packet> deviceToNetworkTCPQueue = new ArrayBlockingQueue<>(1000);
-    private BlockingQueue<ByteBuffer> networkToDeviceQueue = new ArrayBlockingQueue<>(1000);
     private ExecutorService executorService = Executors.newFixedThreadPool(100);
     private View floatingTrafficDataView;
     private TextView tvFloatingTrafficSpeed, tvFloatingTrafficTotal;
@@ -118,7 +115,7 @@ public class FirewallService extends VpnService {
                         break;
                     case STOP_VPN_ACTION:
                         try {
-                            vpnInterface.close();
+                            stopNative();
                             stopSelf();
                         }  catch (Exception | OutOfMemoryError e) {
                             //TODO: disable log
@@ -219,12 +216,90 @@ public class FirewallService extends VpnService {
         }
     });
 
+    static {
+        System.loadLibrary("netguard");
+    }
+
+    private long jni_context;
+
+    private native long jni_init(int sdk);
+
+    private native void jni_start(long context, int loglevel);
+
+    private native void jni_run(long context, int tun, boolean fwd53, int rcode);
+
+    private native void jni_stop(long context);
+
+    private native void jni_clear(long context);
+
     private void loadAddress () {
         mapAddress.clear();
         mapAddress.put("10.0.0.0", 8);
         mapAddress.put("172.16.0.0", 12);
         mapAddress.put("192.168.0.0", 16);
-        mapAddress.put("169.254.0.0", 16);
+    }
+
+    // Called from native code
+    private void nativeExit(String reason) {
+
+    }
+
+    // Called from native code
+    private void nativeError(int error, String message) {
+
+    }
+
+    // Called from native code
+    private void logPacket(Packet packet) {
+
+    }
+
+    // Called from native code
+    private void dnsResolved(ResourceRecord rr) {
+
+    }
+
+    // Called from native code
+    private boolean isDomainBlocked(String name) {
+        return false;
+    }
+
+    // Called from native code
+    @TargetApi(Build.VERSION_CODES.Q)
+    private int getUidQ(int version, int protocol, String saddr, int sport, String daddr, int dport) {
+        if (protocol != 6 /* TCP */ && protocol != 17 /* UDP */)
+            return Process.INVALID_UID;
+
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (cm == null)
+            return Process.INVALID_UID;
+
+        InetSocketAddress local = new InetSocketAddress(saddr, sport);
+        InetSocketAddress remote = new InetSocketAddress(daddr, dport);
+
+        return cm.getConnectionOwnerUid(protocol, local, remote);
+    }
+
+    private boolean isSupported(int protocol) {
+        return (protocol == 1 /* ICMPv4 */ ||
+                protocol == 58 /* ICMPv6 */ ||
+                protocol == 6 /* TCP */ ||
+                protocol == 17 /* UDP */);
+    }
+
+    private ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
+
+    // Called from native code
+    private Allowed isAddressAllowed(Packet packet) {
+        lock.readLock().lock();
+        packet.allowed = !isBlockedUid(packet.uid);
+        lock.readLock().unlock();
+        return packet.allowed ? new Allowed() : null;
+    }
+
+    // Called from native code
+    private void accountUsage(Usage usage) {
+
     }
 
     @Override
@@ -257,25 +332,16 @@ public class FirewallService extends VpnService {
             if (!isWaiting)
                 try {
                     isRunning = true;
-                    executorService.submit(new UdpHandler(deviceToNetworkUDPQueue, networkToDeviceQueue, this));
-                    executorService.submit(new TcpHandler(deviceToNetworkTCPQueue, networkToDeviceQueue, this));
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
                             try {
                                 loadAppData(getBaseContext());
-                                executorService.submit(new VPNRunnable(vpnInterface.getFileDescriptor(),
-                                        deviceToNetworkUDPQueue, deviceToNetworkTCPQueue, networkToDeviceQueue));
+                                executorService.submit(new VPNRunnable(vpnInterface));
                             } catch (Exception | OutOfMemoryError ignored) {
                                 //TODO: disable log
                                 //ignored.printStackTrace();
-                                try {
-                                    vpnInterface.close();
-                                } catch (IOException | OutOfMemoryError e) {
-                                    e.printStackTrace();
-                                } finally {
-                                    stopSelf();
-                                }
+                                stopNative();
                             }
                         }
                     });
@@ -306,6 +372,10 @@ public class FirewallService extends VpnService {
                 LocalBroadcastManager.getInstance(this)
                         .sendBroadcast(new Intent(NOT_PREPARED_VPN_ACTION));
         }
+    }
+
+    private void stopNative() {
+        onDestroy();
     }
 
     private void startNotificatorThread() {
@@ -424,6 +494,8 @@ public class FirewallService extends VpnService {
                 Builder builder = addAllInetAddressToBuilder(new Builder())
                         .setConfigureIntent(pi)
                         .addRoute(VPN_ROUTE, 0)
+                        .addRoute("2000::", 3)
+                        .addDisallowedApplication(getPackageName())
                         .setSession(getPackageName());
                 vpnInterface = builder.establish();
                 return vpnInterface != null;
@@ -462,6 +534,7 @@ public class FirewallService extends VpnService {
     public void onDestroy() {
         super.onDestroy();
         try {
+            cleanup();
             isRunning = false;
             LocalBroadcastManager.getInstance(getBaseContext())
                     .unregisterReceiver(startVpnReceiver);
@@ -474,7 +547,6 @@ public class FirewallService extends VpnService {
                 //TODO: disable log
                 //ignored.printStackTrace();
             }
-            cleanup();
             NetConnections.freeCache();
             //TODO: disable log
             //Log.i(TAG, "Stopped");
@@ -488,9 +560,6 @@ public class FirewallService extends VpnService {
     }
 
     private void cleanup() {
-        deviceToNetworkTCPQueue.clear();
-        deviceToNetworkUDPQueue.clear();
-        networkToDeviceQueue.clear();
         closeResources(vpnInterface);
         executorService.shutdown();
     }
@@ -551,7 +620,7 @@ public class FirewallService extends VpnService {
 
     private boolean isBlockedUid(int uid) {
         if (uid == myUid)
-            return false;
+            return true;
         if (uid > 0) {
             boolean blocked = isBlocked(uid);
             if(blocked)
@@ -664,19 +733,10 @@ public class FirewallService extends VpnService {
     private class VPNRunnable implements Runnable {
         private final String TAG = VPNRunnable.class.getSimpleName();
 
-        private FileDescriptor vpnFileDescriptor;
-        private BlockingQueue<Packet> deviceToNetworkUDPQueue;
-        private BlockingQueue<Packet> deviceToNetworkTCPQueue;
-        private BlockingQueue<ByteBuffer> networkToDeviceQueue;
+        private ParcelFileDescriptor vpnFileDescriptor;
 
-        public VPNRunnable(FileDescriptor vpnFileDescriptor,
-                           BlockingQueue<Packet> deviceToNetworkUDPQueue,
-                           BlockingQueue<Packet> deviceToNetworkTCPQueue,
-                           BlockingQueue<ByteBuffer> networkToDeviceQueue) {
+        public VPNRunnable(ParcelFileDescriptor vpnFileDescriptor) {
             this.vpnFileDescriptor = vpnFileDescriptor;
-            this.deviceToNetworkUDPQueue = deviceToNetworkUDPQueue;
-            this.deviceToNetworkTCPQueue = deviceToNetworkTCPQueue;
-            this.networkToDeviceQueue = networkToDeviceQueue;
         }
 
         @Override
@@ -695,45 +755,16 @@ public class FirewallService extends VpnService {
             x = 0;
             NetConnections.freeCache();
 
-            FileChannel vpnInput = new FileInputStream(vpnFileDescriptor).getChannel();
-            FileChannel vpnOutput = new FileOutputStream(vpnFileDescriptor).getChannel();
-            executorService.submit(new WriteVpnRunnable(vpnOutput, networkToDeviceQueue));
-            executorService.submit(refreshTrafficData);
+            jni_context = jni_init(Build.VERSION.SDK_INT);
+            jni_start(jni_context, 100);
 
-            try {
-                ByteBuffer bufferToNetwork;
-                while (!Thread.interrupted() && isRunning()) {
-                    bufferToNetwork = ByteBufferPool.acquire();
-                    int readBytes = vpnInput.read(bufferToNetwork);
-                    if (readBytes > 0) {
-                        bufferToNetwork.flip();
-                        Packet packet = new Packet(bufferToNetwork);
-                        if (packet.isUDP() && !isBlockedUid(NetConnections.getUid(getBaseContext(),
-                                NetConnections.Protocol.udp, packet.ip4Header.sourceAddress
-                                , packet.udpHeader.sourcePort, packet.ip4Header.destinationAddress
-                                , packet.udpHeader.destinationPort))) {
-                            deviceToNetworkUDPQueue.offer(packet);
-                        } else if (packet.isTCP() && !isBlockedUid(NetConnections.getUid(getBaseContext(),
-                                NetConnections.Protocol.tcp, packet.ip4Header.sourceAddress
-                                , packet.tcpHeader.sourcePort, packet.ip4Header.destinationAddress
-                                , packet.tcpHeader.destinationPort))) {
-                            deviceToNetworkTCPQueue.offer(packet);
-                        }
-                    } else {
-                        try {
-                            Thread.sleep(50);
-                        }  catch (Exception | OutOfMemoryError e) {
-                            //TODO: disable log
-                            //e.printStackTrace();
-                        }
-                    }
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    executorService.submit(refreshTrafficData);
+                    jni_run(jni_context, vpnFileDescriptor.getFd(), true, 3);
                 }
-            } catch (IOException | OutOfMemoryError e) {
-                //TODO: disable log
-                //Log.w(TAG, e.toString(), e);
-            } finally {
-                closeResources(vpnInput, vpnOutput);
-            }
+            });
         }
     }
 }

@@ -19,24 +19,29 @@ package jlab.firewall.vpn;
     Copyright 2015-2019 by Marcel Bokhorst (M66B)
 */
 
-public class Packet {
-    public long time;
-    public int version;
-    public int protocol;
-    public String flags;
-    public String saddr;
-    public int sport;
-    public String daddr;
-    public int dport;
-    public String data;
-    public int uid;
-    public boolean allowed;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-    public Packet() {
+public class ResourceRecord {
+    public long Time;
+    public String QName;
+    public String AName;
+    public String Resource;
+    public int TTL;
+
+    private static DateFormat formatter = SimpleDateFormat.getDateTimeInstance();
+
+    public ResourceRecord() {
     }
 
     @Override
     public String toString() {
-        return "uid=" + uid + " v" + version + " p" + protocol + " " + daddr + "/" + dport;
+        return formatter.format(new Date(Time).getTime()) +
+                " Q " + QName +
+                " A " + AName +
+                " R " + Resource +
+                " TTL " + TTL +
+                " " + formatter.format(new Date(Time + TTL * 1000L).getTime());
     }
 }
