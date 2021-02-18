@@ -1,5 +1,6 @@
 package jlab.firewall.view;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import jlab.firewall.R;
 import android.view.View;
@@ -53,24 +54,19 @@ public class HomeFragment extends Fragment {
     private BroadcastReceiver onFirewallChangeStatusReceiver = new BroadcastReceiver () {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case FirewallService.REFRESH_TRAFFIC_DATA:
-                    refreshTrafficData();
-                    break;
-                case FirewallService.STARTED_VPN_ACTION:
-                    changeStateButton(false);
-                    refreshTrafficData();
-                    break;
-                case FirewallService.STOPPED_VPN_ACTION:
-                    changeStateButton(true);
-                    refreshTrafficData();
-                    break;
-                case FirewallService.NOT_PREPARED_VPN_ACTION:
-                    changeStateButton(true);
-                    break;
-                default:
-                    break;
-            }
+            String action = intent.getAction();
+            if (action == null)
+                return;
+            if (action.equals(FirewallService.REFRESH_TRAFFIC_DATA))
+                refreshTrafficData();
+            else if (action.equals(FirewallService.STARTED_VPN_ACTION)) {
+                changeStateButton(false);
+                refreshTrafficData();
+            } else if (action.equals(FirewallService.STOPPED_VPN_ACTION)) {
+                changeStateButton(true);
+                refreshTrafficData();
+            } else if (action.equals(FirewallService.NOT_PREPARED_VPN_ACTION))
+                changeStateButton(true);
         }
     };
 
@@ -85,10 +81,8 @@ public class HomeFragment extends Fragment {
                 ArrayList<Line> lines = new ArrayList<>();
 
                 //Creando copia para evitar la modificación concurrente
-                ArrayList<PointValue> pointsLineUpSpeed = new ArrayList<>();
-                pointsLineUpSpeed.addAll(trafficDataUpSpeedPoints);
-                ArrayList<PointValue> pointsLineDownSpeed = new ArrayList<>();
-                pointsLineDownSpeed.addAll(trafficDataDownSpeedPoints);
+                ArrayList<PointValue> pointsLineUpSpeed = new ArrayList<>(trafficDataUpSpeedPoints);
+                ArrayList<PointValue> pointsLineDownSpeed = new ArrayList<>(trafficDataDownSpeedPoints);
                 //.
                 lines.add(new Line(pointsLineUpSpeed).setColor(COLOR_NEUTRAL)
                         .setPointColor(COLOR_TRANSPARENT).setStrokeWidth(1).setFilled(true));
@@ -105,6 +99,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {

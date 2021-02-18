@@ -27,6 +27,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.collection.ArrayMap;
 
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -251,7 +252,6 @@ public class FirewallService extends VpnService {
 
     // Called from native code
     private void logPacket(Packet packet) {
-
     }
 
     // Called from native code
@@ -299,7 +299,7 @@ public class FirewallService extends VpnService {
 
     // Called from native code
     private void accountUsage(Usage usage) {
-
+//        Log.println(Log.DEBUG, "Firewall", usage.toString());
     }
 
     @Override
@@ -756,7 +756,7 @@ public class FirewallService extends VpnService {
             NetConnections.freeCache();
 
             jni_context = jni_init(Build.VERSION.SDK_INT);
-            jni_start(jni_context, 100);
+            jni_start(jni_context, Log.ASSERT);
 
             executorService.submit(new Runnable() {
                 @Override
