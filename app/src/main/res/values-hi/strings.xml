@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">फ़ायरवॉल</string>
+    <string name="ads_app_id">ca-app-pub-6420027936185714~5378663037</string>
+    <string name="banner_ad_unit_id">ca-app-pub-6420027936185714/4065581369</string>
     <string name="font_family_text">sans-serif</string>
     <string name="font_family_button">sans-serif-medium</string>
     <string name="start_vpn">शुरू</string>
@@ -32,4 +34,5 @@
     <string name="not_traffic_bytes">0B</string>
     <string name="search_hint">खोज नाम</string>
     <string name="notified">अधिसूचित</string>
+    <string name="show_floating_monitor_speed">फ्लोटिंग स्पीड मॉनिटर दिखाएं</string>
 </resources>

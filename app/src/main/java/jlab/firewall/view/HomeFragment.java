@@ -1,8 +1,14 @@
 package jlab.firewall.view;
 
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import jlab.firewall.R;
+
+import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -19,6 +25,9 @@ import android.content.BroadcastReceiver;
 import androidx.cardview.widget.CardView;
 import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import jlab.firewall.vpn.FirewallService;
 import lecho.lib.hellocharts.formatter.AxisValueFormatter;
@@ -28,6 +37,12 @@ import lecho.lib.hellocharts.model.Line;
 import lecho.lib.hellocharts.model.LineChartData;
 import lecho.lib.hellocharts.model.PointValue;
 import lecho.lib.hellocharts.view.LineChartView;
+
+import static android.app.Activity.RESULT_OK;
+import static jlab.firewall.activity.MainActivity.CAN_DRAW_OVERLAY;
+import static jlab.firewall.activity.MainActivity.USER_DEFINE_CAN_DRAW_OVERLAY_KEY;
+import static jlab.firewall.vpn.FirewallService.CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION;
+import static jlab.firewall.vpn.FirewallService.SHOW_FLOATING_SPEED_MONITOR_KEY;
 import static jlab.firewall.vpn.FirewallService.downByteTotal;
 import static jlab.firewall.vpn.FirewallService.isRunning;
 import static jlab.firewall.vpn.FirewallService.trafficDataDownSpeedPoints;
@@ -69,6 +84,8 @@ public class HomeFragment extends Fragment {
                 changeStateButton(true);
         }
     };
+    private CheckBox cbShowFloatingMonitorSpeed;
+    private SharedPreferences preferences;
 
     private void refreshTrafficData() {
         try {
@@ -99,11 +116,48 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    private void sendBroadcast (boolean show) {
+        Intent intent = new Intent(CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION);
+        intent.putExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, show);
+        LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CAN_DRAW_OVERLAY)
+            sendBroadcast(data.getBooleanExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, false));
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
+        cbShowFloatingMonitorSpeed = view.findViewById(R.id.cbShowFloatingMonitorSpeed);
+        cbShowFloatingMonitorSpeed.setChecked(preferences
+                .getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false));
+        cbShowFloatingMonitorSpeed.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, !isChecked);
+                editor.putBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, isChecked);
+                editor.apply();
+                editor.commit();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (Settings.canDrawOverlays(getContext()))
+                        sendBroadcast(isChecked);
+                    else {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:" + getActivity().getPackageName()));
+                        intent.putExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, isChecked);
+                        startActivityForResult(intent, CAN_DRAW_OVERLAY);
+                    }
+                } else
+                    sendBroadcast(isChecked);
+            }
+        });
         tvTextButton = view.findViewById(R.id.tvTextButton);
         vpnButton = view.findViewById(R.id.btMgrVpn);
         vpnButton.setOnClickListener(new View.OnClickListener() {
@@ -187,6 +241,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
         IntentFilter intentFilter = new IntentFilter(FirewallService.REFRESH_TRAFFIC_DATA);
         intentFilter.addAction(FirewallService.STARTED_VPN_ACTION);
         intentFilter.addAction(FirewallService.STOPPED_VPN_ACTION);

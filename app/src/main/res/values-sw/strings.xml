@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">FireWall</string>
+    <string name="ads_app_id">ca-app-pub-6420027936185714~5378663037</string>
+    <string name="banner_ad_unit_id">ca-app-pub-6420027936185714/4065581369</string>
     <string name="font_family_text">sans-serif</string>
     <string name="font_family_button">sans-serif-medium</string>
     <string name="start_vpn">ANZA</string>
@@ -32,4 +34,5 @@
     <string name="not_traffic_bytes">0B</string>
     <string name="search_hint">Tafuta jina</string>
     <string name="notified">Imearifiwa</string>
+    <string name="show_floating_monitor_speed">Onyesha mfuatiliaji wa kasi inayoelea</string>
 </resources>
