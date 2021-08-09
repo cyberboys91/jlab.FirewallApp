@@ -125,8 +125,14 @@ public class HomeFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAN_DRAW_OVERLAY)
-            sendBroadcast(data.getBooleanExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, false));
+        if (requestCode == CAN_DRAW_OVERLAY) {
+            try {
+                sendBroadcast(data.getBooleanExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, false));
+            } catch (Exception ignored) {
+                //TODO: disable logs
+                //ignored.printStackTrace();
+            }
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")

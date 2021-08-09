@@ -213,7 +213,7 @@ public class FirewallService extends VpnService {
                                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                                 .setLargeIcon(Utils.getIconForApp(notifiedApp.getPrincipalPackName(),
-                                        getBaseContext()))
+                                        FirewallService.this))
                                 .setContentIntent(getPendingIntentNotificationClicked(1))
                                 .setFullScreenIntent(getPendingIntentNotificationClicked(1),
                                         true)
