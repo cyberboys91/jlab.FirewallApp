@@ -116,14 +116,14 @@ public class Utils {
                 Drawable icon = pm.getApplicationIcon(packageName);
                 if (icon != null)
                     result = getBitmapFromDrawable(icon);
+                if (result == null)
+                    result = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
             } catch (Exception ignored) {
                 //TODO: disable log
                 //ignored.printStackTrace();
             }
-        if (result == null)
-            result = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
 
-        if (!inCache)
+        if (!inCache && result != null)
             iconsCache.put(packageName, result);
         return result;
     }

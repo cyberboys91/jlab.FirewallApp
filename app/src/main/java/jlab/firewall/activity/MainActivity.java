@@ -37,7 +37,7 @@ import jlab.firewall.view.OnRunOnUiThread;
 import jlab.firewall.view.TabsAdapter;
 import jlab.firewall.vpn.FirewallService;
 
-import static jlab.firewall.vpn.FirewallService.SHOW_FLOATING_MONITOR_SPEED_KEY;
+import static jlab.firewall.vpn.FirewallService.SHOW_FLOATING_SPEED_MONITOR_KEY;
 import static jlab.firewall.vpn.FirewallService.START_VPN_ACTION;
 import static jlab.firewall.vpn.FirewallService.isWaiting;
 import static jlab.firewall.vpn.Utils.rateApp;
@@ -99,6 +99,13 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         actionBar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
         actionBar.setDisplayShowTitleEnabled(true);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if(!preferences.contains(SHOW_FLOATING_SPEED_MONITOR_KEY)) {
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, false);
+            editor.putBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, true);
+            editor.apply();
+            editor.commit();
+        }
         tabsAdapter = new TabsAdapter(this, tabHost);
         tabsAdapter.addTab(actionBar.newTab().setText(getString(R.string.home)),
                 HomeFragment.class, null);
@@ -166,7 +173,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     private void startFirewall() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)
                 && !preferences.getBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, false)
-                && preferences.getBoolean(SHOW_FLOATING_MONITOR_SPEED_KEY, false)) {
+                && preferences.getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, CAN_DRAW_OVERLAY);

@@ -84,7 +84,7 @@ public class FirewallService extends VpnService {
             NOT_PREPARED_VPN_ACTION = "jlab.action.NOT_PREPARED_VPN_ACTION",
             CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION =
                     "jlab.action.CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION",
-            SHOW_FLOATING_MONITOR_SPEED_KEY = "SHOW_FLOATING_MONITOR_SPEED_KEY";
+            SHOW_FLOATING_SPEED_MONITOR_KEY = "SHOW_FLOATING_MONITOR_SPEED_KEY";
     public static final int myUid = Process.myUid();
     public static int notificationMessageUid;
     public static Message notificationMessage;
@@ -111,30 +111,35 @@ public class FirewallService extends VpnService {
     private BroadcastReceiver EventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent != null && intent.getAction() != null)
-                switch (intent.getAction()) {
-                    case CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION:
-                        boolean show = intent.getBooleanExtra(SHOW_FLOATING_MONITOR_SPEED_KEY, false);
-                        if (!show && floatingTrafficDataView != null)
-                            windowMgr.removeViewImmediate(floatingTrafficDataView);
-                        else if(show && floatingTrafficDataView != null)
-                            windowMgr.addView(floatingTrafficDataView, floatingTrafficDataViewParams);
-                        break;
-                    case START_VPN_ACTION:
-                        startIfCan();
-                        break;
-                    case STOP_VPN_ACTION:
-                        try {
-                            stopNative();
-                            stopSelf();
-                        } catch (Exception | OutOfMemoryError e) {
-                            //TODO: disable log
-                            //e.printStackTrace();
-                        }
-                        break;
-                    default:
-                        break;
-                }
+            try {
+                if (intent != null && intent.getAction() != null)
+                    switch (intent.getAction()) {
+                        case CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION:
+                            boolean show = intent.getBooleanExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, false);
+                            if (!show && floatingTrafficDataView != null)
+                                windowMgr.removeViewImmediate(floatingTrafficDataView);
+                            else if (show && floatingTrafficDataView != null)
+                                windowMgr.addView(floatingTrafficDataView, floatingTrafficDataViewParams);
+                            break;
+                        case START_VPN_ACTION:
+                            startIfCan();
+                            break;
+                        case STOP_VPN_ACTION:
+                            try {
+                                stopNative();
+                                stopSelf();
+                            } catch (Exception | OutOfMemoryError e) {
+                                //TODO: disable log
+                                //e.printStackTrace();
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+            } catch (Exception ignored) {
+                //TODO: disable log
+                //ignored.printStackTrace();
+            }
         }
     };
     private static int lastUidNotified, lastCountNotified;
@@ -143,7 +148,7 @@ public class FirewallService extends VpnService {
         public boolean handleMessage(Message msg) {
             switch (msg.what) {
                 case REFRESH_TRAFFIC_DATA_FLOATING_VIEW:
-                    if(preferences.getBoolean(SHOW_FLOATING_MONITOR_SPEED_KEY, false)) {
+                    if(preferences.getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false)) {
                         if (tvFloatingTrafficTotal != null)
                             tvFloatingTrafficTotal.setText(trafficTotalText);
                         if (tvFloatingTrafficSpeed != null)
@@ -208,7 +213,7 @@ public class FirewallService extends VpnService {
                                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                                 .setLargeIcon(Utils.getIconForApp(notifiedApp.getPrincipalPackName(),
-                                        getBaseContext()))
+                                        FirewallService.this))
                                 .setContentIntent(getPendingIntentNotificationClicked(1))
                                 .setFullScreenIntent(getPendingIntentNotificationClicked(1),
                                         true)
@@ -436,7 +441,7 @@ public class FirewallService extends VpnService {
                 floatingTrafficDataViewParams.gravity = Gravity.TOP | Gravity.LEFT;
                 windowMgr = (WindowManager) getSystemService(WINDOW_SERVICE);
                 if (windowMgr != null) {
-                    if (preferences.getBoolean(SHOW_FLOATING_MONITOR_SPEED_KEY, false))
+                    if (preferences.getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false))
                         windowMgr.addView(floatingTrafficDataView, floatingTrafficDataViewParams);
                     floatingTrafficDataView.setOnTouchListener(new View.OnTouchListener() {
                         private int initialX, initialY;
@@ -458,7 +463,12 @@ public class FirewallService extends VpnService {
                                 case MotionEvent.ACTION_MOVE:
                                     floatingTrafficDataViewParams.x = initialX + (int) (event.getRawX() - initialTouchX);
                                     floatingTrafficDataViewParams.y = initialY + (int) (event.getRawY() - initialTouchY);
-                                    windowMgr.updateViewLayout(floatingTrafficDataView, floatingTrafficDataViewParams);
+                                    try {
+                                        windowMgr.updateViewLayout(floatingTrafficDataView, floatingTrafficDataViewParams);
+                                    }catch (Exception ignored) {
+                                        //TODO: disable log
+                                        //ignored.printStackTrace();
+                                    }
                                     return true;
                                 case MotionEvent.ACTION_UP:
                                     cancelTotalViewGone = false;
@@ -636,7 +646,7 @@ public class FirewallService extends VpnService {
 
     private boolean isBlockedUid(int uid) {
         if (uid == myUid)
-            return true;
+            return false;
         if (uid > 0) {
             boolean blocked = isBlocked(uid);
             if(blocked)
