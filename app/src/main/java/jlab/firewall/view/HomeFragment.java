@@ -37,7 +37,7 @@ import lecho.lib.hellocharts.view.LineChartView;
 
 import static jlab.firewall.activity.MainActivity.USER_DEFINE_CAN_DRAW_OVERLAY_KEY;
 import static jlab.firewall.vpn.FirewallService.CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION;
-import static jlab.firewall.vpn.FirewallService.SHOW_FLOATING_MONITOR_SPEED_KEY;
+import static jlab.firewall.vpn.FirewallService.SHOW_FLOATING_SPEED_MONITOR_KEY;
 import static jlab.firewall.vpn.FirewallService.downByteTotal;
 import static jlab.firewall.vpn.FirewallService.isRunning;
 import static jlab.firewall.vpn.FirewallService.trafficDataDownSpeedPoints;
@@ -118,17 +118,17 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
         cbShowFloatingMonitorSpeed = view.findViewById(R.id.cbShowFloatingMonitorSpeed);
         cbShowFloatingMonitorSpeed.setChecked(preferences
-                .getBoolean(SHOW_FLOATING_MONITOR_SPEED_KEY, false));
+                .getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false));
         cbShowFloatingMonitorSpeed.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 SharedPreferences.Editor editor = preferences.edit();
                 editor.putBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, !isChecked);
-                editor.putBoolean(SHOW_FLOATING_MONITOR_SPEED_KEY, isChecked);
+                editor.putBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, isChecked);
                 editor.apply();
                 editor.commit();
                 Intent intent = new Intent(CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION);
-                intent.putExtra(SHOW_FLOATING_MONITOR_SPEED_KEY, isChecked);
+                intent.putExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, isChecked);
                 LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
             }
         });
