@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     buildToolsVersion '30.0.3'
     defaultConfig {
         applicationId "jlab.firewall"
         minSdkVersion 21
-        targetSdkVersion 30
-        versionCode 20210809
+        targetSdkVersion 31
+        versionCode 20211218
         versionName "1.0"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
