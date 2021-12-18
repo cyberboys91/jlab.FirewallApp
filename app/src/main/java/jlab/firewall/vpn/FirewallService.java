@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
@@ -27,6 +28,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.collection.ArrayMap;
 
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -38,12 +40,9 @@ import android.widget.TextView;
 import android.os.Process;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -82,7 +81,10 @@ public class FirewallService extends VpnService {
             STARTED_VPN_ACTION = "jlab.action.STARTED_VPN_ACTION",
             STOPPED_VPN_ACTION = "jlab.action.STOPPED_VPN_ACTION",
             STOP_VPN_ACTION = "jlab.action.STOP_VPN_ACTION",
-            NOT_PREPARED_VPN_ACTION = "jlab.action.NOT_PREPARED_VPN_ACTION";
+            NOT_PREPARED_VPN_ACTION = "jlab.action.NOT_PREPARED_VPN_ACTION",
+            CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION =
+                    "jlab.action.CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION",
+            SHOW_FLOATING_MONITOR_SPEED_KEY = "SHOW_FLOATING_MONITOR_SPEED_KEY";
     public static final int myUid = Process.myUid();
     public static int notificationMessageUid;
     public static Message notificationMessage;
@@ -106,11 +108,18 @@ public class FirewallService extends VpnService {
     private PackageManager packageManager;
     private boolean refreshTrafficDataAux = false;
     private String trafficTotalText = "↑0B↓0B", trafficSpeedText = "↑0Bps↓0Bps", CHANNEL_ID;
-    private BroadcastReceiver startVpnReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver EventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent != null && intent.getAction() != null)
                 switch (intent.getAction()) {
+                    case CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION:
+                        boolean show = intent.getBooleanExtra(SHOW_FLOATING_MONITOR_SPEED_KEY, false);
+                        if (!show && floatingTrafficDataView != null)
+                            windowMgr.removeViewImmediate(floatingTrafficDataView);
+                        else if(show && floatingTrafficDataView != null)
+                            windowMgr.addView(floatingTrafficDataView, floatingTrafficDataViewParams);
+                        break;
                     case START_VPN_ACTION:
                         startIfCan();
                         break;
@@ -118,7 +127,7 @@ public class FirewallService extends VpnService {
                         try {
                             stopNative();
                             stopSelf();
-                        }  catch (Exception | OutOfMemoryError e) {
+                        } catch (Exception | OutOfMemoryError e) {
                             //TODO: disable log
                             //e.printStackTrace();
                         }
@@ -134,10 +143,12 @@ public class FirewallService extends VpnService {
         public boolean handleMessage(Message msg) {
             switch (msg.what) {
                 case REFRESH_TRAFFIC_DATA_FLOATING_VIEW:
-                    if (tvFloatingTrafficTotal != null)
-                        tvFloatingTrafficTotal.setText(trafficTotalText);
-                    if (tvFloatingTrafficSpeed != null)
-                        tvFloatingTrafficSpeed.setText(trafficSpeedText);
+                    if(preferences.getBoolean(SHOW_FLOATING_MONITOR_SPEED_KEY, false)) {
+                        if (tvFloatingTrafficTotal != null)
+                            tvFloatingTrafficTotal.setText(trafficTotalText);
+                        if (tvFloatingTrafficSpeed != null)
+                            tvFloatingTrafficSpeed.setText(trafficSpeedText);
+                    }
                     handler.removeMessages(REFRESH_TRAFFIC_DATA_FLOATING_VIEW);
                     return true;
                 case NOTIFY_INTERNET_REQUEST_ACCESS:
@@ -222,6 +233,8 @@ public class FirewallService extends VpnService {
     }
 
     private long jni_context;
+    private SharedPreferences preferences;
+    private WindowManager.LayoutParams floatingTrafficDataViewParams;
 
     private native long jni_init(int sdk);
 
@@ -305,6 +318,7 @@ public class FirewallService extends VpnService {
     @Override
     public void onCreate() {
         super.onCreate();
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         loadAddress();
         CHANNEL_ID = String.format("%s.%s", getString(R.string.app_name),
                 getString(R.string.app_list_request));
@@ -322,7 +336,8 @@ public class FirewallService extends VpnService {
         startIfCan();
         IntentFilter intentFilter = new IntentFilter(START_VPN_ACTION);
         intentFilter.addAction(STOP_VPN_ACTION);
-        LocalBroadcastManager.getInstance(getBaseContext()).registerReceiver(startVpnReceiver,
+        intentFilter.addAction(CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION);
+        LocalBroadcastManager.getInstance(getBaseContext()).registerReceiver(EventReceiver,
                 intentFilter);
     }
 
@@ -411,17 +426,18 @@ public class FirewallService extends VpnService {
                 tvFloatingTrafficSpeed = floatingTrafficDataView.findViewById(R.id.tvTrafficDataSpeed);
                 tvFloatingTrafficTotal = floatingTrafficDataView.findViewById(R.id.tvTrafficDataTotal);
                 final LinearLayout llFloatingTrafficTotal = floatingTrafficDataView.findViewById(R.id.llTrafficDataTotal);
-                final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                floatingTrafficDataViewParams = new WindowManager.LayoutParams(
                         WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                                 : WindowManager.LayoutParams.TYPE_PHONE,
                         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                         PixelFormat.TRANSPARENT);
-                params.gravity = Gravity.TOP | Gravity.LEFT;
+                floatingTrafficDataViewParams.gravity = Gravity.TOP | Gravity.LEFT;
                 windowMgr = (WindowManager) getSystemService(WINDOW_SERVICE);
-                if(windowMgr != null) {
-                    windowMgr.addView(floatingTrafficDataView, params);
+                if (windowMgr != null) {
+                    if (preferences.getBoolean(SHOW_FLOATING_MONITOR_SPEED_KEY, false))
+                        windowMgr.addView(floatingTrafficDataView, floatingTrafficDataViewParams);
                     floatingTrafficDataView.setOnTouchListener(new View.OnTouchListener() {
                         private int initialX, initialY;
                         float initialTouchX, initialTouchY;
@@ -432,17 +448,17 @@ public class FirewallService extends VpnService {
                         public boolean onTouch(View v, MotionEvent event) {
                             switch (event.getAction()) {
                                 case MotionEvent.ACTION_DOWN:
-                                    initialX = params.x;
-                                    initialY = params.y;
+                                    initialX = floatingTrafficDataViewParams.x;
+                                    initialY = floatingTrafficDataViewParams.y;
                                     initialTouchX = event.getRawX();
                                     initialTouchY = event.getRawY();
                                     llFloatingTrafficTotal.setVisibility(View.VISIBLE);
                                     cancelTotalViewGone = true;
                                     return true;
                                 case MotionEvent.ACTION_MOVE:
-                                    params.x = initialX + (int) (event.getRawX() - initialTouchX);
-                                    params.y = initialY + (int) (event.getRawY() - initialTouchY);
-                                    windowMgr.updateViewLayout(floatingTrafficDataView, params);
+                                    floatingTrafficDataViewParams.x = initialX + (int) (event.getRawX() - initialTouchX);
+                                    floatingTrafficDataViewParams.y = initialY + (int) (event.getRawY() - initialTouchY);
+                                    windowMgr.updateViewLayout(floatingTrafficDataView, floatingTrafficDataViewParams);
                                     return true;
                                 case MotionEvent.ACTION_UP:
                                     cancelTotalViewGone = false;
@@ -466,7 +482,7 @@ public class FirewallService extends VpnService {
                     });
                 }
             }
-        }  catch (Exception | OutOfMemoryError ignored) {
+        } catch (Exception | OutOfMemoryError ignored) {
             //TODO: disable log
             //ignored.printStackTrace();
         }
@@ -537,7 +553,7 @@ public class FirewallService extends VpnService {
             cleanup();
             isRunning = false;
             LocalBroadcastManager.getInstance(getBaseContext())
-                    .unregisterReceiver(startVpnReceiver);
+                    .unregisterReceiver(EventReceiver);
             LocalBroadcastManager.getInstance(this)
                     .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
             try {

@@ -36,6 +36,8 @@ import jlab.firewall.view.NotifiedAppListFragment;
 import jlab.firewall.view.OnRunOnUiThread;
 import jlab.firewall.view.TabsAdapter;
 import jlab.firewall.vpn.FirewallService;
+
+import static jlab.firewall.vpn.FirewallService.SHOW_FLOATING_MONITOR_SPEED_KEY;
 import static jlab.firewall.vpn.FirewallService.START_VPN_ACTION;
 import static jlab.firewall.vpn.FirewallService.isWaiting;
 import static jlab.firewall.vpn.Utils.rateApp;
@@ -48,7 +50,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     public static final int ALL_PERMISSION_REQUEST_CODE = 9100,
             SHOW_NOTIFIED_APPS_REQUEST_CODE = 9101, CAN_DRAW_OVERLAY = 9102,
             VPN_REQUEST_CODE = 0x0F;
-    private static final String USER_DEFINE_CAN_DRAW_OVERLAY_KEY = "CAN_DRAW_OVERLAY_KEY";
+    public static final String USER_DEFINE_CAN_DRAW_OVERLAY_KEY = "CAN_DRAW_OVERLAY_KEY";
     private ViewPager tabHost;
     private ActionBar actionBar;
     private TabsAdapter tabsAdapter;
@@ -163,7 +165,8 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
 
     private void startFirewall() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)
-                && !preferences.getBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, false)) {
+                && !preferences.getBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, false)
+                && preferences.getBoolean(SHOW_FLOATING_MONITOR_SPEED_KEY, false)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, CAN_DRAW_OVERLAY);

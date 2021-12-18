@@ -33,6 +33,16 @@
 
     </androidx.cardview.widget.CardView>
 
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/cbShowFloatingMonitorSpeed"
+        android:layout_marginTop="@dimen/middle_margin"
+        android:layout_gravity="center"
+        android:textSize="@dimen/text_short_size_dp"
+        android:fontFamily="@string/font_family_text"
+        android:hint="@string/show_floating_monitor_speed"/>
+
     <ScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
@@ -41,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:layout_marginTop="@dimen/activity_horizontal_margin"
+            android:layout_marginTop="@dimen/middle_margin"
             android:paddingBottom="25dp">
 
             <androidx.cardview.widget.CardView

@@ -32,4 +32,5 @@
     <string name="not_traffic_bytes">0B</string>
     <string name="search_hint">Buscar nombre</string>
     <string name="notified">Notified</string>
+    <string name="show_floating_monitor_speed">Mostrar monitor flotante de velocidad</string>
 </resources>

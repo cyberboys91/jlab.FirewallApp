@@ -32,4 +32,5 @@
     <string name="not_traffic_bytes">0B</string>
     <string name="search_hint">이름 검색</string>
     <string name="notified">알림</string>
+    <string name="show_floating_monitor_speed">Show floating monitor speed</string>
 </resources>
