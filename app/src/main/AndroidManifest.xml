@@ -14,6 +14,7 @@
         android:theme="@style/AppTheme">
 
         <activity
+            android:exported="true"
             android:name=".activity.MainActivity"
             android:launchMode="singleTask"
             android:configChanges="screenSize|orientation"
@@ -28,6 +29,7 @@
 <!--            android:resizeableActivity="true"/>-->
 
         <activity
+            android:exported="true"
             android:name=".activity.SplashActivity"
             android:theme="@style/AppTheme.FullScreen">
             <intent-filter>
@@ -46,7 +48,8 @@
             </intent-filter>
         </service>
 
-        <receiver android:name=".vpn.PackChangeReceiver">
+        <receiver android:name=".vpn.PackChangeReceiver"
+            android:exported="true">
             <intent-filter android:priority="999">
                 <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
                 <action android:name="android.intent.action.PACKAGE_ADDED" />
@@ -55,19 +58,19 @@
             </intent-filter>
         </receiver>
 
-<!--        TODO: Add ads in Version 2.0-->
-<!--        <meta-data-->
-<!--            android:name="com.google.android.gms.version"-->
-<!--            android:value="@integer/google_play_services_version" />-->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
 
-<!--        <meta-data-->
-<!--            android:name="com.google.android.gms.ads.APPLICATION_ID"-->
-<!--            android:value="@string/ads_app_id"/>-->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/ads_app_id"/>
 
-<!--        <activity android:hardwareAccelerated="true"-->
-<!--            android:name="com.google.android.gms.ads.AdActivity"-->
-<!--            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"-->
-<!--            android:theme="@android:style/Theme.Translucent" />-->
+        <activity android:hardwareAccelerated="true"
+            android:exported="false"
+            android:name="com.google.android.gms.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+            android:theme="@android:style/Theme.Translucent" />
 
     </application>
 
