@@ -7,7 +7,7 @@ android {
         applicationId "jlab.firewall"
         minSdkVersion 21
         targetSdkVersion 31
-        versionCode 20220225
+        versionCode 20220322
         versionName "1.0"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'

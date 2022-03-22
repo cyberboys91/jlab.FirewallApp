@@ -42,7 +42,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                     + ApplicationContract.USER_INTERACT + " INT NOT NULL,"
                     + ApplicationContract.NOTIFIED + " INT NOT NULL)");
             addApps(db);
-        } catch (Exception e) {
+        } catch(Exception|Error e) {
             //TODO: disable log
             //e.printStackTrace();
         }
@@ -62,12 +62,26 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
     }
 
     public long addApplicationData(SQLiteDatabase sqLiteDatabase, ApplicationDetails applicationDetails) {
-        return sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
+        long countAdded = 0;
+        try {
+            countAdded = sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
+        } catch(Exception|Error ignored) {
+            //TODO: disabled log
+            //ignored.printStackTrace();
+        }
+        return countAdded;
     }
 
     public long addApplicationData(ApplicationDetails applicationDetails) {
-        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
-        return sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
+        long countAdded = 0;
+        try {
+            SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+            countAdded = sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
+        }catch(Exception|Error ignored) {
+            //TODO: disabled log
+            //ignored.printStackTrace();
+        }
+        return countAdded;
     }
 
     @Override
@@ -77,11 +91,11 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
     }
 
     public ArrayList<ApplicationDetails> getAllAppDetails(String namesQuery) {
-        SQLiteDatabase sqLiteDatabase = getReadableDatabase();
         ArrayList<ApplicationDetails> result = new ArrayList<>();
-        Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
-                null, null, null, null, null);
         try {
+            SQLiteDatabase sqLiteDatabase = getReadableDatabase();
+            Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
+                    null, null, null, null, null);
             while (cursor.moveToNext()) {
                 String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
                         packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
@@ -95,22 +109,21 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                     result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
                             internet > 0, notified > 0, interact > 0));
             }
-        } catch (Exception ignored) {
+            cursor.close();
+        } catch(Exception|Error ignored) {
             //TODO: disable log
             //ignored.printStackTrace();
-        } finally {
-            cursor.close();
         }
         return result;
     }
 
     public ArrayList<ApplicationDetails> getNotifiedAppDetails(String namesQuery) {
-        SQLiteDatabase sqLiteDatabase = getReadableDatabase();
         ArrayList<ApplicationDetails> result = new ArrayList<>();
-        Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
-                ApplicationContract.NOTIFIED + " LIKE ?"
-                , new String[]{String.valueOf(1)}, null, null, null);
         try {
+            SQLiteDatabase sqLiteDatabase = getReadableDatabase();
+            Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
+                    ApplicationContract.NOTIFIED + " LIKE ?"
+                    , new String[]{String.valueOf(1)}, null, null, null);
             while (cursor.moveToNext()) {
                 String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
                         packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
@@ -124,44 +137,49 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                     result.add(new ApplicationDetails(uid, count, pPackName, packName, name,
                             internet > 0, notified > 0, interact > 0));
             }
-        } catch (Exception ignored) {
+            cursor.close();
+        } catch(Exception|Error ignored) {
             //TODO: disable log
             //ignored.printStackTrace();
-        } finally {
-            cursor.close();
         }
         return result;
     }
 
     public int updateApplicationData(int uid, ApplicationDetails newApplicationDetails) {
-        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
-        int countUpdated = sqLiteDatabase.update(ApplicationContract.TABLE_NAME,
-                newApplicationDetails.toContentValues(),
-                ApplicationContract._ID + " LIKE ?",
-                new String[]{Integer.toString(uid)});
-        if (countUpdated > 0) {
-            if (newApplicationDetails.hasInternet())
-                addToAllowedList(uid);
-            else
-                removeFromAllowedList(uid);
-            if (newApplicationDetails.interact())
-                addToInteractList(uid);
-            else
-                removeFromInteractList(uid);
-            if (newApplicationDetails.notified())
-                addToNotifiedList(uid);
-            else
-                removeFromNotifiedList(uid);
+        int countUpdated = 0;
+        try {
+            SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+            countUpdated = sqLiteDatabase.update(ApplicationContract.TABLE_NAME,
+                    newApplicationDetails.toContentValues(),
+                    ApplicationContract._ID + " LIKE ?",
+                    new String[]{Integer.toString(uid)});
+            if (countUpdated > 0) {
+                if (newApplicationDetails.hasInternet())
+                    addToAllowedList(uid);
+                else
+                    removeFromAllowedList(uid);
+                if (newApplicationDetails.interact())
+                    addToInteractList(uid);
+                else
+                    removeFromInteractList(uid);
+                if (newApplicationDetails.notified())
+                    addToNotifiedList(uid);
+                else
+                    removeFromNotifiedList(uid);
+            }
+        } catch(Exception|Error ignored) {
+            //TODO: disabled log
+            //ignored.printStackTrace();
         }
         return countUpdated;
     }
 
     public ApplicationDetails getApplicationForId (int uid) {
-        SQLiteDatabase sqLiteDatabase = getReadableDatabase();
-        Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
-                ApplicationContract._ID + " LIKE ?", new String[]{String.valueOf(uid)},
-                null, null, null);
         try {
+            SQLiteDatabase sqLiteDatabase = getReadableDatabase();
+            Cursor cursor = sqLiteDatabase.query(ApplicationContract.TABLE_NAME, null,
+                    ApplicationContract._ID + " LIKE ?", new String[]{String.valueOf(uid)},
+                    null, null, null);
             if (cursor.moveToFirst()) {
                 String pPackName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PRINCIPAL_PACKAGE_NAME)),
                         packName = cursor.getString(cursor.getColumnIndex(ApplicationContract.PACKAGES_NAME)),
@@ -174,19 +192,25 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                 return new ApplicationDetails(uid, count, pPackName, packName, name,
                         internet > 0, notified > 0, interact > 0);
             }
-        } catch (Exception ignored) {
+            cursor.close();
+        } catch(Exception|Error ignored) {
             //TODO: disable log
             //ignored.printStackTrace();
-        } finally {
-            cursor.close();
         }
         return null;
     }
 
     public int deleteAplicationData(int uid) {
-        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
-        return sqLiteDatabase.delete(ApplicationContract.TABLE_NAME,
-                ApplicationContract._ID + " LIKE ?",
-                new String[]{String.valueOf(uid)});
+        int countDeleted = 0;
+        try {
+            SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+            countDeleted = sqLiteDatabase.delete(ApplicationContract.TABLE_NAME,
+                    ApplicationContract._ID + " LIKE ?",
+                    new String[]{String.valueOf(uid)});
+        } catch (Exception|Error ignored) {
+            //TODO: disabled log
+            //ignored.printStackTrace();
+        }
+        return countDeleted;
     }
 }

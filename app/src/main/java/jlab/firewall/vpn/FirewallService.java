@@ -234,7 +234,12 @@ public class FirewallService extends VpnService {
     });
 
     static {
-        System.loadLibrary("netguard");
+        try {
+            System.loadLibrary("netguard");
+        } catch (Exception|Error ignored) {
+            //TODO: Disabled log
+            //ignored.printStackTrace();
+        }
     }
 
     private long jni_context;
