@@ -51,7 +51,6 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
             VPN_REQUEST_CODE = 0x0F;
     public static final String USER_DEFINE_CAN_DRAW_OVERLAY_KEY = "CAN_DRAW_OVERLAY_KEY";
     private ViewPager tabHost;
-    private ActionBar actionBar;
     private TabsAdapter tabsAdapter;
     private SharedPreferences preferences;
     private BroadcastReceiver onFirewallChangeStatusReceiver = new BroadcastReceiver () {
@@ -93,7 +92,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
             }
         };
 
-        actionBar = getActionBar();
+        ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         actionBar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
         actionBar.setDisplayShowTitleEnabled(true);
@@ -130,8 +129,13 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         MobileAds.initialize(this, new OnInitializationCompleteListener() {
             @Override
             public void onInitializationComplete(InitializationStatus initializationStatus) {
-                AdView adView = findViewById(R.id.adView);
-                adView.loadAd(new AdRequest.Builder().build());
+                try {
+                    AdView adView = findViewById(R.id.adView);
+                    adView.loadAd(new AdRequest.Builder().build());
+                } catch (Exception ignored) {
+                    //TODO: disable log
+                    //ignored.printStackTrace();
+                }
             }
         });
     }
@@ -172,9 +176,14 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)
                 && !preferences.getBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, false)
                 && preferences.getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false)) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            try {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, CAN_DRAW_OVERLAY);
+                startActivityForResult(intent, CAN_DRAW_OVERLAY);
+            } catch (Exception ignored) {
+                //TODO: disable log
+                //ignored.printStackTrace();
+            }
         } else
             startVPN();
     }

@@ -1,14 +1,13 @@
 package jlab.firewall.activity;
 
 import jlab.firewall.R;
-import jlab.firewall.vpn.FirewallService;
-
 import android.os.Bundle;
 import android.os.Handler;
 import android.content.Intent;
 import android.os.Looper;
 import android.widget.ImageView;
 import android.view.animation.Animation;
+import jlab.firewall.vpn.FirewallService;
 import android.view.animation.AnimationUtils;
 import androidx.appcompat.app.AppCompatActivity;
 import static jlab.firewall.vpn.FirewallService.loadAppData;

@@ -169,7 +169,9 @@ public class FirewallService extends VpnService {
                     /*if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                         Intent bubbleIntent = new Intent(getBaseContext(), BubbleNotifiedActivity.class);
                         PendingIntent bubPendingIntent = PendingIntent.getActivity(getBaseContext(),
-                                0, bubbleIntent, 0);
+                                0, bubbleIntent, Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                                    ? PendingIntent.FLAG_IMMUTABLE
+                                    : PendingIntent.FLAG_MUTABLE);
                         Notification.Builder notBuilder = new Notification.Builder(getBaseContext(),
                                 CHANNEL_ID)
                                 .setContentText(getBaseContext()
@@ -521,7 +523,10 @@ public class FirewallService extends VpnService {
         if (vpnInterface == null) {
             try {
                 Intent configure = new Intent(this, MainActivity.class);
-                PendingIntent pi = PendingIntent.getService(this, VPN_REQUEST_CODE, configure, 0);
+                PendingIntent pi = PendingIntent.getService(this, VPN_REQUEST_CODE, configure,
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                                ? PendingIntent.FLAG_IMMUTABLE
+                                : PendingIntent.FLAG_MUTABLE);
                 Builder builder = addAllInetAddressToBuilder(new Builder())
                         .setConfigureIntent(pi)
                         .addRoute(VPN_ROUTE, 0)
@@ -706,7 +711,9 @@ public class FirewallService extends VpnService {
         Intent intent = new Intent(getBaseContext(), MainActivity.class);
         intent.putExtra(SELECTED_TAB_KEY, selectedTab);
         return PendingIntent.getActivity(getBaseContext(), SHOW_NOTIFIED_APPS_REQUEST_CODE
-                , intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                , intent, PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                        ? PendingIntent.FLAG_IMMUTABLE
+                        : PendingIntent.FLAG_MUTABLE));
     }
 
     private final Runnable refreshTrafficData = new Runnable() {
