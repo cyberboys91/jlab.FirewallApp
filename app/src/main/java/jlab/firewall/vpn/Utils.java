@@ -5,9 +5,9 @@ package jlab.firewall.vpn;
  */
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -16,15 +16,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import androidx.collection.LruCache;
-import androidx.appcompat.app.AlertDialog;
+import android.util.LruCache;
 import android.view.View;
 import android.widget.TextView;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import com.google.android.material.snackbar.Snackbar;
 import jlab.firewall.R;
 import jlab.firewall.db.ApplicationDetails;
 import me.leolin.shortcutbadger.ShortcutBadger;
@@ -35,6 +32,8 @@ import static jlab.firewall.vpn.FirewallService.mapPackageAllowed;
 import static jlab.firewall.vpn.FirewallService.mapPackageInteract;
 import static jlab.firewall.vpn.FirewallService.mapPackageNotified;
 import static jlab.firewall.vpn.FirewallService.myUid;
+
+import com.google.android.material.snackbar.Snackbar;
 
 public class Utils {
 
@@ -98,12 +97,7 @@ public class Utils {
             }
         }
         sort(allUid);
-        sort(result, new Comparator<ApplicationDetails>() {
-            @Override
-            public int compare(ApplicationDetails o1, ApplicationDetails o2) {
-                return Integer.valueOf(o1.getUid()).compareTo(o2.getUid());
-            }
-        });
+        sort(result, (o1, o2) -> Integer.compare(o1.getUid(), o2.getUid()));
         return result;
     }
 
@@ -205,17 +199,14 @@ public class Utils {
                     .setTitle(R.string.about)
                     .setMessage(R.string.about_content)
                     .setPositiveButton(R.string.accept, null)
-                    .setNegativeButton(activity.getString(R.string.contact), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            try {
-                                activity.startActivity(new Intent(Intent.ACTION_SENDTO)
-                                        .setData(Uri.parse(String.format("mailto:%s", activity.getString(R.string.mail)))));
-                            } catch (Exception ignored) {
-                                //TODO: disable log
-                                //ignored.printStackTrace();
-                                Utils.showSnackBar(R.string.app_mail_not_found, viewForSnack);
-                            }
+                    .setNegativeButton(activity.getString(R.string.contact), (dialogInterface, i) -> {
+                        try {
+                            activity.startActivity(new Intent(Intent.ACTION_SENDTO)
+                                    .setData(Uri.parse(String.format("mailto:%s", activity.getString(R.string.mail)))));
+                        } catch (Exception ignored) {
+                            //TODO: disable log
+                            //ignored.printStackTrace();
+                            Utils.showSnackBar(R.string.app_mail_not_found, viewForSnack);
                         }
                     })
                     .show();
@@ -231,7 +222,7 @@ public class Utils {
 
     public static Snackbar createSnackBar(String message, View view) {
         Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_LONG);
-        ((TextView) snackbar.getView().findViewById(R.id.snackbar_text))
+        ((TextView) snackbar.getView().findViewById(com.google.android.material.R.id.snackbar_text))
                 .setTextColor(view.getResources().getColor(R.color.gray));
         snackbar.getView().setBackgroundResource(R.color.white);
         return snackbar;
@@ -239,7 +230,7 @@ public class Utils {
 
     public static void showSnackBar(int msg, View view) {
         Snackbar snackbar = createSnackBar(msg, view);
-        ((TextView) snackbar.getView().findViewById(R.id.snackbar_text))
+        ((TextView) snackbar.getView().findViewById(com.google.android.material.R.id.snackbar_text))
                 .setTextColor(view.getResources().getColor(R.color.gray));
         snackbar.getView().setBackgroundResource(R.color.white);
         snackbar.setActionTextColor(view.getResources().getColor(R.color.accent));
@@ -248,7 +239,7 @@ public class Utils {
 
     public static void showSnackBar(String msg, View view) {
         Snackbar snackbar = Utils.createSnackBar(msg, view);
-        ((TextView) snackbar.getView().findViewById(R.id.snackbar_text))
+        ((TextView) snackbar.getView().findViewById(com.google.android.material.R.id.snackbar_text))
                 .setTextColor(view.getResources().getColor(R.color.gray));
         snackbar.getView().setBackgroundResource(R.color.white);
         snackbar.show();
