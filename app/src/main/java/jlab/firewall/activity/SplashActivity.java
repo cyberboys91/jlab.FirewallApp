@@ -17,7 +17,7 @@ import static jlab.firewall.vpn.FirewallService.loadAppData;
  * Created by Javier on 7/4/2020.
  */
 
-class SplashActivity extends AppCompatActivity {
+public class SplashActivity extends AppCompatActivity {
     private boolean finish = false;
     private final long timeSleep = 250;
     private Runnable runnable = () -> runOnUiThread(() -> {
@@ -34,6 +34,8 @@ class SplashActivity extends AppCompatActivity {
             finish();
         }
     });
+
+    public SplashActivity () { }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
