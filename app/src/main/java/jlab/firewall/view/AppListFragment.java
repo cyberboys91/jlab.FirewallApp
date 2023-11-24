@@ -60,25 +60,33 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             , R.color.yellow, R.color.orange, R.color.green};
     private SearchView svSearch;
     protected String query;
-    protected Runnable onRefreshDetailsListener = () -> {
+    protected Runnable onRefreshDetailsListener = new Runnable() {
+        @Override
+        public void run() {
+        }
     };
-    protected static OnRunOnUiThread onRunOnUiThread = runnable -> {
+    protected static OnRunOnUiThread onRunOnUiThread = new OnRunOnUiThread() {
+        @Override
+        public void runOnUiThread(Runnable runnable) {
+        }
     };
     protected Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             switch (msg.what) {
-                case RUN_ON_REFRESH_DETAILS_LISTENER -> refreshDetails();
-                case ON_LOAD_CONTENT_FINISH -> {
+                case RUN_ON_REFRESH_DETAILS_LISTENER:
+                    refreshDetails();
+                    break;
+                case ON_LOAD_CONTENT_FINISH:
                     adapter.reload(content);
                     tvEmptyList.setVisibility(adapter.getCount() == 0
                             ? View.VISIBLE
                             : View.INVISIBLE);
                     srlRefresh.setRefreshing(false);
                     refreshDetails();
-                }
-                default -> {
-                }
+                    break;
+                default:
+                    break;
             }
             return false;
         }
@@ -95,30 +103,44 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         this.srlRefresh = view.findViewById(R.id.srlRefresh);
         ListView lvAppList = view.findViewById(R.id.lvAppList);
         lvAppList.setAdapter(adapter);
-        this.srlRefresh.setOnRefreshListener(this::reload);
-
-        this.svSearch.setOnCloseListener(() -> {
-            query = null;
-            svSearch.setVisibility(View.GONE);
-            fbSearch.setVisibility(View.VISIBLE);
-            return true;
+        this.srlRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                reload();
+            }
         });
-        this.svSearch.setOnQueryTextFocusChangeListener((v, hasFocus) -> {
-            if(!hasFocus && (query == null || query.isEmpty())) {
+
+        this.svSearch.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                query = null;
                 svSearch.setVisibility(View.GONE);
                 fbSearch.setVisibility(View.VISIBLE);
+                return true;
             }
         });
-        fbSearch.setOnClickListener(v -> {
-            if (svSearch.getVisibility() != View.VISIBLE) {
-                query = null;
-                if (!svSearch.getQuery().toString().isEmpty())
-                    svSearch.setQuery("", false);
-                svSearch.setVisibility(View.VISIBLE);
-                fbSearch.setVisibility(View.INVISIBLE);
+        this.svSearch.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(!hasFocus && (query == null || query.isEmpty())) {
+                    svSearch.setVisibility(View.GONE);
+                    fbSearch.setVisibility(View.VISIBLE);
+                }
             }
-            svSearch.onActionViewExpanded();
-            svSearch.requestFocus();
+        });
+        fbSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (svSearch.getVisibility() != View.VISIBLE) {
+                    query = null;
+                    if (!svSearch.getQuery().toString().isEmpty())
+                        svSearch.setQuery("", false);
+                    svSearch.setVisibility(View.VISIBLE);
+                    fbSearch.setVisibility(View.INVISIBLE);
+                }
+                svSearch.onActionViewExpanded();
+                svSearch.requestFocus();
+            }
         });
         this.svSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -149,7 +171,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     }
 
     @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
+    public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(QUERY_KEY, query);
     }
@@ -167,16 +189,19 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     @Override
     public void reload() {
         if (srlRefresh != null) {
-            new Thread(() -> {
-                try {
-                    semaphoreReload.acquire();
-                } catch (InterruptedException e) {
-                    //TODO: disable log
-                    //e.printStackTrace();
-                } finally {
-                    content = getContent();
-                    handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
-                    semaphoreReload.release();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        semaphoreReload.acquire();
+                    } catch (InterruptedException e) {
+                        //TODO: disable log
+                        //e.printStackTrace();
+                    } finally {
+                        content = getContent();
+                        handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
+                        semaphoreReload.release();
+                    }
                 }
             }).start();
         }
@@ -204,7 +229,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
 
     @Override
     public String getName(Context context) {
-        return getString(R.string.app_list);
+        return context.getString(R.string.app_list);
     }
 
     @Override
@@ -220,32 +245,46 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             packNames.setText(current.getPackNames());
             name.setText(current.getNames());
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
-            new Thread(() -> {
-                final SpannableStringBuilder text = getSpannableFromText(current.getNames(), ',', colorsSpannable);
-                onRunOnUiThread.runOnUiThread(() -> name.setText(text));
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final SpannableStringBuilder text = getSpannableFromText(current.getNames(), ',', colorsSpannable);
+                    onRunOnUiThread.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            name.setText(text);
+                        }
+                    });
+                }
             }).start();
             if (bmInCache != null)
                 Glide.with(getContext()).asBitmap().load(bmInCache).into(icon);
             else {
-                new Thread(() -> {
-                    try {
-                        semaphoreLoadIcon.acquire();
-                    } catch (InterruptedException e) {
-                        //TODO: disable log
-                        //e.printStackTrace();
-                    } finally {
-                        final Bitmap bm = current.getIcon(getContext());
-                        onRunOnUiThread.runOnUiThread(() -> {
-                            try {
-                                Glide.with(icon).asBitmap().load(bm)
-                                        .into(icon);
-                                icon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fast_fade_in));
-                            } catch (Exception ignored) {
-                                //TODO: disable log
-                                //ignored.printStackTrace();
-                            }
-                        });
-                        semaphoreLoadIcon.release();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            semaphoreLoadIcon.acquire();
+                        } catch (InterruptedException e) {
+                            //TODO: disable log
+                            //e.printStackTrace();
+                        } finally {
+                            final Bitmap bm = current.getIcon(getContext());
+                            onRunOnUiThread.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Glide.with(icon).asBitmap().load(bm)
+                                                .into(icon);
+                                        icon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fast_fade_in));
+                                    } catch (Exception ignored) {
+                                        //TODO: disable log
+                                        //ignored.printStackTrace();
+                                    }
+                                }
+                            });
+                            semaphoreLoadIcon.release();
+                        }
                     }
                 }).start();
             }
@@ -253,23 +292,23 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                 @Override
                 public void onSwitchChange(int state) {
                     switch (state) {
-                        case ALLOW_INTERNET_SWITCH_STATE -> {
+                        case ALLOW_INTERNET_SWITCH_STATE:
                             current.setInternet(true);
                             current.setInteract(true);
                             current.setNotified(false);
-                        }
-                        case BLOCK_INTERNET_SWITCH_STATE -> {
+                            break;
+                        case BLOCK_INTERNET_SWITCH_STATE:
                             current.setInternet(false);
                             current.setInteract(true);
                             current.setNotified(false);
-                        }
-                        case NEUTRAL_SWITCH_STATE -> {
+                            break;
+                        case NEUTRAL_SWITCH_STATE:
                             current.setInteract(false);
                             current.setInternet(false);
                             current.setNotified(false);
-                        }
-                        default -> {
-                        }
+                            break;
+                        default:
+                            break;
                     }
                     try {
                         mutexNotificator.acquire();
@@ -294,11 +333,14 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
 
                 @Override
                 public int getBackground(int state) {
-                    return switch (state) {
-                        case BLOCK_INTERNET_SWITCH_STATE -> R.drawable.img_cancel;
-                        case NEUTRAL_SWITCH_STATE -> R.drawable.img_neutral;
-                        default -> R.drawable.img_checked;
-                    };
+                    switch (state) {
+                        case BLOCK_INTERNET_SWITCH_STATE:
+                            return R.drawable.img_cancel;
+                        case NEUTRAL_SWITCH_STATE:
+                            return R.drawable.img_neutral;
+                        default:
+                            return R.drawable.img_checked;
+                    }
                 }
             });
             swInternetStatus.setState(getSwitchStateFromAppDetails(current));

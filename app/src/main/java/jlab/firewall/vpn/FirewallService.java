@@ -71,6 +71,7 @@ public class FirewallService extends VpnService {
     public static ArrayList<Integer> mapPackageInteract = new ArrayList<>();
     public static ArrayList<PointValue> trafficDataUpSpeedPoints = new ArrayList<>();
     public static ArrayList<PointValue> trafficDataDownSpeedPoints = new ArrayList<>();
+    public static final String TAG = FirewallService.class.getSimpleName();
     public static final String VPN_ROUTE = "0.0.0.0",
             APP_DETAILS_NOTIFICATION_KEY = "APP_DETAILS_NOTIFICATION_KEY",
             APP_DETAILS_NAME_NOTIFICATION_KEY = "APP_DETAILS_NAME_NOTIFICATION_KEY",
@@ -113,15 +114,17 @@ public class FirewallService extends VpnService {
             try {
                 if (intent != null && intent.getAction() != null)
                     switch (intent.getAction()) {
-                        case CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION -> {
+                        case CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION:
                             boolean show = intent.getBooleanExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, false);
                             if (!show && floatingTrafficDataView != null)
                                 windowMgr.removeViewImmediate(floatingTrafficDataView);
                             else if (show && floatingTrafficDataView != null)
                                 windowMgr.addView(floatingTrafficDataView, floatingTrafficDataViewParams);
-                        }
-                        case START_VPN_ACTION -> startIfCan();
-                        case STOP_VPN_ACTION -> {
+                            break;
+                        case START_VPN_ACTION:
+                            startIfCan();
+                            break;
+                        case STOP_VPN_ACTION:
                             try {
                                 stopNative();
                                 stopSelf();
@@ -129,9 +132,9 @@ public class FirewallService extends VpnService {
                                 //TODO: disable log
                                 //e.printStackTrace();
                             }
-                        }
-                        default -> {
-                        }
+                            break;
+                        default:
+                            break;
                     }
             } catch (Exception ignored) {
                 //TODO: disable log
@@ -144,8 +147,8 @@ public class FirewallService extends VpnService {
         @Override
         public boolean handleMessage(Message msg) {
             switch (msg.what) {
-                case REFRESH_TRAFFIC_DATA_FLOATING_VIEW -> {
-                    if (preferences.getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false)) {
+                case REFRESH_TRAFFIC_DATA_FLOATING_VIEW:
+                    if(preferences.getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false)) {
                         if (tvFloatingTrafficTotal != null)
                             tvFloatingTrafficTotal.setText(trafficTotalText);
                         if (tvFloatingTrafficSpeed != null)
@@ -153,8 +156,7 @@ public class FirewallService extends VpnService {
                     }
                     handler.removeMessages(REFRESH_TRAFFIC_DATA_FLOATING_VIEW);
                     return true;
-                }
-                case NOTIFY_INTERNET_REQUEST_ACCESS -> {
+                case NOTIFY_INTERNET_REQUEST_ACCESS:
                     ApplicationDetails notifiedApp = msg.getData().getParcelable(APP_DETAILS_NOTIFICATION_KEY);
                     int countNotified = mapPackageNotified.size();
                     if (notifiedApp != null && (lastUidNotified != notifiedApp.getUid()
@@ -180,13 +182,13 @@ public class FirewallService extends VpnService {
                         notMgr.notify(REQUEST_INTERNET_NOTIFICATION, notification);
                         showCountBadger(getBaseContext(), notification, countNotified);
                     }
+
                     handler.removeMessages(NOTIFY_INTERNET_REQUEST_ACCESS);
                     LocalBroadcastManager.getInstance(getBaseContext())
                             .sendBroadcast(new Intent(REFRESH_COUNT_NOTIFIED_APPS_ACTION));
                     return true;
-                }
-                default -> {
-                }
+                default:
+                    break;
             }
             return false;
         }
@@ -316,25 +318,29 @@ public class FirewallService extends VpnService {
             if (!isWaiting)
                 try {
                     isRunning = true;
-                    executorService.submit(() -> {
-                        try {
-                            loadAppData(getBaseContext());
-                            executorService.submit(new VPNRunnable(vpnInterface));
-                        } catch (Exception | OutOfMemoryError ignored) {
-                            //TODO: disable log
-                            //ignored.printStackTrace();
-                            stopNative();
+                    executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                loadAppData(getBaseContext());
+                                executorService.submit(new VPNRunnable(vpnInterface));
+                            } catch (Exception | OutOfMemoryError ignored) {
+                                //TODO: disable log
+                                //ignored.printStackTrace();
+                                stopNative();
+                            }
                         }
                     });
 
-                    sendBroadcast(new Intent(STARTED_VPN_ACTION));
+                    LocalBroadcastManager.getInstance(this)
+                            .sendBroadcast(new Intent(STARTED_VPN_ACTION));
                     loadTrafficDataView();
                     startNotificatorThread();
                     //TODO: disable log
                     //Log.i(TAG, "Started");
                     startForeground(RUNNING_NOTIFICATION,
                             new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
-                                    .setContentText(getString(R.string.started_vpn_service))
+                                    .setContentText(getBaseContext().getString(R.string.started_vpn_service))
                                     .setContentTitle(getString(R.string.app_name))
                                     .setAutoCancel(false)
                                     .setSmallIcon(R.drawable.img_running_not)
@@ -359,22 +365,25 @@ public class FirewallService extends VpnService {
     }
 
     private void startNotificatorThread() {
-        executorService.submit(() -> {
-            while (!Thread.interrupted() && isRunning()) {
-                try {
-                    Thread.sleep(1000);
-                    mutexNotificator.acquire();
-                    if (notificationMessage != null) {
-                        handler.sendMessage(notificationMessage);
-                        notificationMessage = null;
-                        notificationMessageUid = -1;
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                while (!Thread.interrupted() && isRunning()) {
+                    try {
+                        Thread.sleep(1000);
+                        mutexNotificator.acquire();
+                        if (notificationMessage != null) {
+                            handler.sendMessage(notificationMessage);
+                            notificationMessage = null;
+                            notificationMessageUid = -1;
+                        }
+                    }  catch (Exception | OutOfMemoryError e) {
+                        //TODO: disable log
+                        //e.printStackTrace();
+                        System.gc();
+                    } finally {
+                        mutexNotificator.release();
                     }
-                }  catch (Exception | OutOfMemoryError e) {
-                    //TODO: disable log
-                    //e.printStackTrace();
-                    System.gc();
-                } finally {
-                    mutexNotificator.release();
                 }
             }
         });
@@ -409,7 +418,7 @@ public class FirewallService extends VpnService {
                         @Override
                         public boolean onTouch(View v, MotionEvent event) {
                             switch (event.getAction()) {
-                                case MotionEvent.ACTION_DOWN -> {
+                                case MotionEvent.ACTION_DOWN:
                                     initialX = floatingTrafficDataViewParams.x;
                                     initialY = floatingTrafficDataViewParams.y;
                                     initialTouchX = event.getRawX();
@@ -417,32 +426,32 @@ public class FirewallService extends VpnService {
                                     llFloatingTrafficTotal.setVisibility(View.VISIBLE);
                                     cancelTotalViewGone = true;
                                     return true;
-                                }
-                                case MotionEvent.ACTION_MOVE -> {
+                                case MotionEvent.ACTION_MOVE:
                                     floatingTrafficDataViewParams.x = initialX + (int) (event.getRawX() - initialTouchX);
                                     floatingTrafficDataViewParams.y = initialY + (int) (event.getRawY() - initialTouchY);
                                     try {
                                         windowMgr.updateViewLayout(floatingTrafficDataView, floatingTrafficDataViewParams);
-                                    } catch (Exception ignored) {
+                                    }catch (Exception ignored) {
                                         //TODO: disable log
                                         //ignored.printStackTrace();
                                     }
                                     return true;
-                                }
-                                case MotionEvent.ACTION_UP -> {
+                                case MotionEvent.ACTION_UP:
                                     cancelTotalViewGone = false;
                                     if (!totalViewWaitForGone) {
                                         totalViewWaitForGone = true;
-                                        llFloatingTrafficTotal.postDelayed(() -> {
-                                            if (!cancelTotalViewGone)
-                                                llFloatingTrafficTotal.setVisibility(View.GONE);
-                                            totalViewWaitForGone = false;
+                                        llFloatingTrafficTotal.postDelayed(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if (!cancelTotalViewGone)
+                                                    llFloatingTrafficTotal.setVisibility(View.GONE);
+                                                totalViewWaitForGone = false;
+                                            }
                                         }, 5000);
                                     }
                                     return true;
-                                }
-                                default -> {
-                                }
+                                default:
+                                    break;
                             }
                             return false;
                         }
@@ -617,39 +626,42 @@ public class FirewallService extends VpnService {
     }
 
     private void notifyUid(final int uid) {
-        executorService.submit(() -> {
-            try {
-                mutexNotificator.acquire();
-                if (!Utils.isInteract(uid)) {
-                    ApplicationDetails appDetails = appMgr.getApplicationForId(uid);
-                    if (appDetails != null && appDetails.getPrincipalPackName() != null) {
-                        appDetails.setNotified(true);
-                        appMgr.updateApplicationData(appDetails.getUid(), appDetails);
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mutexNotificator.acquire();
+                    if (!Utils.isInteract(uid)) {
+                        ApplicationDetails appDetails = appMgr.getApplicationForId(uid);
+                        if (appDetails != null && appDetails.getPrincipalPackName() != null) {
+                            appDetails.setNotified(true);
+                            appMgr.updateApplicationData(appDetails.getUid(), appDetails);
 
-                        ApplicationInfo appInfo = null;
-                        try {
-                            appInfo = packageManager.getApplicationInfo(appDetails
-                                    .getPrincipalPackName(), PackageManager.GET_META_DATA);
-                        }  catch (Exception | OutOfMemoryError e) {
-                            //TODO: disable log
-                            //e.printStackTrace();
+                            ApplicationInfo appInfo = null;
+                            try {
+                                appInfo = packageManager.getApplicationInfo(appDetails
+                                        .getPrincipalPackName(), PackageManager.GET_META_DATA);
+                            }  catch (Exception | OutOfMemoryError e) {
+                                //TODO: disable log
+                                //e.printStackTrace();
+                            }
+                            notificationMessage = new Message();
+                            notificationMessageUid = uid;
+                            notificationMessage.what = NOTIFY_INTERNET_REQUEST_ACCESS;
+                            Bundle bundle = new Bundle();
+                            bundle.putString(APP_DETAILS_NAME_NOTIFICATION_KEY, appInfo != null
+                                    ? packageManager.getApplicationLabel(appInfo).toString()
+                                    : appDetails.getPrincipalPackName());
+                            bundle.putParcelable(APP_DETAILS_NOTIFICATION_KEY, appDetails);
+                            notificationMessage.setData(bundle);
                         }
-                        notificationMessage = new Message();
-                        notificationMessageUid = uid;
-                        notificationMessage.what = NOTIFY_INTERNET_REQUEST_ACCESS;
-                        Bundle bundle = new Bundle();
-                        bundle.putString(APP_DETAILS_NAME_NOTIFICATION_KEY, appInfo != null
-                                ? packageManager.getApplicationLabel(appInfo).toString()
-                                : appDetails.getPrincipalPackName());
-                        bundle.putParcelable(APP_DETAILS_NOTIFICATION_KEY, appDetails);
-                        notificationMessage.setData(bundle);
                     }
+                }  catch (Exception | OutOfMemoryError ignored) {
+                    //TODO: disable log
+                    //ignored.printStackTrace();
+                } finally {
+                    mutexNotificator.release();
                 }
-            }  catch (Exception | OutOfMemoryError ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
-            } finally {
-                mutexNotificator.release();
             }
         });
     }
@@ -743,9 +755,12 @@ public class FirewallService extends VpnService {
             jni_context = jni_init(Build.VERSION.SDK_INT);
             jni_start(jni_context, Log.ASSERT);
 
-            executorService.submit(() -> {
-                executorService.submit(refreshTrafficData);
-                jni_run(jni_context, vpnFileDescriptor.getFd(), true, 3);
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    executorService.submit(refreshTrafficData);
+                    jni_run(jni_context, vpnFileDescriptor.getFd(), true, 3);
+                }
             });
         }
     }

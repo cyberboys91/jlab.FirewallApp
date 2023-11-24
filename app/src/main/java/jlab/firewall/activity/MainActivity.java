@@ -25,6 +25,8 @@ import android.view.MenuItem;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import java.util.ArrayList;
 import jlab.firewall.R;
 import jlab.firewall.view.AppListFragment;
@@ -56,16 +58,20 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         public void onReceive(Context context, Intent intent) {
             try {
                 switch (intent.getAction()) {
-                    case FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION ->
-                            tabsAdapter.refreshCountNotified(1);
-                    case FirewallService.STARTED_VPN_ACTION ->
-                            showSnackBar(R.string.started_vpn_service, tabHost);
-                    case FirewallService.STOPPED_VPN_ACTION ->
-                            showSnackBar(R.string.stopped_vpn_service, tabHost);
-                    case FirewallService.NOT_PREPARED_VPN_ACTION ->
-                            showSnackBar(R.string.not_prepared_vpn_service, tabHost);
-                    default -> {
-                    }
+                    case FirewallService.REFRESH_COUNT_NOTIFIED_APPS_ACTION:
+                        tabsAdapter.refreshCountNotified(1);
+                        break;
+                    case FirewallService.STARTED_VPN_ACTION:
+                        showSnackBar(R.string.started_vpn_service, tabHost);
+                        break;
+                    case FirewallService.STOPPED_VPN_ACTION:
+                        showSnackBar(R.string.stopped_vpn_service, tabHost);
+                        break;
+                    case FirewallService.NOT_PREPARED_VPN_ACTION:
+                        showSnackBar(R.string.not_prepared_vpn_service, tabHost);
+                        break;
+                    default:
+                        break;
                 }
             } catch (Exception ignored) {
                 //TODO: disable log
@@ -79,7 +85,12 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tabHost = findViewById(R.id.vpContent);
-        HomeFragment.startFirewall = this::startFirewall;
+        HomeFragment.startFirewall = new Runnable() {
+            @Override
+            public void run() {
+                startFirewall();
+            }
+        };
 
         ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -115,13 +126,16 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        MobileAds.initialize(this, initializationStatus -> {
-            try {
-                AdView adView = findViewById(R.id.adView);
-                adView.loadAd(new AdRequest.Builder().build());
-            } catch (Exception ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+                try {
+                    AdView adView = findViewById(R.id.adView);
+                    adView.loadAd(new AdRequest.Builder().build());
+                } catch (Exception ignored) {
+                    //TODO: disable log
+                    //ignored.printStackTrace();
+                }
             }
         });
     }
@@ -129,7 +143,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(onFirewallChangeStatusReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(onFirewallChangeStatusReceiver);
     }
 
     public boolean requestPermission() {
@@ -189,18 +203,22 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     }
 
     private void startVPN () {
-        new Thread(() -> {
-            try {
-                Intent vpnIntent = VpnService.prepare(MainActivity.this);
-                if (vpnIntent != null)
-                    startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
-                else if (!isWaiting())
-                    onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
-                else
-                    sendBroadcast(new Intent(START_VPN_ACTION));
-            } catch (Exception ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Intent vpnIntent = VpnService.prepare(MainActivity.this);
+                    if (vpnIntent != null)
+                        startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
+                    else if (!isWaiting())
+                        onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
+                    else
+                        LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
+                                Intent(START_VPN_ACTION));
+                } catch (Exception ignored) {
+                    //TODO: disable log
+                    //ignored.printStackTrace();
+                }
             }
         }).start();
     }

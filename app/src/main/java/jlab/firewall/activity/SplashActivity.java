@@ -20,20 +20,28 @@ import static jlab.firewall.vpn.FirewallService.loadAppData;
 public class SplashActivity extends AppCompatActivity {
     private boolean finish = false;
     private final long timeSleep = 250;
-    private Runnable runnable = () -> runOnUiThread(() -> {
-        try {
-            Thread.sleep(timeSleep);
-        } catch (InterruptedException e) {
-            //TODO: disable log
-            //e.printStackTrace();
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(timeSleep);
+                    } catch (InterruptedException e) {
+                        //TODO: disable log
+                        //e.printStackTrace();
+                    }
+                    if(!finish) {
+                        Intent intent = new Intent(getBaseContext(), MainActivity.class);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        finish();
+                    }
+                }
+            });
         }
-        if(!finish) {
-            Intent intent = new Intent(getBaseContext(), MainActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-            finish();
-        }
-    });
+    };
 
     public SplashActivity () { }
 
@@ -45,11 +53,19 @@ public class SplashActivity extends AppCompatActivity {
         Animation animation = AnimationUtils.loadAnimation(this, R.anim.beat);
         ivIcon.startAnimation(animation);
 
-        new Handler(Looper.getMainLooper()).postDelayed(() -> new Thread(() -> {
-            if (!FirewallService.isRunning())
-                loadAppData(getBaseContext());
-            runnable.run();
-        }).start(), 0);
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!FirewallService.isRunning())
+                            loadAppData(getBaseContext());
+                        runnable.run();
+                    }
+                }).start();
+            }
+        }, 0);
     }
 
     @Override
