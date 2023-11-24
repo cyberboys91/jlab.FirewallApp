@@ -163,47 +163,6 @@ public class FirewallService extends VpnService {
                         lastCountNotified = countNotified;
                         String name = msg.getData().getString(APP_DETAILS_NAME_NOTIFICATION_KEY);
 
-                        //TODO: Add Bubble in version 2.0
-                    /*if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        Intent bubbleIntent = new Intent(getBaseContext(), BubbleNotifiedActivity.class);
-                        PendingIntent bubPendingIntent = PendingIntent.getActivity(getBaseContext(),
-                                0, bubbleIntent, Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                                    ? PendingIntent.FLAG_IMMUTABLE
-                                    : PendingIntent.FLAG_MUTABLE);
-                        Notification.Builder notBuilder = new Notification.Builder(getBaseContext(),
-                                CHANNEL_ID)
-                                .setContentText(getBaseContext()
-                                        .getString(R.string.apps_req_internet_access))
-                                .setContentTitle(name)
-                                .setAutoCancel(true)
-                                .setShowWhen(true)
-                                .setSmallIcon(R.drawable.img_not)
-                                .setNumber(mapPackageNotified.size())
-                                .setLargeIcon(Utils.getIconForApp(lastAppNotified.getPrincipalPackName(),
-                                        getBaseContext()))
-                                .setContentIntent(bubPendingIntent);
-
-                        Icon icon = Icon.createWithResource(getBaseContext(), R.drawable.img_not);
-                        Notification.BubbleMetadata bubbleData =
-                                new Notification.BubbleMetadata.Builder()
-                                        .setDesiredHeight(600)
-                                        .setIcon(icon)
-                                        .setIntent(bubPendingIntent)
-                                        .setAutoExpandBubble(true)
-                                        .setSuppressNotification(true)
-                                        .build();
-
-                        Person chatBot = new Person.Builder()
-                                .setBot(true)
-                                .setName(name)
-                                .setImportant(true)
-                                .build();
-
-                        ;
-                        notMgr.notify(REQUEST_INTERNET_NOTIFICATION, notBuilder
-                                .setBubbleMetadata(bubbleData).addPerson(chatBot).build());
-                    }
-                    else*/
                         Notification notification = new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
                                 .setContentText(getBaseContext().getString(R.string.apps_req_internet_access))
                                 .setContentTitle(name)
