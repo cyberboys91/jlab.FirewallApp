@@ -22,14 +22,6 @@
             android:configChanges="screenSize|orientation"
             android:theme="@style/AppTheme"/>
 
-<!--        <activity-->
-<!--            android:name=".activity.BubbleNotifiedActivity"-->
-<!--            android:theme="@style/AppTheme.NoActionBar"-->
-<!--            android:label="@string/notified"-->
-<!--            android:allowEmbedded="true"-->
-<!--            android:documentLaunchMode="always"-->
-<!--            android:resizeableActivity="true"/>-->
-
         <activity
             android:exported="true"
             android:name=".activity.SplashActivity"
