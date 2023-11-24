@@ -24,7 +24,6 @@ import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.TextView;
 import jlab.firewall.vpn.FirewallService;
 import lecho.lib.hellocharts.formatter.AxisValueFormatter;
@@ -67,19 +66,20 @@ public class HomeFragment extends Fragment {
             String action = intent.getAction();
             if (action == null)
                 return;
-            if (action.equals(FirewallService.REFRESH_TRAFFIC_DATA))
-                refreshTrafficData();
-            else if (action.equals(FirewallService.STARTED_VPN_ACTION)) {
-                changeStateButton(false);
-                refreshTrafficData();
-            } else if (action.equals(FirewallService.STOPPED_VPN_ACTION)) {
-                changeStateButton(true);
-                refreshTrafficData();
-            } else if (action.equals(FirewallService.NOT_PREPARED_VPN_ACTION))
-                changeStateButton(true);
+            switch (action) {
+                case FirewallService.REFRESH_TRAFFIC_DATA -> refreshTrafficData();
+                case FirewallService.STARTED_VPN_ACTION -> {
+                    changeStateButton(false);
+                    refreshTrafficData();
+                }
+                case FirewallService.STOPPED_VPN_ACTION -> {
+                    changeStateButton(true);
+                    refreshTrafficData();
+                }
+                case FirewallService.NOT_PREPARED_VPN_ACTION -> changeStateButton(true);
+            }
         }
     };
-    private CheckBox cbShowFloatingMonitorSpeed;
     private SharedPreferences preferences;
 
     private void refreshTrafficData() {
@@ -116,32 +116,26 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
-        cbShowFloatingMonitorSpeed = view.findViewById(R.id.cbShowFloatingMonitorSpeed);
+        CheckBox cbShowFloatingMonitorSpeed = view.findViewById(R.id.cbShowFloatingMonitorSpeed);
         cbShowFloatingMonitorSpeed.setChecked(preferences
                 .getBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, false));
-        cbShowFloatingMonitorSpeed.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, !isChecked);
-                editor.putBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, isChecked);
-                editor.apply();
-                editor.commit();
-                Intent intent = new Intent(CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION);
-                intent.putExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, isChecked);
-                LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
-            }
+        cbShowFloatingMonitorSpeed.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, !isChecked);
+            editor.putBoolean(SHOW_FLOATING_SPEED_MONITOR_KEY, isChecked);
+            editor.apply();
+            editor.commit();
+            Intent intent = new Intent(CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION);
+            intent.putExtra(SHOW_FLOATING_SPEED_MONITOR_KEY, isChecked);
+            LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
         });
         tvTextButton = view.findViewById(R.id.tvTextButton);
         vpnButton = view.findViewById(R.id.btMgrVpn);
-        vpnButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!FirewallService.isRunning())
-                    startFirewallService();
-                else
-                    stopFirewallService();
-            }
+        vpnButton.setOnClickListener(v -> {
+            if (!FirewallService.isRunning())
+                startFirewallService();
+            else
+                stopFirewallService();
         });
         tvUpByteTotal = view.findViewById(R.id.tvUpByteTotal);
         tvDownByteTotal = view.findViewById(R.id.tvDownByteTotal);
@@ -186,13 +180,8 @@ public class HomeFragment extends Fragment {
     private void stopFirewallService() {
         tvTextButton.setText(R.string.stopping_vpn);
         vpnButton.setEnabled(false);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                LocalBroadcastManager.getInstance(getContext())
-                        .sendBroadcast(new Intent(FirewallService.STOP_VPN_ACTION));
-            }
-        }).start();
+        new Thread(() -> LocalBroadcastManager.getInstance(getContext())
+                .sendBroadcast(new Intent(FirewallService.STOP_VPN_ACTION))).start();
     }
 
     private void startFirewallService() {

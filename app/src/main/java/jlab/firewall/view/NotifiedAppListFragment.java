@@ -38,12 +38,8 @@ public class NotifiedAppListFragment extends AppListFragment {
     private BroadcastReceiver refreshCountNotifiedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case REFRESH_COUNT_NOTIFIED_APPS_ACTION:
-                    reload();
-                    break;
-                default:
-                    break;
+            if (intent.getAction().equals(REFRESH_COUNT_NOTIFIED_APPS_ACTION)) {
+                reload();
             }
         }
     };
@@ -75,92 +71,72 @@ public class NotifiedAppListFragment extends AppListFragment {
             packNames.setText(current.getPackNames());
             name.setText(current.getNames());
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    final SpannableStringBuilder text = getSpannableFromText(current.getNames(), ',', colorsSpannable);
-                    onRunOnUiThread.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            name.setText(text);
-                        }
-                    });
-                }
+            new Thread(() -> {
+                final SpannableStringBuilder text = getSpannableFromText(current.getNames(), ',', colorsSpannable);
+                onRunOnUiThread.runOnUiThread(() -> name.setText(text));
             }).start();
             if(bmInCache != null)
                 Glide.with(icon).asBitmap().load(bmInCache).into(icon);
             else {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            semaphoreLoadIcon.acquire();
-                        } catch (InterruptedException e) {
-                            //TODO: disable log
-                            //e.printStackTrace();
-                        } finally {
-                            final Bitmap bm = current.getIcon(getContext());
-                            onRunOnUiThread.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    icon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fast_fade_in));
-                                    Glide.with(icon).asBitmap().load(bm)
-                                            .into(icon);
-                                }
-                            });
-                            semaphoreLoadIcon.release();
-                        }
+                new Thread(() -> {
+                    try {
+                        semaphoreLoadIcon.acquire();
+                    } catch (InterruptedException e) {
+                        //TODO: disable log
+                        //e.printStackTrace();
+                    } finally {
+                        final Bitmap bm = current.getIcon(getContext());
+                        onRunOnUiThread.runOnUiThread(() -> {
+                            icon.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fast_fade_in));
+                            Glide.with(icon).asBitmap().load(bm)
+                                    .into(icon);
+                        });
+                        semaphoreLoadIcon.release();
                     }
                 }).start();
             }
             final View allowInternet = convertView.findViewById(R.id.llAllowInternet),
                     blockInternet = convertView.findViewById(R.id.llBlockInternet);
-            allowInternet.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    current.setInternet(true);
-                    current.setInteract(true);
-                    current.setNotified(false);
-                    try {
-                        mutexNotificator.acquire();
-                        if(current.getUid() == notificationMessageUid)
-                            notificationMessage = null;
-                    } catch (InterruptedException e) {
-                        //TODO: disable log
-                        //e.printStackTrace();
-                    }
-                    finally {
-                        appDbMgr.updateApplicationData(current.getUid(), current);
-                        mutexNotificator.release();
-                    }
-                    FirewallService.cancelNotification(current.getUid());
-                    //Refresh
-                    sendRefreshCountNotifiedBroadcast();
+            allowInternet.setOnClickListener(v -> {
+                current.setInternet(true);
+                current.setInteract(true);
+                current.setNotified(false);
+                try {
+                    mutexNotificator.acquire();
+                    if(current.getUid() == notificationMessageUid)
+                        notificationMessage = null;
+                } catch (InterruptedException e) {
+                    //TODO: disable log
+                    //e.printStackTrace();
                 }
+                finally {
+                    appDbMgr.updateApplicationData(current.getUid(), current);
+                    mutexNotificator.release();
+                }
+                FirewallService.cancelNotification(current.getUid());
+                //Refresh
+                sendRefreshCountNotifiedBroadcast();
             });
             allowInternet.setOnTouchListener(viewOnTouchListener());
-            blockInternet.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    current.setInternet(false);
-                    current.setInteract(true);
-                    current.setNotified(false);
-                    try {
-                        mutexNotificator.acquire();
-                        if(current.getUid() == notificationMessageUid)
-                            notificationMessage = null;
-                    } catch (InterruptedException e) {
-                        //TODO: disable log
-                        //e.printStackTrace();
-                    }
-                    finally {
-                        appDbMgr.updateApplicationData(current.getUid(), current);
-                        mutexNotificator.release();
-                    }
-                    FirewallService.cancelNotification(current.getUid());
-                    //Refresh
-                    sendRefreshCountNotifiedBroadcast();
+            blockInternet.setOnClickListener(v -> {
+                current.setInternet(false);
+                current.setInteract(true);
+                current.setNotified(false);
+                try {
+                    mutexNotificator.acquire();
+                    if(current.getUid() == notificationMessageUid)
+                        notificationMessage = null;
+                } catch (InterruptedException e) {
+                    //TODO: disable log
+                    //e.printStackTrace();
                 }
+                finally {
+                    appDbMgr.updateApplicationData(current.getUid(), current);
+                    mutexNotificator.release();
+                }
+                FirewallService.cancelNotification(current.getUid());
+                //Refresh
+                sendRefreshCountNotifiedBroadcast();
             });
             blockInternet.setOnTouchListener(viewOnTouchListener());
         }
