@@ -37,7 +37,10 @@ import com.google.android.material.snackbar.Snackbar;
 
 public class Utils {
 
+    public static final int ONE_KB = 1024;
+
     private static final LruCache<String, Bitmap> iconsCache = new LruCache<>(500);
+
 
     public static boolean hasInternet(String packageName, Context context) {
         PackageManager pm = context.getPackageManager();
@@ -91,7 +94,7 @@ public class Utils {
                 if (index < 0) {
                     allUid.add(current.uid);
                     result.add(new ApplicationDetails(current.uid, current.packageName,
-                            current.packageName, current.name, false, false, false));
+                            current.packageName, current.name, false, false, false, 0, 0));
                 } else
                     result.get(index).addPackageAndName(current.name, current.packageName);
             }

@@ -14,4 +14,6 @@ public class ApplicationContract implements BaseColumns {
     public static final String INTERNET_PERMISSION = "internet";
     public static final String USER_INTERACT = "interact";
     public static final String NOTIFIED = "notified";
+    public static final String TX_BYTES = "txBytes";
+    public static final String RX_BYTES = "rxBytes";
 }

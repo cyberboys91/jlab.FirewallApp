@@ -83,7 +83,7 @@ public class PackChangeReceiver extends BroadcastReceiver {
                 }
             }
             return new ApplicationDetails(uid, count, pPackName.toString(),
-                    packNames.toString(), names.toString(), false, false, false);
+                    packNames.toString(), names.toString(), false, false, false, 0, 0);
         }
         return null;
     }
