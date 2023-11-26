@@ -40,7 +40,9 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                     + ApplicationContract.NAMES + " TEXT NOT NULL,"
                     + ApplicationContract.INTERNET_PERMISSION + " INT NOT NULL,"
                     + ApplicationContract.USER_INTERACT + " INT NOT NULL,"
-                    + ApplicationContract.NOTIFIED + " INT NOT NULL)");
+                    + ApplicationContract.NOTIFIED + " INT NOT NULL,"
+                    + ApplicationContract.TX_BYTES + " INT NOT NULL,"
+                    + ApplicationContract.RX_BYTES + " INT NOT NULL)");
 
             addApps(db);
         } catch(Exception|Error e) {
