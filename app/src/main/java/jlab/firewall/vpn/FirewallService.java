@@ -41,6 +41,7 @@ import android.os.Process;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -89,14 +90,16 @@ public class FirewallService extends VpnService {
     public static int notificationMessageUid;
     public static Message notificationMessage;
     public static Semaphore mutexNotificator = new Semaphore(1),
-            mutextLoadAppData = new Semaphore(1);
+            mutextLoadAppData = new Semaphore(1),
+            mutexRefreshTxRxBytesForAllApps = new Semaphore(1);
     private static Map<String, Integer> mapAddress = new ArrayMap<>();
     private static final int REQUEST_INTERNET_NOTIFICATION = 9200,
             REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9203,
             RUNNING_NOTIFICATION = 9204, MAX_COUNT_POINTS = 100;
     private static NotificationManager notMgr;
-    private ApplicationDbManager appMgr;
-    public static AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
+    public static ApplicationDbManager dbManager;
+    private static final Hashtable<Integer, ApplicationDetails> appsBeforeRunService = new Hashtable<>();
+    public static final AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
             downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
     private long downBytesInStart, upBytesInStart, x;
     private static boolean isRunning, isWaiting;
@@ -265,10 +268,10 @@ public class FirewallService extends VpnService {
     }
 
     private boolean isSupported(int protocol) {
-        return (protocol == 1 /* ICMPv4 */ ||
-                protocol == 58 /* ICMPv6 */ ||
-                protocol == 6 /* TCP */ ||
-                protocol == 17 /* UDP */);
+        return (protocol == Protocols.ICMPv4 ||
+                protocol == Protocols.ICMPv6 ||
+                protocol == Protocols.TCP ||
+                protocol == Protocols.UDP);
     }
 
     private ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
@@ -283,7 +286,7 @@ public class FirewallService extends VpnService {
 
     // Called from native code
     private void accountUsage(Usage usage) {
-//        Log.println(Log.DEBUG, "Firewall", usage.toString());
+        //Log.println(Log.DEBUG, "Firewall", usage.toString());
     }
 
     @Override
@@ -294,7 +297,7 @@ public class FirewallService extends VpnService {
         CHANNEL_ID = String.format("%s.%s", getString(R.string.app_name),
                 getString(R.string.app_list_request));
         packageManager = getBaseContext().getPackageManager();
-        appMgr = new ApplicationDbManager(getBaseContext());
+        dbManager = new ApplicationDbManager(getBaseContext());
         notMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
@@ -317,7 +320,26 @@ public class FirewallService extends VpnService {
             isWaiting = !setupVPN();
             if (!isWaiting)
                 try {
+                    loadAppsBeforeRunService();
                     isRunning = true;
+                    //Refresh Tx and Rx bytes
+                    executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (!Thread.interrupted() && isRunning()) {
+                                try {
+                                    Thread.sleep(1000);
+                                    if (!Thread.interrupted() && isRunning()) {
+                                        refreshTxRxBytesForAllApps();
+                                    }
+                                }  catch (Exception | OutOfMemoryError e) {
+                                    //TODO: disable log
+                                    //e.printStackTrace();
+                                    System.gc();
+                                }
+                            }
+                        }
+                    });
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
@@ -357,6 +379,14 @@ public class FirewallService extends VpnService {
             else
                 LocalBroadcastManager.getInstance(this)
                         .sendBroadcast(new Intent(NOT_PREPARED_VPN_ACTION));
+        }
+    }
+
+    private void loadAppsBeforeRunService() {
+        ArrayList<ApplicationDetails> allAppsInDB = dbManager.getAllAppDetails(null);
+        FirewallService.appsBeforeRunService.clear();
+        for (ApplicationDetails app : allAppsInDB) {
+            FirewallService.appsBeforeRunService.put(app.getUid(), app);
         }
     }
 
@@ -531,6 +561,7 @@ public class FirewallService extends VpnService {
         try {
             cleanup();
             isRunning = false;
+            refreshTxRxBytesForAllApps();
             LocalBroadcastManager.getInstance(getBaseContext())
                     .unregisterReceiver(EventReceiver);
             LocalBroadcastManager.getInstance(this)
@@ -582,13 +613,15 @@ public class FirewallService extends VpnService {
             mapPackageInteract = new ArrayList<>();
             ArrayList<Integer> allUid = new ArrayList<>();
             List<ApplicationDetails> allApps = getPackagesInternetPermission(context, allUid);
-            ApplicationDbManager appDbMgr = new ApplicationDbManager(context);
-            List<ApplicationDetails> appsDetails = appDbMgr.getAllAppDetails(null);
+            if (dbManager == null) {
+                dbManager = new ApplicationDbManager(context);
+            }
+            List<ApplicationDetails> appsDetails = dbManager.getAllAppDetails(null);
             int countUid = allUid.size();
             for (ApplicationDetails app : appsDetails) {
                 int indexSearch = binarySearch(allUid, app.getUid());
                 if (indexSearch < 0 || indexSearch >= countUid)
-                    appDbMgr.deleteAplicationData(app.getUid());
+                    dbManager.deleteAplicationData(app.getUid());
                 else {
                     allUid.remove(indexSearch);
                     allApps.remove(indexSearch);
@@ -601,7 +634,7 @@ public class FirewallService extends VpnService {
                         mapPackageInteract.add(app.getUid());
                 }
             }
-            appDbMgr.addApps(allApps);
+            dbManager.addApps(allApps);
             sort(mapPackageAllowed);
             sort(mapPackageNotified);
             sort(mapPackageInteract);
@@ -632,10 +665,10 @@ public class FirewallService extends VpnService {
                 try {
                     mutexNotificator.acquire();
                     if (!Utils.isInteract(uid)) {
-                        ApplicationDetails appDetails = appMgr.getApplicationForId(uid);
+                        ApplicationDetails appDetails = dbManager.getApplicationForId(uid);
                         if (appDetails != null && appDetails.getPrincipalPackName() != null) {
                             appDetails.setNotified(true);
-                            appMgr.updateApplicationData(appDetails.getUid(), appDetails);
+                            dbManager.updateApplicationData(appDetails.getUid(), appDetails);
 
                             ApplicationInfo appInfo = null;
                             try {
@@ -726,6 +759,25 @@ public class FirewallService extends VpnService {
             }
         }
     };
+
+    private void refreshTxRxBytesForAllApps () {
+        try {
+            mutexRefreshTxRxBytesForAllApps.acquire();
+            ArrayList<ApplicationDetails> apps = dbManager.getAllAppDetails(null);
+            for(ApplicationDetails item : apps) {
+                long txBytes = item.getTxBytes(), rxBytes = item.getRxBytes();
+                item.setTxBytes(txBytes + TrafficStats.getUidTxBytes(item.getUid()) - FirewallService.appsBeforeRunService.get(item.getUid()).getTxBytes());
+                item.setRxBytes(rxBytes + TrafficStats.getUidRxBytes(item.getUid()) - FirewallService.appsBeforeRunService.get(item.getUid()).getRxBytes());
+                if (txBytes != item.getTxBytes() || rxBytes != item.getRxBytes()) {
+                    dbManager.updateApplicationData(item.getUid(), item);
+                }
+            }
+        } catch (Exception | OutOfMemoryError e) {
+            System.gc();
+        } finally {
+            mutexRefreshTxRxBytesForAllApps.release();
+        }
+    }
 
     private class VPNRunnable implements Runnable {
         private final String TAG = VPNRunnable.class.getSimpleName();

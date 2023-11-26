@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import androidx.core.app.NotificationManagerCompat;
-import jlab.firewall.db.ApplicationDbManager;
+
 import jlab.firewall.db.ApplicationDetails;
 import static jlab.firewall.vpn.Utils.hasInternet;
 import static jlab.firewall.vpn.Utils.removeFromMapsIfExist;
@@ -18,7 +18,6 @@ import static jlab.firewall.vpn.Utils.removeFromMapsIfExist;
 public class PackChangeReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        ApplicationDbManager appMgr = new ApplicationDbManager(context);
         PackageManager packMgr = context.getPackageManager();
         String action = (intent == null ? null : intent.getAction());
         if (action == null)
@@ -27,7 +26,7 @@ public class PackChangeReceiver extends BroadcastReceiver {
         if (uid > 0) {
             switch (action) {
                 case Intent.ACTION_PACKAGE_FULLY_REMOVED:
-                    if (appMgr.deleteAplicationData(uid) > 0) {
+                    if (FirewallService.dbManager.deleteAplicationData(uid) > 0) {
                         removeFromMapsIfExist(uid);
                         NotificationManagerCompat.from(context).cancel(uid); // installed notification
                         NotificationManagerCompat.from(context).cancel(uid + 10000); // access notification
@@ -36,19 +35,21 @@ public class PackChangeReceiver extends BroadcastReceiver {
                 case Intent.ACTION_PACKAGE_ADDED:
                     ApplicationDetails appDetails = getOnlyInternetApps(uid, packMgr, context);
                     if (appDetails != null)
-                        appMgr.addApplicationData(appDetails);
+                        FirewallService.dbManager.addApplicationData(appDetails);
                     break;
                 case Intent.ACTION_PACKAGE_REPLACED:
-                    appDetails = appMgr.getApplicationForId(uid);
+                    appDetails = FirewallService.dbManager.getApplicationForId(uid);
                     ApplicationDetails appDetails2 = getOnlyInternetApps(uid, packMgr, context);
                     if(appDetails != null && appDetails2 != null) {
                         appDetails2.setInteract(appDetails.interact());
                         appDetails2.setInternet(appDetails.hasInternet());
                         appDetails2.setNotified(appDetails.notified());
-                        appMgr.updateApplicationData(uid, appDetails2);
+                        appDetails2.setTxBytes(appDetails.getTxBytes());
+                        appDetails2.setRxBytes(appDetails.getRxBytes());
+                        FirewallService.dbManager.updateApplicationData(uid, appDetails2);
                     }
                     else if(appDetails == null && appDetails2 != null)
-                        appMgr.addApplicationData(appDetails2);
+                        FirewallService.dbManager.addApplicationData(appDetails2);
                     break;
                 default:
                     break;

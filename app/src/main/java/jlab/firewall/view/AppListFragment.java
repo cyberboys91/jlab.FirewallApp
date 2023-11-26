@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import jlab.firewall.R;
-import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
 import jlab.firewall.vpn.FirewallService;
 import jlab.firewall.vpn.Utils;
@@ -53,7 +52,6 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     private SwipeRefreshLayout srlRefresh;
     protected Semaphore semaphoreLoadIcon = new Semaphore(3),
         semaphoreReload = new Semaphore(1);
-    protected ApplicationDbManager appDbMgr;
     protected TextView tvEmptyList;
     protected List<ApplicationDetails> content = new ArrayList<>();
     protected static int[] colorsSpannable = new int[]{R.color.darken
@@ -179,7 +177,6 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.appDbMgr = new ApplicationDbManager(getContext());
         this.adapter = new AppListAdapter(getContext(), getContent());
         this.adapter.setOnManagerContentListener(this);
         if (savedInstanceState != null && savedInstanceState.containsKey(QUERY_KEY))
@@ -318,7 +315,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                         //TODO: disable log
                         //e.printStackTrace();
                     } finally {
-                        appDbMgr.updateApplicationData(current.getUid(), current);
+                        FirewallService.dbManager.updateApplicationData(current.getUid(), current);
                         mutexNotificator.release();
                     }
                     FirewallService.cancelNotification(current.getUid());
@@ -358,7 +355,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
 
     @Override
     public List<ApplicationDetails> getContent() {
-        content = appDbMgr.getAllAppDetails(query);
+        content = FirewallService.dbManager.getAllAppDetails(query);
         return content;
     }
 
