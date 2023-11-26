@@ -98,7 +98,6 @@ public class FirewallService extends VpnService {
             RUNNING_NOTIFICATION = 9204, MAX_COUNT_POINTS = 100;
     private static NotificationManager notMgr;
     public static ApplicationDbManager dbManager;
-    private static final Hashtable<Integer, ApplicationDetails> appsBeforeRunService = new Hashtable<>();
     public static final AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
             downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
     private long downBytesInStart, upBytesInStart, x;
@@ -286,7 +285,23 @@ public class FirewallService extends VpnService {
 
     // Called from native code
     private void accountUsage(Usage usage) {
-        //Log.println(Log.DEBUG, "Firewall", usage.toString());
+        //TODO: Save Tx and Rx bytes
+        /*try {
+            mutexRefreshTxRxBytesForAllApps.acquire();
+            ApplicationDetails item = dbManager.getApplicationForId(usage.Uid);
+            if (item != null) {
+                long txBytes = item.getTxBytes(), rxBytes = item.getRxBytes();
+                item.setTxBytes(txBytes + usage.Sent);
+                item.setRxBytes(rxBytes + usage.Received);
+                if (txBytes != item.getTxBytes() || rxBytes != item.getRxBytes()) {
+                    dbManager.updateApplicationData(item.getUid(), item);
+                }
+            }
+        } catch (Exception | OutOfMemoryError e) {
+            System.gc();
+        } finally {
+            mutexRefreshTxRxBytesForAllApps.release();
+        }*/
     }
 
     @Override
@@ -320,26 +335,7 @@ public class FirewallService extends VpnService {
             isWaiting = !setupVPN();
             if (!isWaiting)
                 try {
-                    loadAppsBeforeRunService();
                     isRunning = true;
-                    //Refresh Tx and Rx bytes
-                    executorService.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            while (!Thread.interrupted() && isRunning()) {
-                                try {
-                                    Thread.sleep(1000);
-                                    if (!Thread.interrupted() && isRunning()) {
-                                        refreshTxRxBytesForAllApps();
-                                    }
-                                }  catch (Exception | OutOfMemoryError e) {
-                                    //TODO: disable log
-                                    //e.printStackTrace();
-                                    System.gc();
-                                }
-                            }
-                        }
-                    });
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
@@ -379,14 +375,6 @@ public class FirewallService extends VpnService {
             else
                 LocalBroadcastManager.getInstance(this)
                         .sendBroadcast(new Intent(NOT_PREPARED_VPN_ACTION));
-        }
-    }
-
-    private void loadAppsBeforeRunService() {
-        ArrayList<ApplicationDetails> allAppsInDB = dbManager.getAllAppDetails(null);
-        FirewallService.appsBeforeRunService.clear();
-        for (ApplicationDetails app : allAppsInDB) {
-            FirewallService.appsBeforeRunService.put(app.getUid(), app);
         }
     }
 
@@ -561,7 +549,6 @@ public class FirewallService extends VpnService {
         try {
             cleanup();
             isRunning = false;
-            refreshTxRxBytesForAllApps();
             LocalBroadcastManager.getInstance(getBaseContext())
                     .unregisterReceiver(EventReceiver);
             LocalBroadcastManager.getInstance(this)
@@ -759,25 +746,6 @@ public class FirewallService extends VpnService {
             }
         }
     };
-
-    private void refreshTxRxBytesForAllApps () {
-        try {
-            mutexRefreshTxRxBytesForAllApps.acquire();
-            ArrayList<ApplicationDetails> apps = dbManager.getAllAppDetails(null);
-            for(ApplicationDetails item : apps) {
-                long txBytes = item.getTxBytes(), rxBytes = item.getRxBytes();
-                item.setTxBytes(txBytes + TrafficStats.getUidTxBytes(item.getUid()) - FirewallService.appsBeforeRunService.get(item.getUid()).getTxBytes());
-                item.setRxBytes(rxBytes + TrafficStats.getUidRxBytes(item.getUid()) - FirewallService.appsBeforeRunService.get(item.getUid()).getRxBytes());
-                if (txBytes != item.getTxBytes() || rxBytes != item.getRxBytes()) {
-                    dbManager.updateApplicationData(item.getUid(), item);
-                }
-            }
-        } catch (Exception | OutOfMemoryError e) {
-            System.gc();
-        } finally {
-            mutexRefreshTxRxBytesForAllApps.release();
-        }
-    }
 
     private class VPNRunnable implements Runnable {
         private final String TAG = VPNRunnable.class.getSimpleName();

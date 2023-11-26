@@ -1096,22 +1096,6 @@ void ng_dump() {
                         ++r, alloc[c].tag, ctime(&alloc[c].time));
 }
 
-JNIEXPORT void JNICALL
-Java_eu_faircode_netguard_Util_dump_1memory_1profile(JNIEnv *env, jclass type) {
-#ifdef PROFILE_MEMORY
-    log_android(ANDROID_LOG_DEBUG, "Dump memory profile");
-
-    if (pthread_mutex_lock(alock))
-        log_android(ANDROID_LOG_ERROR, "pthread_mutex_lock failed");
-
-    ng_dump();
-
-    if (pthread_mutex_unlock(alock))
-        log_android(ANDROID_LOG_ERROR, "pthread_mutex_unlock failed");
-
-#endif
-}
-
 JNIEXPORT jlong JNICALL
 Java_jlab_firewall_vpn_FirewallService_jni_1init(JNIEnv *env, jobject thiz, jint sdk) {
     return Java_eu_faircode_netguard_ServiceSinkhole_jni_1init(env, thiz, sdk);

@@ -235,12 +235,16 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
                 .inflate(R.layout.app_details_in_listview, parent, false);
         final ApplicationDetails current = adapter.getItem(position);
         final TextView packNames = convertView.findViewById(R.id.tvPackagesName),
-                name = convertView.findViewById(R.id.tvName);
+                name = convertView.findViewById(R.id.tvName),
+                txBytes = convertView.findViewById(R.id.tvTxBytes),
+                rxBytes = convertView.findViewById(R.id.tvRxBytes);
         final ImageView icon = convertView.findViewById(R.id.ivIcon);
         final SwitchMultiOptionButton swInternetStatus = convertView.findViewById(R.id.swInternetStatus);
         if (current != null) {
             packNames.setText(current.getPackNames());
             name.setText(current.getNames());
+            txBytes.setText(current.getStringTxBytes());
+            rxBytes.setText(current.getStringRxBytes());
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
             new Thread(new Runnable() {
                 @Override
