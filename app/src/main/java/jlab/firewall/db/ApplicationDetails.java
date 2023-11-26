@@ -127,11 +127,11 @@ public class ApplicationDetails implements Parcelable {
     }
 
     public String getStringTxBytes () {
-        return Utils.getSizeString(this.txBytes, 2);
+        return Utils.getSizeString(this.txBytes, this.txBytes > Utils.ONE_KB ? 2 : 0);
     }
 
     public String getStringRxBytes () {
-        return Utils.getSizeString(this.rxBytes, 2);
+        return Utils.getSizeString(this.rxBytes, this.rxBytes > Utils.ONE_KB ? 2 : 0);
     }
 
     public void addPackageAndName(String name, String packageName) {
