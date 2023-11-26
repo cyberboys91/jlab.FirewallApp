@@ -89,7 +89,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
-        if (newVersion >= ApplicationDbManager.TX_RX_BYTES_DATABASE_VERSION) {
+        if (oldVersion == ApplicationDbManager.FIRST_DATABASE_VERSION && newVersion >= ApplicationDbManager.TX_RX_BYTES_DATABASE_VERSION) {
             sqLiteDatabase.execSQL("ALTER TABLE " + ApplicationContract.TABLE_NAME + " ADD COLUMN " + ApplicationContract.TX_BYTES + " INTEGER DEFAULT 0");
             sqLiteDatabase.execSQL("ALTER TABLE " + ApplicationContract.TABLE_NAME + " ADD COLUMN " + ApplicationContract.RX_BYTES + " INTEGER DEFAULT 0");
         }
