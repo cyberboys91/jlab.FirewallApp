@@ -379,7 +379,30 @@ public class FirewallService extends VpnService {
     }
 
     private void stopNative() {
-        onDestroy();
+        try {
+            cleanup();
+            isRunning = false;
+            LocalBroadcastManager.getInstance(getBaseContext())
+                    .unregisterReceiver(EventReceiver);
+            LocalBroadcastManager.getInstance(this)
+                    .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
+            try {
+                if (floatingTrafficDataView != null)
+                    windowMgr.removeViewImmediate(floatingTrafficDataView);
+            }  catch (Exception | OutOfMemoryError ignored) {
+                //TODO: disable log
+                //ignored.printStackTrace();
+            }
+            NetConnections.freeCache();
+            //TODO: disable log
+            //Log.i(TAG, "Stopped");
+        } catch (Exception | OutOfMemoryError ignored) {
+            //TODO: disable log
+            //ignored.printStackTrace();
+        } finally {
+            if (notMgr != null)
+                notMgr.cancel(RUNNING_NOTIFICATION);
+        }
     }
 
     private void startNotificatorThread() {
@@ -541,35 +564,6 @@ public class FirewallService extends VpnService {
 
     public static boolean isWaiting () {
         return isWaiting;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        try {
-            cleanup();
-            isRunning = false;
-            LocalBroadcastManager.getInstance(getBaseContext())
-                    .unregisterReceiver(EventReceiver);
-            LocalBroadcastManager.getInstance(this)
-                    .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
-            try {
-                if (floatingTrafficDataView != null)
-                    windowMgr.removeViewImmediate(floatingTrafficDataView);
-            }  catch (Exception | OutOfMemoryError ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
-            }
-            NetConnections.freeCache();
-            //TODO: disable log
-            //Log.i(TAG, "Stopped");
-        } catch (Exception | OutOfMemoryError ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
-        } finally {
-            if (notMgr != null)
-                notMgr.cancel(RUNNING_NOTIFICATION);
-        }
     }
 
     private void cleanup() {
