@@ -13,6 +13,8 @@ import android.net.VpnService;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -128,7 +130,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         super.onPostCreate(savedInstanceState);
         MobileAds.initialize(this, new OnInitializationCompleteListener() {
             @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            public void onInitializationComplete(@NonNull InitializationStatus initializationStatus) {
                 try {
                     AdView adView = findViewById(R.id.adView);
                     adView.loadAd(new AdRequest.Builder().build());
