@@ -112,7 +112,6 @@ public class FirewallService extends VpnService {
     public static ApplicationDbManager dbManager;
     public static final AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
             downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
-    private Intent intent;
     private long downBytesInStart, upBytesInStart, x;
     private static boolean isRunning, isWaiting;
     private ParcelFileDescriptor vpnInterface = null;
@@ -336,7 +335,6 @@ public class FirewallService extends VpnService {
                 channel.setAllowBubbles(true);
             notMgr.createNotificationChannel(channel);
         }
-        startServiceNow(intent.getAction().equals(RETRY_START_VPN_ACTION));
         IntentFilter intentFilter = new IntentFilter(START_VPN_ACTION);
         intentFilter.addAction(STOP_VPN_ACTION);
         intentFilter.addAction(CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION);
@@ -601,7 +599,7 @@ public class FirewallService extends VpnService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        this.intent = intent;
+        startServiceNow(intent.getAction() != null && intent.getAction().equals(RETRY_START_VPN_ACTION));
         return START_STICKY;
     }
 
