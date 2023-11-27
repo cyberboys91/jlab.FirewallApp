@@ -109,7 +109,7 @@ public class FirewallService extends VpnService {
             REFRESH_TRAFFIC_DATA_FLOATING_VIEW = 9201, NOTIFY_INTERNET_REQUEST_ACCESS = 9203,
             RUNNING_NOTIFICATION = 9204, MAX_COUNT_POINTS = 100;
     private static NotificationManager notMgr;
-    public static ApplicationDbManager dbManager;
+    private static ApplicationDbManager dbManager;
     public static final AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
             downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
     private long downBytesInStart, upBytesInStart, x;

@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import androidx.core.app.NotificationManagerCompat;
 
+import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
 import static jlab.firewall.vpn.Utils.hasInternet;
 import static jlab.firewall.vpn.Utils.removeFromMapsIfExist;
@@ -24,9 +25,10 @@ public class PackChangeReceiver extends BroadcastReceiver {
             return;
         int uid = intent.getIntExtra(Intent.EXTRA_UID, 0);
         if (uid > 0) {
+            ApplicationDbManager dbManager = new ApplicationDbManager(context);
             switch (action) {
                 case Intent.ACTION_PACKAGE_FULLY_REMOVED:
-                    if (FirewallService.dbManager.deleteAplicationData(uid) > 0) {
+                    if (dbManager.deleteAplicationData(uid) > 0) {
                         removeFromMapsIfExist(uid);
                         NotificationManagerCompat.from(context).cancel(uid); // installed notification
                         NotificationManagerCompat.from(context).cancel(uid + 10000); // access notification
@@ -35,10 +37,10 @@ public class PackChangeReceiver extends BroadcastReceiver {
                 case Intent.ACTION_PACKAGE_ADDED:
                     ApplicationDetails appDetails = getOnlyInternetApps(uid, packMgr, context);
                     if (appDetails != null)
-                        FirewallService.dbManager.addApplicationData(appDetails);
+                        dbManager.addApplicationData(appDetails);
                     break;
                 case Intent.ACTION_PACKAGE_REPLACED:
-                    appDetails = FirewallService.dbManager.getApplicationForId(uid);
+                    appDetails = dbManager.getApplicationForId(uid);
                     ApplicationDetails appDetails2 = getOnlyInternetApps(uid, packMgr, context);
                     if(appDetails != null && appDetails2 != null) {
                         appDetails2.setInteract(appDetails.interact());
@@ -46,10 +48,10 @@ public class PackChangeReceiver extends BroadcastReceiver {
                         appDetails2.setNotified(appDetails.notified());
                         appDetails2.setTxBytes(appDetails.getTxBytes());
                         appDetails2.setRxBytes(appDetails.getRxBytes());
-                        FirewallService.dbManager.updateApplicationData(uid, appDetails2);
+                        dbManager.updateApplicationData(uid, appDetails2);
                     }
                     else if(appDetails == null && appDetails2 != null)
-                        FirewallService.dbManager.addApplicationData(appDetails2);
+                        dbManager.addApplicationData(appDetails2);
                     break;
                 default:
                     break;

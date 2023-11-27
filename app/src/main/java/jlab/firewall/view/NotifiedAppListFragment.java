@@ -130,7 +130,7 @@ public class NotifiedAppListFragment extends AppListFragment {
                         //e.printStackTrace();
                     }
                     finally {
-                        FirewallService.dbManager.updateApplicationData(current.getUid(), current);
+                        dbManager.updateApplicationData(current.getUid(), current);
                         mutexNotificator.release();
                     }
                     FirewallService.cancelNotification(current.getUid());
@@ -154,7 +154,7 @@ public class NotifiedAppListFragment extends AppListFragment {
                         //e.printStackTrace();
                     }
                     finally {
-                        FirewallService.dbManager.updateApplicationData(current.getUid(), current);
+                        dbManager.updateApplicationData(current.getUid(), current);
                         mutexNotificator.release();
                     }
                     FirewallService.cancelNotification(current.getUid());
@@ -179,7 +179,7 @@ public class NotifiedAppListFragment extends AppListFragment {
 
     @Override
     public List<ApplicationDetails> getContent() {
-        content = FirewallService.dbManager.getNotifiedAppDetails(query);
+        content = dbManager.getNotifiedAppDetails(query);
         return content;
     }
 
