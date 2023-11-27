@@ -161,6 +161,12 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                 requestPermissions.add(Manifest.permission.FOREGROUND_SERVICE);
                 request = true;
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions.add(Manifest.permission.POST_NOTIFICATIONS);
+                request = true;
+            }
             if (request)
                 requestAllPermission(requestPermissions);
         }
