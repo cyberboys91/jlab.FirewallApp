@@ -29,6 +29,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.collection.ArrayMap;
 
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -41,7 +42,6 @@ import android.os.Process;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -65,6 +65,10 @@ import static jlab.firewall.vpn.Utils.getSizeString;
 import static jlab.firewall.vpn.Utils.isBlocked;
 import static jlab.firewall.vpn.Utils.showCountBadger;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class FirewallService extends VpnService {
 
     public static ArrayList<Integer> mapPackageAllowed = new ArrayList<>();
@@ -79,18 +83,26 @@ public class FirewallService extends VpnService {
             REFRESH_COUNT_NOTIFIED_APPS_ACTION = "jlab.action.REFRESH_COUNT_NOTIFIED_APPS",
             REFRESH_TRAFFIC_DATA = "jlab.action.REFRESH_TRAFFIC_DATA",
             START_VPN_ACTION = "jlab.action.START_VPN",
+            RETRY_START_VPN_ACTION = "jlab.action.RETRY_START_VPN",
             STARTED_VPN_ACTION = "jlab.action.STARTED_VPN_ACTION",
             STOPPED_VPN_ACTION = "jlab.action.STOPPED_VPN_ACTION",
             STOP_VPN_ACTION = "jlab.action.STOP_VPN_ACTION",
             NOT_PREPARED_VPN_ACTION = "jlab.action.NOT_PREPARED_VPN_ACTION",
             CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION =
                     "jlab.action.CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION",
-            SHOW_FLOATING_SPEED_MONITOR_KEY = "SHOW_FLOATING_MONITOR_SPEED_KEY";
+            SHOW_FLOATING_SPEED_MONITOR_KEY = "SHOW_FLOATING_MONITOR_SPEED_KEY",
+            X_KEY = "X_KEY",
+            UP_BYTES_IN_START_KEY = "UP_BYTES_IN_START_KEY",
+            DOWN_BYTES_IN_START_KEY = "DOWN_BYTES_IN_START_KEY",
+            UP_BYTES_TOTAL_KEY = "UP_BYTES_TOTAL_KEY",
+            DOWN_BYTES_TOTAL_KEY = "DOWN_BYTES_TOTAL_KEY",
+            TRAFFIC_DATA_UP_SPEED_POINTS_KEY = "TRAFFIC_DATA_UP_SPEED_POINTS_KEY",
+            TRAFFIC_DATA_DOWN_SPEED_POINTS_KEY = "TRAFFIC_DATA_DOWN_SPEED_POINTS_KEY";
     public static final int myUid = Process.myUid();
     public static int notificationMessageUid;
     public static Message notificationMessage;
     public static Semaphore mutexNotificator = new Semaphore(1),
-            mutextLoadAppData = new Semaphore(1),
+            mutexLoadAppData = new Semaphore(1),
             mutexRefreshTxRxBytesForAllApps = new Semaphore(1);
     private static Map<String, Integer> mapAddress = new ArrayMap<>();
     private static final int REQUEST_INTERNET_NOTIFICATION = 9200,
@@ -100,6 +112,7 @@ public class FirewallService extends VpnService {
     public static ApplicationDbManager dbManager;
     public static final AtomicLong downByteTotal = new AtomicLong(0), upByteTotal = new AtomicLong(0),
             downByteSpeed = new AtomicLong(0), upByteSpeed = new AtomicLong(0);
+    private Intent intent;
     private long downBytesInStart, upBytesInStart, x;
     private static boolean isRunning, isWaiting;
     private ParcelFileDescriptor vpnInterface = null;
@@ -124,11 +137,11 @@ public class FirewallService extends VpnService {
                                 windowMgr.addView(floatingTrafficDataView, floatingTrafficDataViewParams);
                             break;
                         case START_VPN_ACTION:
-                            startIfCan();
+                            startServiceNow(false);
                             break;
                         case STOP_VPN_ACTION:
                             try {
-                                stopNative();
+                                stopServiceNow(false);
                                 stopSelf();
                             } catch (Exception | OutOfMemoryError e) {
                                 //TODO: disable log
@@ -238,6 +251,7 @@ public class FirewallService extends VpnService {
 
     // Called from native code
     private void logPacket(Packet packet) {
+
     }
 
     // Called from native code
@@ -253,7 +267,7 @@ public class FirewallService extends VpnService {
     // Called from native code
     @TargetApi(Build.VERSION_CODES.Q)
     private int getUidQ(int version, int protocol, String saddr, int sport, String daddr, int dport) {
-        if (protocol != 6 /* TCP */ && protocol != 17 /* UDP */)
+        if (protocol != Protocols.TCP && protocol != Protocols.UDP)
             return Process.INVALID_UID;
 
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -322,7 +336,7 @@ public class FirewallService extends VpnService {
                 channel.setAllowBubbles(true);
             notMgr.createNotificationChannel(channel);
         }
-        startIfCan();
+        startServiceNow(intent.getAction().equals(RETRY_START_VPN_ACTION));
         IntentFilter intentFilter = new IntentFilter(START_VPN_ACTION);
         intentFilter.addAction(STOP_VPN_ACTION);
         intentFilter.addAction(CHANGE_STATUS_FLOATING_MONITOR_SPPED_ACTION);
@@ -330,7 +344,7 @@ public class FirewallService extends VpnService {
                 intentFilter);
     }
 
-    public void startIfCan() {
+    public void startServiceNow(boolean retry) {
         if (!isRunning) {
             isWaiting = !setupVPN();
             if (!isWaiting)
@@ -341,11 +355,11 @@ public class FirewallService extends VpnService {
                         public void run() {
                             try {
                                 loadAppData(getBaseContext());
-                                executorService.submit(new VPNRunnable(vpnInterface));
+                                executorService.submit(new VPNRunnable(vpnInterface, retry));
                             } catch (Exception | OutOfMemoryError ignored) {
                                 //TODO: disable log
                                 //ignored.printStackTrace();
-                                stopNative();
+                                stopServiceNow(true);
                             }
                         }
                     });
@@ -378,24 +392,50 @@ public class FirewallService extends VpnService {
         }
     }
 
-    private void stopNative() {
+    private ArrayList<String> getStringPoints (ArrayList<PointValue> points) {
+        ArrayList<String> result = new ArrayList<>();
+        for(PointValue point : points) {
+            result.add(String.format("{x:%s, y:%s}", point.getX(), point.getY()));
+        }
+        return result;
+    }
+
+    private void stopServiceNow(boolean retry) {
         try {
             cleanup();
             isRunning = false;
-            LocalBroadcastManager.getInstance(getBaseContext())
-                    .unregisterReceiver(EventReceiver);
-            LocalBroadcastManager.getInstance(this)
-                    .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
-            try {
-                if (floatingTrafficDataView != null)
-                    windowMgr.removeViewImmediate(floatingTrafficDataView);
-            }  catch (Exception | OutOfMemoryError ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
+            if (retry) {
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putLong(UP_BYTES_IN_START_KEY, upBytesInStart);
+                editor.putLong(DOWN_BYTES_IN_START_KEY, downBytesInStart);
+                editor.putLong(UP_BYTES_TOTAL_KEY, upByteTotal.get());
+                editor.putLong(DOWN_BYTES_TOTAL_KEY, downByteTotal.get());
+                editor.putString(TRAFFIC_DATA_UP_SPEED_POINTS_KEY, String.format("[%s]", TextUtils.join(",",
+                        getStringPoints(trafficDataUpSpeedPoints))));
+                editor.putString(TRAFFIC_DATA_DOWN_SPEED_POINTS_KEY, String.format("[%s]", TextUtils.join(",",
+                        getStringPoints(trafficDataDownSpeedPoints))));
+                editor.putLong(X_KEY, x);
+                editor.apply();
+                editor.commit();
+
+                sendBroadcast(new Intent(RETRY_START_VPN_ACTION));
             }
-            NetConnections.freeCache();
-            //TODO: disable log
-            //Log.i(TAG, "Stopped");
+            else {
+                LocalBroadcastManager.getInstance(getBaseContext())
+                        .unregisterReceiver(EventReceiver);
+                LocalBroadcastManager.getInstance(this)
+                        .sendBroadcast(new Intent(STOPPED_VPN_ACTION));
+                try {
+                    if (floatingTrafficDataView != null)
+                        windowMgr.removeViewImmediate(floatingTrafficDataView);
+                } catch (Exception | OutOfMemoryError ignored) {
+                    //TODO: disable log
+                    //ignored.printStackTrace();
+                }
+                NetConnections.freeCache();
+                //TODO: disable log
+                //Log.i(TAG, "Stopped");
+            }
         } catch (Exception | OutOfMemoryError ignored) {
             //TODO: disable log
             //ignored.printStackTrace();
@@ -403,6 +443,12 @@ public class FirewallService extends VpnService {
             if (notMgr != null)
                 notMgr.cancel(RUNNING_NOTIFICATION);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopServiceNow(true);
     }
 
     private void startNotificatorThread() {
@@ -555,6 +601,7 @@ public class FirewallService extends VpnService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        this.intent = intent;
         return START_STICKY;
     }
 
@@ -588,7 +635,7 @@ public class FirewallService extends VpnService {
 
     public static void loadAppData (Context context) {
         try {
-            mutextLoadAppData.acquire();
+            mutexLoadAppData.acquire();
             mapPackageNotified = new ArrayList<>();
             mapPackageAllowed = new ArrayList<>();
             mapPackageInteract = new ArrayList<>();
@@ -623,7 +670,7 @@ public class FirewallService extends VpnService {
             //TODO: disable log
             //e.printStackTrace();
         } finally {
-            mutextLoadAppData.release();
+            mutexLoadAppData.release();
         }
     }
 
@@ -746,8 +793,11 @@ public class FirewallService extends VpnService {
 
         private ParcelFileDescriptor vpnFileDescriptor;
 
-        public VPNRunnable(ParcelFileDescriptor vpnFileDescriptor) {
+        private boolean retry;
+
+        public VPNRunnable(ParcelFileDescriptor vpnFileDescriptor, boolean retry) {
             this.vpnFileDescriptor = vpnFileDescriptor;
+            this.retry = retry;
         }
 
         @Override
@@ -755,17 +805,42 @@ public class FirewallService extends VpnService {
             //TODO: disable log
             //Log.i(TAG, "Started");
 
-            downBytesInStart = getDownBytesTotalForService();
-            upBytesInStart = getUpBytesTotalForService();
-            upByteTotal.set(0);
-            downByteTotal.set(0);
-            upByteSpeed.set(0);
-            downByteSpeed.set(0);
-            trafficDataDownSpeedPoints.clear();
-            trafficDataUpSpeedPoints.clear();
-            x = 0;
-            NetConnections.freeCache();
+            if (retry) {
+                preferences = PreferenceManager.getDefaultSharedPreferences(FirewallService.this);
+                try {
+                    JSONArray jsonArray = new JSONArray(preferences.getString(TRAFFIC_DATA_UP_SPEED_POINTS_KEY, "[]"));
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonCurrent = new JSONObject(jsonArray.get(i).toString());
+                        trafficDataUpSpeedPoints.add(new PointValue((float) jsonCurrent.getDouble("x"), (float) jsonCurrent.getDouble("y")));
+                    }
 
+                    jsonArray = new JSONArray(preferences.getString(TRAFFIC_DATA_DOWN_SPEED_POINTS_KEY, "[]"));
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonCurrent = new JSONObject(jsonArray.get(i).toString());
+                        trafficDataDownSpeedPoints.add(new PointValue((float) jsonCurrent.getDouble("x"), (float) jsonCurrent.getDouble("y")));
+                    }
+                } catch (JSONException e) {
+                } finally {
+                    upBytesInStart = preferences.getLong(UP_BYTES_IN_START_KEY, 0);;
+                    downBytesInStart = preferences.getLong(DOWN_BYTES_IN_START_KEY, 0);
+                    upByteTotal.set(preferences.getLong(UP_BYTES_TOTAL_KEY, 0));
+                    downByteTotal.set(preferences.getLong(DOWN_BYTES_TOTAL_KEY, 0));
+                    x = preferences.getInt(X_KEY, 0);
+                }
+            }
+            else {
+                upBytesInStart = getUpBytesTotalForService();
+                downBytesInStart = getDownBytesTotalForService();
+                upByteTotal.set(0);
+                downByteTotal.set(0);
+                upByteSpeed.set(0);
+                downByteSpeed.set(0);
+                trafficDataDownSpeedPoints.clear();
+                trafficDataUpSpeedPoints.clear();
+                x = 0;
+            }
+
+            NetConnections.freeCache();
             jni_context = jni_init(Build.VERSION.SDK_INT);
             jni_start(jni_context, Log.ASSERT);
 

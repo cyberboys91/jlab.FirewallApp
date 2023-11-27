@@ -53,6 +53,13 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name=".vpn.FirewallServiceReceiver"
+            android:exported="true">
+            <intent-filter android:priority="999">
+                <action android:name="jlab.action.RETRY_START_VPN"/>
+            </intent-filter>
+        </receiver>
+
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
