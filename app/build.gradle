@@ -7,8 +7,9 @@ android {
     defaultConfig {
         applicationId "jlabori.firewall"
         minSdkVersion 21
-        versionCode 20240910
-        versionName "1.0"
+        versionCode 20241003
+        targetSdkVersion 35
+        versionName "v1.0.beta"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
