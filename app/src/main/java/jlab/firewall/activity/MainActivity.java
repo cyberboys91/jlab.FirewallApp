@@ -15,7 +15,6 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -28,8 +27,6 @@ import android.view.MenuItem;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import java.util.ArrayList;
 import jlab.firewall.R;
 import jlab.firewall.view.AppListFragment;
@@ -88,12 +85,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tabHost = findViewById(R.id.vpContent);
-        HomeFragment.startFirewall = new Runnable() {
-            @Override
-            public void run() {
-                startFirewall();
-            }
-        };
+        HomeFragment.startFirewall = this::startFirewall;
 
         ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -140,16 +132,13 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
-            @Override
-            public void onInitializationComplete(@NonNull InitializationStatus initializationStatus) {
-                try {
-                    AdView adView = findViewById(R.id.adView);
-                    adView.loadAd(new AdRequest.Builder().build());
-                } catch (Exception ignored) {
-                    //TODO: disable log
-                    //ignored.printStackTrace();
-                }
+        MobileAds.initialize(this, initializationStatus -> {
+            try {
+                AdView adView = findViewById(R.id.adView);
+                adView.loadAd(new AdRequest.Builder().build());
+            } catch (Exception ignored) {
+                //TODO: disable log
+                //ignored.printStackTrace();
             }
         });
     }
@@ -223,22 +212,19 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     }
 
     private void startVPN () {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Intent vpnIntent = VpnService.prepare(MainActivity.this);
-                    if (vpnIntent != null)
-                        startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
-                    else if (!isWaiting())
-                        onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
-                    else
-                        LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
-                                Intent(START_VPN_ACTION));
-                } catch (Exception ignored) {
-                    //TODO: disable log
-                    //ignored.printStackTrace();
-                }
+        new Thread(() -> {
+            try {
+                Intent vpnIntent = VpnService.prepare(MainActivity.this);
+                if (vpnIntent != null)
+                    startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
+                else if (!isWaiting())
+                    onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
+                else
+                    LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
+                            Intent(START_VPN_ACTION));
+            } catch (Exception ignored) {
+                //TODO: disable log
+                //ignored.printStackTrace();
             }
         }).start();
     }
