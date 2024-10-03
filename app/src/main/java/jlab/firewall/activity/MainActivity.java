@@ -149,7 +149,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(onFirewallChangeStatusReceiver);
     }
 
-    public boolean requestPermission() {
+    public void requestPermission() {
         boolean request = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             ArrayList<String> requestPermissions = new ArrayList<>();
@@ -173,7 +173,6 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
             if (request)
                 requestAllPermission(requestPermissions);
         }
-        return request;
     }
 
     private void requestAllPermission(ArrayList<String> requestPermissions) {
