@@ -131,6 +131,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                     tabHost.setCurrentItem(0);
                 else {
                     overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                    finish();
                 }
             }
         });
