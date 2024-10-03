@@ -173,7 +173,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(QUERY_KEY, query);
     }
@@ -256,7 +256,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    final SpannableStringBuilder text = getSpannableFromText(current.getNames(), ',', colorsSpannable);
+                    final SpannableStringBuilder text = getSpannableFromText(current.getNames(), colorsSpannable);
                     onRunOnUiThread.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -341,14 +341,11 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
 
                 @Override
                 public int getBackground(int state) {
-                    switch (state) {
-                        case BLOCK_INTERNET_SWITCH_STATE:
-                            return R.drawable.img_cancel;
-                        case NEUTRAL_SWITCH_STATE:
-                            return R.drawable.img_neutral;
-                        default:
-                            return R.drawable.img_checked;
-                    }
+                    return switch (state) {
+                        case BLOCK_INTERNET_SWITCH_STATE -> R.drawable.img_cancel;
+                        case NEUTRAL_SWITCH_STATE -> R.drawable.img_neutral;
+                        default -> R.drawable.img_checked;
+                    };
                 }
             });
             swInternetStatus.setState(getSwitchStateFromAppDetails(current));
@@ -374,12 +371,12 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         AppListFragment.onRunOnUiThread = onRunOnUiThread;
     }
 
-    protected SpannableStringBuilder getSpannableFromText(String text, char sep, int... colors) {
+    protected SpannableStringBuilder getSpannableFromText(String text, int... colors) {
         SpannableStringBuilder strBuilder = new SpannableStringBuilder(text);
         int indexSep = 0, indexColor = 0;
         if (colors.length > 0)
             for (int i = 0; i < text.length() && indexSep < text.length(); i++)
-                if (text.charAt(i) == sep) {
+                if (text.charAt(i) == ',') {
                     if (indexColor >= colors.length)
                         indexColor = 0;
                     ForegroundColorSpan colorSpan = new ForegroundColorSpan

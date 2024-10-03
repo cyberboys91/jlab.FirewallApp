@@ -38,12 +38,8 @@ public class NotifiedAppListFragment extends AppListFragment {
     private BroadcastReceiver refreshCountNotifiedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case REFRESH_COUNT_NOTIFIED_APPS_ACTION:
-                    reload();
-                    break;
-                default:
-                    break;
+            if (intent.getAction().equals(REFRESH_COUNT_NOTIFIED_APPS_ACTION)) {
+                reload();
             }
         }
     };
@@ -75,17 +71,14 @@ public class NotifiedAppListFragment extends AppListFragment {
             packNames.setText(current.getPackNames());
             name.setText(current.getNames());
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    final SpannableStringBuilder text = getSpannableFromText(current.getNames(), ',', colorsSpannable);
-                    onRunOnUiThread.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            name.setText(text);
-                        }
-                    });
-                }
+            new Thread(() -> {
+                final SpannableStringBuilder text = getSpannableFromText(current.getNames(), colorsSpannable);
+                onRunOnUiThread.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        name.setText(text);
+                    }
+                });
             }).start();
             if(bmInCache != null)
                 Glide.with(icon).asBitmap().load(bmInCache).into(icon);

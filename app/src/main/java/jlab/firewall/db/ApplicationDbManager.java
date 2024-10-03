@@ -64,27 +64,23 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
         addApps(getWritableDatabase(), appsDetails);
     }
 
-    public long addApplicationData(SQLiteDatabase sqLiteDatabase, ApplicationDetails applicationDetails) {
-        long countAdded = 0;
+    public void addApplicationData(SQLiteDatabase sqLiteDatabase, ApplicationDetails applicationDetails) {
         try {
-            countAdded = sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
+            sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
         } catch(Exception|Error ignored) {
             //TODO: disabled log
             //ignored.printStackTrace();
         }
-        return countAdded;
     }
 
-    public long addApplicationData(ApplicationDetails applicationDetails) {
-        long countAdded = 0;
+    public void addApplicationData(ApplicationDetails applicationDetails) {
         try {
             SQLiteDatabase sqLiteDatabase = getWritableDatabase();
-            countAdded = sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
+            sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
         }catch(Exception|Error ignored) {
             //TODO: disabled log
             //ignored.printStackTrace();
         }
-        return countAdded;
     }
 
     @Override
@@ -156,7 +152,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
         return result;
     }
 
-    public int updateApplicationData(int uid, ApplicationDetails newApplicationDetails) {
+    public void updateApplicationData(int uid, ApplicationDetails newApplicationDetails) {
         int countUpdated = 0;
         try {
             SQLiteDatabase sqLiteDatabase = getWritableDatabase();
@@ -182,7 +178,6 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
             //TODO: disabled log
             //ignored.printStackTrace();
         }
-        return countUpdated;
     }
 
     public ApplicationDetails getApplicationForId (int uid) {
@@ -214,7 +209,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
         return null;
     }
 
-    public int deleteAplicationData(int uid) {
+    public int deleteApplicationData(int uid) {
         int countDeleted = 0;
         try {
             SQLiteDatabase sqLiteDatabase = getWritableDatabase();

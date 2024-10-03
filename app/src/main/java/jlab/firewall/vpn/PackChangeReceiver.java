@@ -28,7 +28,7 @@ public class PackChangeReceiver extends BroadcastReceiver {
             ApplicationDbManager dbManager = new ApplicationDbManager(context);
             switch (action) {
                 case Intent.ACTION_PACKAGE_FULLY_REMOVED:
-                    if (dbManager.deleteAplicationData(uid) > 0) {
+                    if (dbManager.deleteApplicationData(uid) > 0) {
                         removeFromMapsIfExist(uid);
                         NotificationManagerCompat.from(context).cancel(uid); // installed notification
                         NotificationManagerCompat.from(context).cancel(uid + 10000); // access notification

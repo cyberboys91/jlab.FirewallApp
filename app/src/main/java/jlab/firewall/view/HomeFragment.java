@@ -67,16 +67,18 @@ public class HomeFragment extends Fragment {
             String action = intent.getAction();
             if (action == null)
                 return;
-            if (action.equals(FirewallService.REFRESH_TRAFFIC_DATA))
-                refreshTrafficData();
-            else if (action.equals(FirewallService.STARTED_VPN_ACTION)) {
-                changeStateButton(false);
-                refreshTrafficData();
-            } else if (action.equals(FirewallService.STOPPED_VPN_ACTION)) {
-                changeStateButton(true);
-                refreshTrafficData();
-            } else if (action.equals(FirewallService.NOT_PREPARED_VPN_ACTION))
-                changeStateButton(true);
+            switch (action) {
+                case FirewallService.REFRESH_TRAFFIC_DATA -> refreshTrafficData();
+                case FirewallService.STARTED_VPN_ACTION -> {
+                    changeStateButton(false);
+                    refreshTrafficData();
+                }
+                case FirewallService.STOPPED_VPN_ACTION -> {
+                    changeStateButton(true);
+                    refreshTrafficData();
+                }
+                case FirewallService.NOT_PREPARED_VPN_ACTION -> changeStateButton(true);
+            }
         }
     };
     private SharedPreferences preferences;
@@ -183,13 +185,8 @@ public class HomeFragment extends Fragment {
     private void stopFirewallService() {
         tvTextButton.setText(R.string.stopping_vpn);
         vpnButton.setEnabled(false);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                LocalBroadcastManager.getInstance(getContext())
-                        .sendBroadcast(new Intent(FirewallService.STOP_VPN_ACTION));
-            }
-        }).start();
+        new Thread(() -> LocalBroadcastManager.getInstance(getContext())
+                .sendBroadcast(new Intent(FirewallService.STOP_VPN_ACTION))).start();
     }
 
     private void startFirewallService() {

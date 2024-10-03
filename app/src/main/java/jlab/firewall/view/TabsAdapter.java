@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.app.ActionBar;
 import android.content.Context;
 import android.app.FragmentTransaction;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentStatePagerAdapter;
@@ -97,6 +99,7 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
         return mTabs.size();
     }
 
+    @NonNull
     @Override
     public Fragment getItem(int position) {
         return mFragments.get(position);

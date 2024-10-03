@@ -342,6 +342,7 @@ public class FirewallService extends VpnService {
                 intentFilter);
     }
 
+    @SuppressLint("ForegroundServiceType")
     public void startServiceNow(boolean retry) {
         if (!isRunning) {
             isWaiting = !setupVPN();
@@ -647,7 +648,7 @@ public class FirewallService extends VpnService {
             for (ApplicationDetails app : appsDetails) {
                 int indexSearch = binarySearch(allUid, app.getUid());
                 if (indexSearch < 0 || indexSearch >= countUid)
-                    dbManager.deleteAplicationData(app.getUid());
+                    dbManager.deleteApplicationData(app.getUid());
                 else {
                     allUid.remove(indexSearch);
                     allApps.remove(indexSearch);
