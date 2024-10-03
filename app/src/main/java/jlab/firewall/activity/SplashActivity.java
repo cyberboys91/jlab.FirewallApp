@@ -5,10 +5,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.content.Intent;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.ImageView;
 import android.view.animation.Animation;
 import jlab.firewall.vpn.FirewallService;
 import android.view.animation.AnimationUtils;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import static jlab.firewall.vpn.FirewallService.loadAppData;
 
@@ -66,12 +69,13 @@ public class SplashActivity extends AppCompatActivity {
                 }).start();
             }
         }, 0);
-    }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        this.finish = true;
-        finish();
+        this.getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish = true;
+                finish();
+            }
+        });
     }
 }

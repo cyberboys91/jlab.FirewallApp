@@ -14,6 +14,7 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
@@ -123,6 +124,16 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         LocalBroadcastManager.getInstance(this).registerReceiver(onFirewallChangeStatusReceiver,
                 new IntentFilter(intentFilter));
 
+        this.getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (tabHost.getCurrentItem() != 0)
+                    tabHost.setCurrentItem(0);
+                else {
+                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                }
+            }
+        });
     }
 
     @Override
@@ -229,16 +240,6 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                 }
             }
         }).start();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (tabHost.getCurrentItem() != 0)
-            tabHost.setCurrentItem(0);
-        else {
-            super.onBackPressed();
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-        }
     }
 
     @Override
