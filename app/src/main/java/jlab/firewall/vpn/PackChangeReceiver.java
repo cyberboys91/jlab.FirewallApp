@@ -24,37 +24,37 @@ public class PackChangeReceiver extends BroadcastReceiver {
             return;
         int uid = intent.getIntExtra(Intent.EXTRA_UID, 0);
         if (uid > 0) {
-            ApplicationDbManager dbManager = new ApplicationDbManager(context);
-            ApplicationDetails appDetails;
-            switch (action) {
-                case Intent.ACTION_PACKAGE_FULLY_REMOVED:
-                    if (dbManager.deleteApplicationData(uid) > 0) {
-                        removeFromMapsIfExist(uid);
-                        NotificationManagerCompat.from(context).cancel(uid); // installed notification
-                        NotificationManagerCompat.from(context).cancel(uid + 10000); // access notification
-                    }
-                    break;
-                case Intent.ACTION_PACKAGE_ADDED:
-                    appDetails = getOnlyInternetApps(uid, packMgr, context);
-                    if (appDetails != null)
-                        dbManager.addApplicationData(appDetails);
-                    break;
-                case Intent.ACTION_PACKAGE_REPLACED:
-                    appDetails = dbManager.getApplicationForId(uid);
-                    ApplicationDetails appDetails2 = getOnlyInternetApps(uid, packMgr, context);
-                    if(appDetails != null && appDetails2 != null) {
-                        appDetails2.setInteract(appDetails.interact());
-                        appDetails2.setInternet(appDetails.hasInternet());
-                        appDetails2.setNotified(appDetails.notified());
-                        appDetails2.setTxBytes(appDetails.getTxBytes());
-                        appDetails2.setRxBytes(appDetails.getRxBytes());
-                        dbManager.updateApplicationData(uid, appDetails2);
-                    }
-                    else if(appDetails == null && appDetails2 != null)
-                        dbManager.addApplicationData(appDetails2);
-                    break;
-                default:
-                    break;
+            try (ApplicationDbManager dbManager = new ApplicationDbManager(context)) {
+                ApplicationDetails appDetails;
+                switch (action) {
+                    case Intent.ACTION_PACKAGE_FULLY_REMOVED:
+                        if (dbManager.deleteApplicationData(uid) > 0) {
+                            removeFromMapsIfExist(uid);
+                            NotificationManagerCompat.from(context).cancel(uid); // installed notification
+                            NotificationManagerCompat.from(context).cancel(uid + 10000); // access notification
+                        }
+                        break;
+                    case Intent.ACTION_PACKAGE_ADDED:
+                        appDetails = getOnlyInternetApps(uid, packMgr, context);
+                        if (appDetails != null)
+                            dbManager.addApplicationData(appDetails);
+                        break;
+                    case Intent.ACTION_PACKAGE_REPLACED:
+                        appDetails = dbManager.getApplicationForId(uid);
+                        ApplicationDetails appDetails2 = getOnlyInternetApps(uid, packMgr, context);
+                        if (appDetails != null && appDetails2 != null) {
+                            appDetails2.setInteract(appDetails.interact());
+                            appDetails2.setInternet(appDetails.hasInternet());
+                            appDetails2.setNotified(appDetails.notified());
+                            appDetails2.setTxBytes(appDetails.getTxBytes());
+                            appDetails2.setRxBytes(appDetails.getRxBytes());
+                            dbManager.updateApplicationData(uid, appDetails2);
+                        } else if (appDetails == null && appDetails2 != null)
+                            dbManager.addApplicationData(appDetails2);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }

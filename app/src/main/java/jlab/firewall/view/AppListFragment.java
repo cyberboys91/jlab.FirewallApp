@@ -169,18 +169,15 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
     @Override
     public void reload() {
         if (srlRefresh != null) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        semaphoreReload.acquire();
-                    }
-                    catch (InterruptedException ignored) { }
-                    finally {
-                        content = getContent();
-                        handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
-                        semaphoreReload.release();
-                    }
+            new Thread(() -> {
+                try {
+                    semaphoreReload.acquire();
+                }
+                catch (InterruptedException ignored) { }
+                finally {
+                    content = getContent();
+                    handler.sendEmptyMessage(ON_LOAD_CONTENT_FINISH);
+                    semaphoreReload.release();
                 }
             }).start();
         }
@@ -219,16 +216,16 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         final TextView packNames = convertView.findViewById(R.id.tvPackagesName),
                 name = convertView.findViewById(R.id.tvName);
                 //TODO: Show Tx and Rx bytes
-                /*txBytes = convertView.findViewById(R.id.tvTxBytes),
-                rxBytes = convertView.findViewById(R.id.tvRxBytes);*/
+                //txBytes = convertView.findViewById(R.id.tvTxBytes),
+                //rxBytes = convertView.findViewById(R.id.tvRxBytes);
         final ImageView icon = convertView.findViewById(R.id.ivIcon);
         final SwitchMultiOptionButton swInternetStatus = convertView.findViewById(R.id.swInternetStatus);
         if (current != null) {
             packNames.setText(current.getPackNames());
             name.setText(current.getNames());
             //TODO: Show Tx and Rx bytes
-            /*txBytes.setText(current.getStringTxBytes());
-            rxBytes.setText(current.getStringRxBytes());*/
+            //txBytes.setText(current.getStringTxBytes());
+            //rxBytes.setText(current.getStringRxBytes());
             Bitmap bmInCache = Utils.getIconForAppInCache(current.getPrincipalPackName());
             new Thread(() -> {
                 final SpannableStringBuilder text = getSpannableFromText(current.getNames(), colorsSpannable);

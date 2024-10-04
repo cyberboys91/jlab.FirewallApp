@@ -1,5 +1,6 @@
 package jlab.firewall.view;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.app.ActionBar;
 import android.content.Context;
@@ -52,6 +53,7 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
             ((OnReloadListener) mFragments.get(position)).reload();
     }
 
+    @SuppressLint("InflateParams")
     private void addTitleBadgeCountViewAppNotified(int position, OnReloadListener listener) {
         if (position >= 0 && position < mFragments.size()) {
             int count = listener.getCount();
@@ -64,7 +66,7 @@ public class TabsAdapter extends FragmentStatePagerAdapter implements ActionBar.
                 ((TextView) customTitleView.findViewById(R.id.tvBadgeCount))
                         .setText(count < MAX_COUNT_ALLOW_IN_TITLE
                                 ? String.valueOf(count)
-                                : String.valueOf(MAX_COUNT_ALLOW_IN_TITLE) + "+");
+                                : MAX_COUNT_ALLOW_IN_TITLE + "+");
             showCountBadger(mContext, null, count);
             customTitleView.findViewById(R.id.rlBadgeWrapper).setVisibility(count > 0
                     ? View.VISIBLE : View.GONE);

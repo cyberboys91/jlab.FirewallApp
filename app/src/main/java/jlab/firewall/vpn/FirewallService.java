@@ -308,7 +308,7 @@ public class FirewallService extends VpnService {
     @Override
     public void onCreate() {
         super.onCreate();
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences = getSharedPreferences(String.format("%s_preferences", getPackageName()), Context.MODE_PRIVATE);
         loadAddress();
         CHANNEL_ID = String.format("%s.%s", getString(R.string.app_name),
                 getString(R.string.app_list_request));
@@ -443,6 +443,7 @@ public class FirewallService extends VpnService {
         });
     }
 
+    @SuppressLint({"InflateParams", "RtlHardcoded"})
     private void loadTrafficDataView() {
         try {
             if (!Thread.interrupted() && isRunning()) {
@@ -751,7 +752,7 @@ public class FirewallService extends VpnService {
         public void run() {
 
             if (retry) {
-                preferences = PreferenceManager.getDefaultSharedPreferences(FirewallService.this);
+                preferences = getSharedPreferences(String.format("%s_preferences", getPackageName()), Context.MODE_PRIVATE);
                 try {
                     JSONArray jsonArray = new JSONArray(preferences.getString(TRAFFIC_DATA_UP_SPEED_POINTS_KEY, "[]"));
                     for (int i = 0; i < jsonArray.length(); i++) {
@@ -764,8 +765,9 @@ public class FirewallService extends VpnService {
                         JSONObject jsonCurrent = new JSONObject(jsonArray.get(i).toString());
                         trafficDataDownSpeedPoints.add(new PointValue((float) jsonCurrent.getDouble("x"), (float) jsonCurrent.getDouble("y")));
                     }
-                } catch (JSONException e) {
-                } finally {
+                }
+                catch (JSONException ignored) { }
+                finally {
                     upBytesInStart = preferences.getLong(UP_BYTES_IN_START_KEY, 0);;
                     downBytesInStart = preferences.getLong(DOWN_BYTES_IN_START_KEY, 0);
                     upByteTotal.set(preferences.getLong(UP_BYTES_TOTAL_KEY, 0));
@@ -789,12 +791,9 @@ public class FirewallService extends VpnService {
             jni_context = jni_init(Build.VERSION.SDK_INT);
             jni_start(jni_context, Log.ASSERT);
 
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    executorService.submit(refreshTrafficData);
-                    jni_run(jni_context, vpnFileDescriptor.getFd(), true, 3);
-                }
+            executorService.submit(() -> {
+                executorService.submit(refreshTrafficData);
+                jni_run(jni_context, vpnFileDescriptor.getFd(), true, 3);
             });
         }
     }

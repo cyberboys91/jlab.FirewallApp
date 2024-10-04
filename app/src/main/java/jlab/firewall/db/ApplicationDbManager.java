@@ -49,7 +49,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
     }
 
     private void addApps(SQLiteDatabase db) {
-        addApps(db, getPackagesInternetPermission(mContext, new ArrayList<Integer>()));
+        addApps(db, getPackagesInternetPermission(mContext, new ArrayList<>()));
     }
 
     public void addApps(SQLiteDatabase db, List<ApplicationDetails> appsDetails) {
@@ -138,10 +138,9 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
     }
 
     public void updateApplicationData(int uid, ApplicationDetails newApplicationDetails) {
-        int countUpdated = 0;
         try {
             SQLiteDatabase sqLiteDatabase = getWritableDatabase();
-            countUpdated = sqLiteDatabase.update(ApplicationContract.TABLE_NAME,
+            int countUpdated = sqLiteDatabase.update(ApplicationContract.TABLE_NAME,
                     newApplicationDetails.toContentValues(),
                     ApplicationContract._ID + " LIKE ?",
                     new String[]{Integer.toString(uid)});

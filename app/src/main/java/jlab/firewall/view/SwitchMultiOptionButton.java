@@ -4,6 +4,7 @@ package jlab.firewall.view;
  * Created by Javier on 02/01/2021.
  */
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -50,12 +51,9 @@ public class SwitchMultiOptionButton extends LinearLayout {
 
     private void addContentView() {
         View.inflate(getContext(), R.layout.switch_option_button, this);
-        setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setState((state + 1) % onSwitchListener.countStates());
-                onSwitchListener.onSwitchChange(state);
-            }
+        setOnClickListener(v -> {
+            setState((state + 1) % onSwitchListener.countStates());
+            onSwitchListener.onSwitchChange(state);
         });
         setOnTouchListener(viewOnTouchListener());
     }
@@ -77,6 +75,7 @@ public class SwitchMultiOptionButton extends LinearLayout {
 
     public static View.OnTouchListener viewOnTouchListener () {
         return new View.OnTouchListener() {
+            @SuppressLint("ClickableViewAccessibility")
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
