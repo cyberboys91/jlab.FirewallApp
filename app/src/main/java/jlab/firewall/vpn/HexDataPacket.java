@@ -10,7 +10,6 @@ class HexDataPacket {
     private String remoteHost;
     private String localPort;
     private String remotePort;
-    private int uid = -1;
 
     public HexDataPacket(boolean isV6, String completeTrace) {
         int startIndex;
@@ -48,9 +47,5 @@ class HexDataPacket {
 
     public String getRemoteHost() {
         return remoteHost;
-    }
-
-    public int getUID() {
-        return uid;
     }
 }

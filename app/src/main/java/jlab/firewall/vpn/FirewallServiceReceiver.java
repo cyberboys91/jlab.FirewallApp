@@ -11,16 +11,10 @@ import android.content.BroadcastReceiver;
 public class FirewallServiceReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent != null && intent.getAction() != null) {
-            switch (intent.getAction()) {
-                case FirewallService.RETRY_START_VPN_ACTION:
-                    Intent intentService = new Intent(context, FirewallService.class);
-                    intentService.setAction(FirewallService.RETRY_START_VPN_ACTION);
-                    context.startService(intentService);
-                    break;
-                default:
-                    break;
-            }
+        if (intent != null && intent.getAction() != null && intent.getAction().equals(FirewallService.RETRY_START_VPN_ACTION)) {
+            Intent intentService = new Intent(context, FirewallService.class);
+            intentService.setAction(FirewallService.RETRY_START_VPN_ACTION);
+            context.startService(intentService);
         }
     }
 }

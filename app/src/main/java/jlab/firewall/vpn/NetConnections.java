@@ -6,10 +6,8 @@ package jlab.firewall.vpn;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.TrafficStats;
 import android.os.Build;
 import android.util.LruCache;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -97,14 +95,11 @@ public class NetConnections {
     }
 
     private static int getProtocolInt (Protocol protocol) {
-        switch (protocol) {
-            case tcp:
-                return TCP_PROTOCOL_INT;
-            case udp:
-                return UDP_PROTOCOL_INT;
-            default:
-                return -1;
-        }
+        return switch (protocol) {
+            case tcp -> TCP_PROTOCOL_INT;
+            case udp -> UDP_PROTOCOL_INT;
+            default -> -1;
+        };
     }
 
     @TargetApi(Build.VERSION_CODES.Q)

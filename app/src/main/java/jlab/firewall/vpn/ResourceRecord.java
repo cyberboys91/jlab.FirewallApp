@@ -19,6 +19,8 @@ package jlab.firewall.vpn;
     Copyright 2015-2019 by Marcel Bokhorst (M66B)
 */
 
+import androidx.annotation.NonNull;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,6 +37,7 @@ public class ResourceRecord {
     public ResourceRecord() {
     }
 
+    @NonNull
     @Override
     public String toString() {
         return formatter.format(new Date(Time).getTime()) +

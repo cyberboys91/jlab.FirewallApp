@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import androidx.core.app.NotificationManagerCompat;
-
 import jlab.firewall.db.ApplicationDbManager;
 import jlab.firewall.db.ApplicationDetails;
 import static jlab.firewall.vpn.Utils.hasInternet;
@@ -26,6 +25,7 @@ public class PackChangeReceiver extends BroadcastReceiver {
         int uid = intent.getIntExtra(Intent.EXTRA_UID, 0);
         if (uid > 0) {
             ApplicationDbManager dbManager = new ApplicationDbManager(context);
+            ApplicationDetails appDetails;
             switch (action) {
                 case Intent.ACTION_PACKAGE_FULLY_REMOVED:
                     if (dbManager.deleteApplicationData(uid) > 0) {
@@ -35,7 +35,7 @@ public class PackChangeReceiver extends BroadcastReceiver {
                     }
                     break;
                 case Intent.ACTION_PACKAGE_ADDED:
-                    ApplicationDetails appDetails = getOnlyInternetApps(uid, packMgr, context);
+                    appDetails = getOnlyInternetApps(uid, packMgr, context);
                     if (appDetails != null)
                         dbManager.addApplicationData(appDetails);
                     break;

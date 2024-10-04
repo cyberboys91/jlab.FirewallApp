@@ -73,10 +73,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                     default:
                         break;
                 }
-            } catch (Exception ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
-            }
+            } catch (Exception ignored) { }
         }
     };
 
@@ -136,10 +133,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
             try {
                 AdView adView = findViewById(R.id.adView);
                 adView.loadAd(new AdRequest.Builder().build());
-            } catch (Exception ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
-            }
+            } catch (Exception ignored) { }
         });
     }
 
@@ -188,10 +182,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
                 startActivityForResult(intent, CAN_DRAW_OVERLAY);
-            } catch (Exception ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
-            }
+            } catch (Exception ignored) { }
         } else
             startVPN();
     }
@@ -221,10 +212,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
                 else
                     LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(new
                             Intent(START_VPN_ACTION));
-            } catch (Exception ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
-            }
+            } catch (Exception ignored) { }
         }).start();
     }
 

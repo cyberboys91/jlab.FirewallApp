@@ -24,10 +24,7 @@ public class SplashActivity extends AppCompatActivity {
     private Runnable runnable = () -> runOnUiThread(() -> {
         try {
             Thread.sleep(timeSleep);
-        } catch (InterruptedException e) {
-            //TODO: disable log
-            //e.printStackTrace();
-        }
+        } catch (InterruptedException ignored) { }
         if(!finish) {
             Intent intent = new Intent(getBaseContext(), MainActivity.class);
             startActivity(intent);

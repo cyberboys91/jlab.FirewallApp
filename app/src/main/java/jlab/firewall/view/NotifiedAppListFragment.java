@@ -88,10 +88,9 @@ public class NotifiedAppListFragment extends AppListFragment {
                     public void run() {
                         try {
                             semaphoreLoadIcon.acquire();
-                        } catch (InterruptedException e) {
-                            //TODO: disable log
-                            //e.printStackTrace();
-                        } finally {
+                        }
+                        catch (InterruptedException ignored) { }
+                        finally {
                             final Bitmap bm = current.getIcon(getContext());
                             onRunOnUiThread.runOnUiThread(new Runnable() {
                                 @Override
@@ -118,10 +117,8 @@ public class NotifiedAppListFragment extends AppListFragment {
                         mutexNotificator.acquire();
                         if(current.getUid() == notificationMessageUid)
                             notificationMessage = null;
-                    } catch (InterruptedException e) {
-                        //TODO: disable log
-                        //e.printStackTrace();
                     }
+                    catch (InterruptedException ignored) { }
                     finally {
                         dbManager.updateApplicationData(current.getUid(), current);
                         mutexNotificator.release();
@@ -142,10 +139,7 @@ public class NotifiedAppListFragment extends AppListFragment {
                         mutexNotificator.acquire();
                         if(current.getUid() == notificationMessageUid)
                             notificationMessage = null;
-                    } catch (InterruptedException e) {
-                        //TODO: disable log
-                        //e.printStackTrace();
-                    }
+                    } catch (InterruptedException ignored) { }
                     finally {
                         dbManager.updateApplicationData(current.getUid(), current);
                         mutexNotificator.release();

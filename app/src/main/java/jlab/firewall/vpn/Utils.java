@@ -115,10 +115,7 @@ public class Utils {
                     result = getBitmapFromDrawable(icon);
                 if (result == null)
                     result = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
-            } catch (Exception ignored) {
-                //TODO: disable log
-                //ignored.printStackTrace();
-            }
+            } catch (Exception ignored) { }
 
         if (!inCache && result != null)
             iconsCache.put(packageName, result);
@@ -188,8 +185,6 @@ public class Utils {
         try {
             activity.startActivity(goToMarket);
         } catch (Exception ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
             activity.startActivity(new Intent(Intent.ACTION_VIEW,
                     Uri.parse(String.format("https://play.google.com/store/apps/details?id=%s"
                             , activity.getPackageName()))));
@@ -207,16 +202,11 @@ public class Utils {
                             activity.startActivity(new Intent(Intent.ACTION_SENDTO)
                                     .setData(Uri.parse(String.format("mailto:%s", activity.getString(R.string.mail)))));
                         } catch (Exception ignored) {
-                            //TODO: disable log
-                            //ignored.printStackTrace();
                             Utils.showSnackBar(R.string.app_mail_not_found, viewForSnack);
                         }
                     })
                     .show();
-        } catch (Exception ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
-        }
+        } catch (Exception ignored) { }
     }
 
     private static Snackbar createSnackBar(int message, View view) {
@@ -301,9 +291,6 @@ public class Utils {
             ShortcutBadger.applyCount(context, count);
             if (notification != null)
                 ShortcutBadger.applyNotification(context, notification, count);
-        } catch (Exception ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
-        }
+        } catch (Exception ignored) { }
     }
 }

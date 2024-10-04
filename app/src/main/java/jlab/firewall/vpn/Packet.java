@@ -19,6 +19,8 @@ package jlab.firewall.vpn;
     Copyright 2015-2019 by Marcel Bokhorst (M66B)
 */
 
+import androidx.annotation.NonNull;
+
 public class Packet {
     public long time;
     public int version;
@@ -35,6 +37,7 @@ public class Packet {
     public Packet() {
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "uid=" + uid + " v" + version + " p" + protocol + " " + daddr + "/" + dport;

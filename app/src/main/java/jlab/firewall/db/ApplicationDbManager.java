@@ -45,10 +45,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                     + ApplicationContract.RX_BYTES + " INT NOT NULL)");
 
             addApps(db);
-        } catch(Exception|Error e) {
-            //TODO: disable log
-            //e.printStackTrace();
-        }
+        } catch(Exception|Error ignored) { }
     }
 
     private void addApps(SQLiteDatabase db) {
@@ -67,20 +64,14 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
     public void addApplicationData(SQLiteDatabase sqLiteDatabase, ApplicationDetails applicationDetails) {
         try {
             sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
-        } catch(Exception|Error ignored) {
-            //TODO: disabled log
-            //ignored.printStackTrace();
-        }
+        } catch(Exception|Error ignored) { }
     }
 
     public void addApplicationData(ApplicationDetails applicationDetails) {
         try {
             SQLiteDatabase sqLiteDatabase = getWritableDatabase();
             sqLiteDatabase.insert(ApplicationContract.TABLE_NAME, null, applicationDetails.toContentValues());
-        }catch(Exception|Error ignored) {
-            //TODO: disabled log
-            //ignored.printStackTrace();
-        }
+        } catch(Exception|Error ignored) { }
     }
 
     @Override
@@ -114,10 +105,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                             txBytes, rxBytes));
             }
             cursor.close();
-        } catch(Exception|Error ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
-        }
+        } catch(Exception|Error ignored) { }
         return result;
     }
 
@@ -145,10 +133,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                             txBytes, rxBytes));
             }
             cursor.close();
-        } catch(Exception|Error ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
-        }
+        } catch(Exception|Error ignored) { }
         return result;
     }
 
@@ -174,10 +159,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                 else
                     removeFromNotifiedList(uid);
             }
-        } catch(Exception|Error ignored) {
-            //TODO: disabled log
-            //ignored.printStackTrace();
-        }
+        } catch(Exception|Error ignored) { }
     }
 
     public ApplicationDetails getApplicationForId (int uid) {
@@ -202,10 +184,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
                         txBytes, rxBytes);
             }
             cursor.close();
-        } catch(Exception|Error ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
-        }
+        } catch(Exception|Error ignored) { }
         return null;
     }
 
@@ -216,10 +195,7 @@ public class ApplicationDbManager extends SQLiteOpenHelper {
             countDeleted = sqLiteDatabase.delete(ApplicationContract.TABLE_NAME,
                     ApplicationContract._ID + " LIKE ?",
                     new String[]{String.valueOf(uid)});
-        } catch (Exception|Error ignored) {
-            //TODO: disabled log
-            //ignored.printStackTrace();
-        }
+        } catch (Exception|Error ignored) { }
         return countDeleted;
     }
 }

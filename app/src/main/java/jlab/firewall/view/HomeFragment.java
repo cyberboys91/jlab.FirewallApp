@@ -104,10 +104,9 @@ public class HomeFragment extends Fragment {
                 chartData.setLines(lines);
                 chart.setLineChartData(chartData);
             }
-        } catch (Exception ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
-        } finally {
+        }
+        catch (Exception ignored) { }
+        finally {
             mutexRefreshTraffic.release();
         }
     }
@@ -230,10 +229,7 @@ public class HomeFragment extends Fragment {
                 }
                 vpnButton.setEnabled(true);
             }
-        } catch (Exception ignored) {
-            //TODO: disable log
-            //ignored.printStackTrace();
-        }
+        } catch (Exception ignored) { }
     }
 
     @Override
