@@ -1,6 +1,8 @@
 package jlab.firewall.activity;
 
 import jlab.firewall.R;
+
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.content.Intent;
@@ -18,6 +20,7 @@ import static jlab.firewall.vpn.FirewallService.loadAppData;
  * Created by Javier on 7/4/2020.
  */
 
+@SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
     private boolean finish = false;
     private final long timeSleep = 250;

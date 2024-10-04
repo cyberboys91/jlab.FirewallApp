@@ -88,7 +88,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         actionBar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
         actionBar.setDisplayShowTitleEnabled(true);
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences = getSharedPreferences(String.format("%s_preferences", getPackageName()), Context.MODE_PRIVATE);
         if(!preferences.contains(SHOW_FLOATING_SPEED_MONITOR_KEY)) {
             SharedPreferences.Editor editor = preferences.edit();
             editor.putBoolean(USER_DEFINE_CAN_DRAW_OVERLAY_KEY, false);
