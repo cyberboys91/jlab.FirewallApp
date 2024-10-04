@@ -27,7 +27,6 @@ import android.os.ParcelFileDescriptor;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.collection.ArrayMap;
-
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -49,7 +48,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import jlab.firewall.R;
 import jlab.firewall.activity.MainActivity;
 import jlab.firewall.db.ApplicationDbManager;
@@ -64,7 +62,6 @@ import static jlab.firewall.vpn.Utils.getPackagesInternetPermission;
 import static jlab.firewall.vpn.Utils.getSizeString;
 import static jlab.firewall.vpn.Utils.isBlocked;
 import static jlab.firewall.vpn.Utils.showCountBadger;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -349,17 +346,14 @@ public class FirewallService extends VpnService {
             if (!isWaiting)
                 try {
                     isRunning = true;
-                    executorService.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                loadAppData(getBaseContext());
-                                executorService.submit(new VPNRunnable(vpnInterface, retry));
-                            } catch (Exception | OutOfMemoryError ignored) {
-                                //TODO: disable log
-                                //ignored.printStackTrace();
-                                stopServiceNow(true);
-                            }
+                    executorService.submit(() -> {
+                        try {
+                            loadAppData(getBaseContext());
+                            executorService.submit(new VPNRunnable(vpnInterface, retry));
+                        } catch (Exception | OutOfMemoryError ignored) {
+                            //TODO: disable log
+                            //ignored.printStackTrace();
+                            stopServiceNow(true);
                         }
                     });
 
@@ -451,25 +445,22 @@ public class FirewallService extends VpnService {
     }
 
     private void startNotificatorThread() {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                while (!Thread.interrupted() && isRunning()) {
-                    try {
-                        Thread.sleep(1000);
-                        mutexNotificator.acquire();
-                        if (notificationMessage != null) {
-                            handler.sendMessage(notificationMessage);
-                            notificationMessage = null;
-                            notificationMessageUid = -1;
-                        }
-                    }  catch (Exception | OutOfMemoryError e) {
-                        //TODO: disable log
-                        //e.printStackTrace();
-                        System.gc();
-                    } finally {
-                        mutexNotificator.release();
+        executorService.submit(() -> {
+            while (!Thread.interrupted() && isRunning()) {
+                try {
+                    Thread.sleep(1000);
+                    mutexNotificator.acquire();
+                    if (notificationMessage != null) {
+                        handler.sendMessage(notificationMessage);
+                        notificationMessage = null;
+                        notificationMessageUid = -1;
                     }
+                }  catch (Exception | OutOfMemoryError e) {
+                    //TODO: disable log
+                    //e.printStackTrace();
+                    System.gc();
+                } finally {
+                    mutexNotificator.release();
                 }
             }
         });
@@ -526,13 +517,10 @@ public class FirewallService extends VpnService {
                                     cancelTotalViewGone = false;
                                     if (!totalViewWaitForGone) {
                                         totalViewWaitForGone = true;
-                                        llFloatingTrafficTotal.postDelayed(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                if (!cancelTotalViewGone)
-                                                    llFloatingTrafficTotal.setVisibility(View.GONE);
-                                                totalViewWaitForGone = false;
-                                            }
+                                        llFloatingTrafficTotal.postDelayed(() -> {
+                                            if (!cancelTotalViewGone)
+                                                llFloatingTrafficTotal.setVisibility(View.GONE);
+                                            totalViewWaitForGone = false;
                                         }, 5000);
                                     }
                                     return true;
@@ -686,42 +674,39 @@ public class FirewallService extends VpnService {
     }
 
     private void notifyUid(final int uid) {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    mutexNotificator.acquire();
-                    if (!Utils.isInteract(uid)) {
-                        ApplicationDetails appDetails = dbManager.getApplicationForId(uid);
-                        if (appDetails != null && appDetails.getPrincipalPackName() != null) {
-                            appDetails.setNotified(true);
-                            dbManager.updateApplicationData(appDetails.getUid(), appDetails);
+        executorService.submit(() -> {
+            try {
+                mutexNotificator.acquire();
+                if (!Utils.isInteract(uid)) {
+                    ApplicationDetails appDetails = dbManager.getApplicationForId(uid);
+                    if (appDetails != null && appDetails.getPrincipalPackName() != null) {
+                        appDetails.setNotified(true);
+                        dbManager.updateApplicationData(appDetails.getUid(), appDetails);
 
-                            ApplicationInfo appInfo = null;
-                            try {
-                                appInfo = packageManager.getApplicationInfo(appDetails
-                                        .getPrincipalPackName(), PackageManager.GET_META_DATA);
-                            }  catch (Exception | OutOfMemoryError e) {
-                                //TODO: disable log
-                                //e.printStackTrace();
-                            }
-                            notificationMessage = new Message();
-                            notificationMessageUid = uid;
-                            notificationMessage.what = NOTIFY_INTERNET_REQUEST_ACCESS;
-                            Bundle bundle = new Bundle();
-                            bundle.putString(APP_DETAILS_NAME_NOTIFICATION_KEY, appInfo != null
-                                    ? packageManager.getApplicationLabel(appInfo).toString()
-                                    : appDetails.getPrincipalPackName());
-                            bundle.putParcelable(APP_DETAILS_NOTIFICATION_KEY, appDetails);
-                            notificationMessage.setData(bundle);
+                        ApplicationInfo appInfo = null;
+                        try {
+                            appInfo = packageManager.getApplicationInfo(appDetails
+                                    .getPrincipalPackName(), PackageManager.GET_META_DATA);
+                        }  catch (Exception | OutOfMemoryError e) {
+                            //TODO: disable log
+                            //e.printStackTrace();
                         }
+                        notificationMessage = new Message();
+                        notificationMessageUid = uid;
+                        notificationMessage.what = NOTIFY_INTERNET_REQUEST_ACCESS;
+                        Bundle bundle = new Bundle();
+                        bundle.putString(APP_DETAILS_NAME_NOTIFICATION_KEY, appInfo != null
+                                ? packageManager.getApplicationLabel(appInfo).toString()
+                                : appDetails.getPrincipalPackName());
+                        bundle.putParcelable(APP_DETAILS_NOTIFICATION_KEY, appDetails);
+                        notificationMessage.setData(bundle);
                     }
-                }  catch (Exception | OutOfMemoryError ignored) {
-                    //TODO: disable log
-                    //ignored.printStackTrace();
-                } finally {
-                    mutexNotificator.release();
                 }
+            }  catch (Exception | OutOfMemoryError ignored) {
+                //TODO: disable log
+                //ignored.printStackTrace();
+            } finally {
+                mutexNotificator.release();
             }
         });
     }
