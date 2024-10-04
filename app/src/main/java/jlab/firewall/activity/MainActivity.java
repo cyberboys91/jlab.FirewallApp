@@ -11,7 +11,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.VpnService;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 
 import androidx.activity.OnBackPressedCallback;
