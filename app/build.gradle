@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "jlabori.firewall"
         minSdkVersion 21
-        versionCode 20241003
+        versionCode 20241004
         targetSdkVersion 35
         versionName "v1.0.beta"
         vectorDrawables.useSupportLibrary = true

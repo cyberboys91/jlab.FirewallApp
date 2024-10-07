@@ -51,7 +51,7 @@ public class ApplicationDetails implements Parcelable {
         this.rxBytes = in.readLong();
     }
 
-    public static final Creator<ApplicationDetails> CREATOR = new Creator<ApplicationDetails>() {
+    public static final Creator<ApplicationDetails> CREATOR = new Creator<>() {
         @Override
         public ApplicationDetails createFromParcel(Parcel in) {
             return new ApplicationDetails(in);
