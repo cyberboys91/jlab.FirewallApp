@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">防火牆</string>
-    <string name="ads_app_id">ca-app-pub-6420027936185714~5378663037</string>
-    <string name="banner_ad_unit_id">ca-app-pub-6420027936185714/4065581369</string>
+    <string name="ads_app_id">ca-app-pub-6844059227613516~2373084370</string>
+    <string name="banner_ad_unit_id">ca-app-pub-6844059227613516/3057215316</string>
     <string name="font_family_text">sans-serif</string>
     <string name="font_family_button">sans-serif-medium</string>
     <string name="start_vpn">開始</string>
