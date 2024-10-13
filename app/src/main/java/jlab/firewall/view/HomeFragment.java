@@ -90,10 +90,9 @@ public class HomeFragment extends Fragment {
             if (chart != null) {
                 ArrayList<Line> lines = new ArrayList<>();
 
-                //Creando copia para evitar la modificación concurrente
                 ArrayList<PointValue> pointsLineUpSpeed = new ArrayList<>(trafficDataUpSpeedPoints);
                 ArrayList<PointValue> pointsLineDownSpeed = new ArrayList<>(trafficDataDownSpeedPoints);
-                //.
+
                 lines.add(new Line(pointsLineUpSpeed).setColor(COLOR_NEUTRAL)
                         .setPointColor(COLOR_TRANSPARENT).setStrokeWidth(1).setFilled(true));
                 lines.add(new Line(pointsLineDownSpeed).setColor(COLOR_GREEN)

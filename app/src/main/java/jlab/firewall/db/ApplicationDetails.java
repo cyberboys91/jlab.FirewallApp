@@ -12,7 +12,7 @@ import jlab.firewall.vpn.Utils;
  */
 public class ApplicationDetails implements Parcelable {
 
-    private int uid, count = 1;
+    private int uid, count;
     private long txBytes, rxBytes;
     private StringBuilder pPackName, names, packNames;
     private boolean internet, notified, interact;

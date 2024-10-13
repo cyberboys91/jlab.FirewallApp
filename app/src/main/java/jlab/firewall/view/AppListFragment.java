@@ -1,5 +1,6 @@
 package jlab.firewall.view;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -208,6 +209,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         return context.getString(R.string.app_list);
     }
 
+    @SuppressLint("ViewHolder")
     @Override
     public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         convertView = LayoutInflater.from(getContext())

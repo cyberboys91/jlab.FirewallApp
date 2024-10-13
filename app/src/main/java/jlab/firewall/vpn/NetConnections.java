@@ -87,10 +87,7 @@ public class NetConnections {
                 }
             }
             reader.close();
-        } catch (IOException e) {
-            //TODO: disable log
-            //e.printStackTrace();
-        }
+        } catch (IOException ignored) { }
         return -1;
     }
 

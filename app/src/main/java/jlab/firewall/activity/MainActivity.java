@@ -14,6 +14,7 @@ import android.os.Build;
 import android.provider.Settings;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -222,7 +223,7 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.mnRateApp)
             //rate

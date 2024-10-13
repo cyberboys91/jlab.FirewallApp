@@ -1,5 +1,6 @@
 package jlab.firewall.view;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -59,6 +60,7 @@ public class NotifiedAppListFragment extends AppListFragment {
                 .unregisterReceiver(refreshCountNotifiedReceiver);
     }
 
+    @SuppressLint("ViewHolder")
     @Override
     public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         convertView = LayoutInflater.from(getContext())

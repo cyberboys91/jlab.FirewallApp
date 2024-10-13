@@ -768,7 +768,7 @@ public class FirewallService extends VpnService {
                 }
                 catch (JSONException ignored) { }
                 finally {
-                    upBytesInStart = preferences.getLong(UP_BYTES_IN_START_KEY, 0);;
+                    upBytesInStart = preferences.getLong(UP_BYTES_IN_START_KEY, 0);
                     downBytesInStart = preferences.getLong(DOWN_BYTES_IN_START_KEY, 0);
                     upByteTotal.set(preferences.getLong(UP_BYTES_TOTAL_KEY, 0));
                     downByteTotal.set(preferences.getLong(DOWN_BYTES_TOTAL_KEY, 0));
