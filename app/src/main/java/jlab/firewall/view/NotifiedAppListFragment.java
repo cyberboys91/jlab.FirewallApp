@@ -96,8 +96,8 @@ public class NotifiedAppListFragment extends AppListFragment {
                     }
                 }).start();
             }
-            final View allowInternet = convertView.findViewById(R.id.llAllowInternet),
-                    blockInternet = convertView.findViewById(R.id.llBlockInternet);
+            final View allowInternet = convertView.findViewById(R.id.rlAllowInternet),
+                    blockInternet = convertView.findViewById(R.id.rlBlockInternet);
             allowInternet.setOnClickListener(v -> {
                 current.setInternet(true);
                 current.setInteract(true);

@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ImageView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:importantForAccessibility="no">
-</ImageView>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="52dp"
+    android:layout_height="52dp"
+    android:background="@drawable/corner_white_radius_15dp">
+
+    <ImageView
+        android:layout_height="32dp"
+        android:layout_width="32dp"
+        android:id="@+id/ivOptionButton"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:importantForAccessibility="no">
+    </ImageView>
+
+</RelativeLayout>
