@@ -39,6 +39,7 @@
         android:id="@+id/cbShowFloatingMonitorSpeed"
         android:layout_marginTop="@dimen/middle_margin"
         android:layout_gravity="center"
+        android:textColorHint="@color/white"
         android:textSize="@dimen/text_middle_size"
         android:fontFamily="@string/font_family_text"
         android:hint="@string/show_floating_monitor_speed"/>
@@ -90,7 +91,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:textColor="@color/darken"
+                            android:textColor="@color/white"
                             android:textSize="@dimen/text_middle_size"
                             android:text="@string/speed_bps"
                             android:fontFamily="@string/font_family_text"
@@ -102,6 +103,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
+                        android:baselineAligned="false"
                         android:paddingBottom="20dp"
                         android:orientation="horizontal">
 
@@ -124,7 +126,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textSize="@dimen/text_total_size_sp"
-                                android:textColor="@color/darken"
+                                android:textColor="@color/white"
                                 android:text="@string/not_traffic_bytes"
                                 android:fontFamily="@string/font_family_text"
                                 android:id="@+id/tvUpByteTotal"
@@ -149,7 +151,7 @@
                                 android:fontFamily="@string/font_family_text"
                                 android:text="@string/not_traffic_bytes"
                                 android:textSize="@dimen/text_total_size_sp"
-                                android:textColor="@color/darken"
+                                android:textColor="@color/white"
                                 android:layout_marginStart="10dp"
                                 android:ellipsize="end"
                                 android:maxLines="1"/>

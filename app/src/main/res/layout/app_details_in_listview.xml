@@ -36,6 +36,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/tvName"
                 android:textSize="@dimen/text_big_size"
+                android:textColor="@color/white"
                 android:fontFamily="@string/font_family_text"
                 android:textStyle="bold"/>
 
@@ -47,7 +48,7 @@
                 android:maxLines="5"
                 android:ellipsize="end"
                 android:fontFamily="@string/font_family_text"
-                android:textColor="@android:color/holo_blue_dark"/>
+                android:textColor="@color/neutral"/>
 
         </LinearLayout>
 

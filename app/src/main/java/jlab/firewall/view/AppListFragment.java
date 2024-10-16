@@ -56,7 +56,7 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
         semaphoreReload = new Semaphore(1);
     protected TextView tvEmptyList;
     protected List<ApplicationDetails> content = new ArrayList<>();
-    protected static int[] colorsSpannable = new int[]{R.color.darken
+    protected static int[] colorsSpannable = new int[]{R.color.white
             , R.color.yellow, R.color.orange, R.color.green};
     private SearchView svSearch;
     protected String query;

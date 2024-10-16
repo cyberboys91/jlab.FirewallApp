@@ -56,7 +56,7 @@ public class HomeFragment extends Fragment {
     private LineChartData chartData;
     private TextView tvTextButton, tvUpByteTotal, tvDownByteTotal;
     private Semaphore mutexRefreshTraffic = new Semaphore(1);
-    private static final int COLOR_GREEN = Color.GREEN, COLOR_NEUTRAL = Color.parseColor("#2389af"),
+    private static final int COLOR_GREEN = Color.GREEN, COLOR_NEUTRAL = Color.parseColor("#2196F3"),
         COLOR_TRANSPARENT = Color.argb(0, 255, 255, 255);
     private BroadcastReceiver onFirewallChangeStatusReceiver = new BroadcastReceiver () {
         @Override

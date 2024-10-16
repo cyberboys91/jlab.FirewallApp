@@ -7,12 +7,12 @@
     <color name="white_dark">#c7c7c7</color>
     <color name="transparent_white">#40808080</color>
     <color name="transparent_white_dark">#ec252525</color>
-    <color name="neutral">#2389af</color>
-    <color name="orange">#ca683f</color>
+    <color name="neutral">#2196F3</color>
+    <color name="orange">#E76A35</color>
     <color name="native_green">#00ff00</color>
     <color name="green">#3c8d27</color>
     <color name="green_bright">#439d2c</color>
-    <color name="yellow">#c59a2d</color>
+    <color name="yellow">#E6A919</color>
     <color name="gray">#282b36</color>
     <color name="black">#000000</color>
     <color name="darken">#DDDDDD</color>
