@@ -24,7 +24,6 @@
         android:id="@+id/rlBadgeWrapper"
         android:padding="2dp"
         android:layout_marginStart="5dp"
-        android:layout_marginLeft="5dp"
         android:background="@drawable/corner_white_radius_10dp"
         android:layout_gravity="center">
 
@@ -32,7 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tvBadgeCount"
-            android:textSize="12dp"
+            android:textSize="@dimen/text_min_size_sp"
             android:fontFamily="@string/font_family_text"
             android:textColor="@color/black"
             android:layout_centerVertical="true"
