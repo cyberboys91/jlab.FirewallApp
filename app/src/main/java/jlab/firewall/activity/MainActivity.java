@@ -129,12 +129,12 @@ public class MainActivity extends FragmentActivity implements OnRunOnUiThread {
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        MobileAds.initialize(this, initializationStatus -> {
-            try {
-                AdView adView = findViewById(R.id.adView);
-                adView.loadAd(new AdRequest.Builder().build());
-            } catch (Exception ignored) { }
-        });
+//        MobileAds.initialize(this, initializationStatus -> {
+//            try {
+//                AdView adView = findViewById(R.id.adView);
+//                adView.loadAd(new AdRequest.Builder().build());
+//            } catch (Exception ignored) { }
+//        });
     }
 
     @Override
