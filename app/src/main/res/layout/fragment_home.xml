@@ -26,7 +26,7 @@
             android:textColor="@color/white"
             android:padding="4dp"
             android:text="@string/start_vpn"
-            android:textSize="@dimen/text_short_size_dp"
+            android:textSize="@dimen/text_middle_size"
             android:fontFamily="@string/font_family_text"
             android:textStyle="bold"
             android:layout_gravity="center"/>
@@ -35,11 +35,11 @@
 
     <CheckBox
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/checkbox_height_dp"
         android:id="@+id/cbShowFloatingMonitorSpeed"
         android:layout_marginTop="@dimen/middle_margin"
         android:layout_gravity="center"
-        android:textSize="@dimen/text_short_size_dp"
+        android:textSize="@dimen/text_middle_size"
         android:fontFamily="@string/font_family_text"
         android:hint="@string/show_floating_monitor_speed"/>
 
@@ -49,7 +49,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginTop="@dimen/middle_margin"
             android:paddingBottom="25dp">
@@ -91,7 +91,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:textColor="@color/darken"
-                            android:textSize="@dimen/text_short_size_dp"
+                            android:textSize="@dimen/text_middle_size"
                             android:text="@string/speed_bps"
                             android:fontFamily="@string/font_family_text"
                             android:layout_centerHorizontal="true"/>
@@ -128,7 +128,6 @@
                                 android:text="@string/not_traffic_bytes"
                                 android:fontFamily="@string/font_family_text"
                                 android:id="@+id/tvUpByteTotal"
-                                android:layout_marginLeft="10dp"
                                 android:layout_marginStart="10dp"
                                 android:layout_gravity="center"
                                 android:ellipsize="end"
@@ -146,13 +145,11 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:id="@+id/tvDownByteTotal"
-                                android:layout_toLeftOf="@+id/tvDownArrow"
                                 android:layout_toStartOf="@id/tvDownArrow"
                                 android:fontFamily="@string/font_family_text"
                                 android:text="@string/not_traffic_bytes"
                                 android:textSize="@dimen/text_total_size_dp"
                                 android:textColor="@color/darken"
-                                android:layout_marginLeft="10dp"
                                 android:layout_marginStart="10dp"
                                 android:ellipsize="end"
                                 android:maxLines="1"/>
@@ -166,10 +163,8 @@
                                 android:textColor="@color/native_green"
                                 android:fontFamily="@string/font_family_text"
                                 android:textStyle="bold"
-                                android:layout_marginLeft="10dp"
                                 android:layout_marginStart="10dp"
-                                android:layout_alignParentEnd="true"
-                                android:layout_alignParentRight="true"/>
+                                android:layout_alignParentEnd="true"/>
 
                         </RelativeLayout>
 
