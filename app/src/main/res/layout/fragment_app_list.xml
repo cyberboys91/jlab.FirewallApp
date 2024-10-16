@@ -56,6 +56,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="20dp"
+        android:importantForAccessibility="no"
         app:srcCompat="@drawable/vector_search"
         app:backgroundTint="@color/floating_button_color"
         app:fabSize="mini"/>

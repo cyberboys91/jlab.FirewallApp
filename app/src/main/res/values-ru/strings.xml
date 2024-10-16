@@ -35,4 +35,6 @@
     <string name="search_hint">Имя поиска</string>
     <string name="notified">Уведомлен</string>
     <string name="show_floating_monitor_speed">Показать монитор плавающей скорости</string>
+    <string name="default_traffic_data_speed">↑0Bps↓0Bps</string>
+    <string name="default_traffic_data_total">↑0B↓0B</string>
 </resources>

@@ -14,6 +14,7 @@
         android:layout_height="50dp"
         android:id="@+id/ivIcon"
         android:layout_gravity="center_vertical"
+        android:importantForAccessibility="no"
         android:src="@drawable/app_icon_background"/>
 
     <LinearLayout
@@ -23,7 +24,6 @@
         android:orientation="vertical"
         android:padding="5dp"
         android:layout_marginStart="10dp"
-        android:layout_marginLeft="10dp"
         android:layout_gravity="center_vertical">
 
         <TextView
@@ -58,7 +58,6 @@
                 android:layout_height="wrap_content"
                 android:minHeight="30dp"
                 android:layout_marginEnd="7dp"
-                android:layout_marginRight="7dp"
                 app:cardCornerRadius="10dp"
                 app:contentPaddingTop="1dp"
                 app:contentPaddingBottom="2dp"

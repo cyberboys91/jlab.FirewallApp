@@ -35,4 +35,6 @@
     <string name="search_hint">Sök Namn</string>
     <string name="notified">Underrättelse</string>
     <string name="show_floating_monitor_speed">Visa flytande hastighetsmonitor</string>
+    <string name="default_traffic_data_speed">↑0Bps↓0Bps</string>
+    <string name="default_traffic_data_total">↑0B↓0B</string>
 </resources>

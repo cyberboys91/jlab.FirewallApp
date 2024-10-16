@@ -35,4 +35,6 @@
     <string name="search_hint">खोज नाम</string>
     <string name="notified">अधिसूचित</string>
     <string name="show_floating_monitor_speed">फ्लोटिंग स्पीड मॉनिटर दिखाएं</string>
+    <string name="default_traffic_data_speed">↑0Bps↓0Bps</string>
+    <string name="default_traffic_data_total">↑0B↓0B</string>
 </resources>

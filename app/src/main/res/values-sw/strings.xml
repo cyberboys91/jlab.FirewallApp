@@ -35,4 +35,6 @@
     <string name="search_hint">Tafuta jina</string>
     <string name="notified">Imearifiwa</string>
     <string name="show_floating_monitor_speed">Onyesha mfuatiliaji wa kasi inayoelea</string>
+    <string name="default_traffic_data_speed">↑0Bps↓0Bps</string>
+    <string name="default_traffic_data_total">↑0B↓0B</string>
 </resources>

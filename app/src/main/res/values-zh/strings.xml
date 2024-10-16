@@ -35,4 +35,6 @@
     <string name="search_hint">搜尋名稱</string>
     <string name="notified">已通知</string>
     <string name="show_floating_monitor_speed">顯示浮動速度監視器</string>
+    <string name="default_traffic_data_speed">↑0Bps↓0Bps</string>
+    <string name="default_traffic_data_total">↑0B↓0B</string>
 </resources>

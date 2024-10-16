@@ -35,4 +35,6 @@
     <string name="search_hint">이름 검색</string>
     <string name="notified">알림</string>
     <string name="show_floating_monitor_speed">부동 속도 모니터 표시</string>
+    <string name="default_traffic_data_speed">↑0Bps↓0Bps</string>
+    <string name="default_traffic_data_total">↑0B↓0B</string>
 </resources>

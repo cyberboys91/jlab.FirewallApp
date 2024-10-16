@@ -35,4 +35,6 @@
     <string name="search_hint">නම සොයන්න</string>
     <string name="notified">දැනුම් දෙනු ලැබේ</string>
     <string name="show_floating_monitor_speed">පාවෙන වේග මොනිටරය පෙන්වන්න</string>
+    <string name="default_traffic_data_speed">↑0Bps↓0Bps</string>
+    <string name="default_traffic_data_total">↑0B↓0B</string>
 </resources>

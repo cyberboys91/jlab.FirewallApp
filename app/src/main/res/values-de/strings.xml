@@ -35,4 +35,6 @@
     <string name="search_hint">Name suchen</string>
     <string name="notified">Benachrichtigt</string>
     <string name="show_floating_monitor_speed">Schwebende Geschwindigkeitsüberwachung anzeigen</string>
+    <string name="default_traffic_data_speed">↑0Bps↓0Bps</string>
+    <string name="default_traffic_data_total">↑0B↓0B</string>
 </resources>
