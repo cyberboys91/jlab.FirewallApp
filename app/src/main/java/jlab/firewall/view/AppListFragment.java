@@ -139,16 +139,18 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             }
         });
         if(this.svSearch != null) {
-            var tvSearch = this.svSearch.findViewById(androidx.appcompat.R.id.search_src_text);
-            tvSearch.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                    (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                            48f, getResources().getDisplayMetrics())));
             if (query != null && !query.isEmpty()) {
-                if (!this.svSearch.getQuery()
-                        .toString().equals(query))
+                if (!this.svSearch.getQuery().toString().equals(query)) {
                     this.svSearch.setQuery(query, false);
+                }
                 this.svSearch.setVisibility(View.VISIBLE);
                 fbSearch.setVisibility(View.INVISIBLE);
+                this.svSearch.postDelayed(() -> {
+                    var tvSearch = this.svSearch.findViewById(androidx.appcompat.R.id.search_src_text);
+                    tvSearch.setLayoutParams(new LinearLayout.LayoutParams(tvSearch.getWidth(),
+                            (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                                    48f, getResources().getDisplayMetrics())));
+                }, 0);
             } else {
                 this.svSearch.setVisibility(View.GONE);
                 fbSearch.setVisibility(View.VISIBLE);
