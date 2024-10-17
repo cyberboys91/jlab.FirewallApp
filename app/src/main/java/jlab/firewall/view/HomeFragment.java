@@ -216,7 +216,7 @@ public class HomeFragment extends Fragment {
                     vpnButton.setCardBackgroundColor(getResources().getColor(R.color.neutral));
                 } else {
                     tvTextButton.setText(R.string.stop_vpn);
-                    vpnButton.setCardBackgroundColor(getResources().getColor(R.color.yellow));
+                    vpnButton.setCardBackgroundColor(getResources().getColor(R.color.orange));
                 }
                 vpnButton.setEnabled(true);
             }
