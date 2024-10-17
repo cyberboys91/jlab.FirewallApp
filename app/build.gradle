@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "jlabori.firewall"
         minSdkVersion 21
-        versionCode 20241018
+        versionCode 20241019
         targetSdkVersion 35
         versionName "v1.0.beta"
         vectorDrawables.useSupportLibrary = true
@@ -21,7 +21,7 @@ android {
             }
         }
 
-        ndkVersion "26.1.10909125"
+        ndkVersion "28.0.12433566"
         ndk {
             // https://developer.android.com/ndk/guides/abis.html#sa
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
@@ -43,7 +43,7 @@ android {
         sourceCompatibility 17
         targetCompatibility 17
     }
-    ndkVersion '26.1.10909125'
+    ndkVersion '28.0.12433566'
 }
 
 dependencies {
