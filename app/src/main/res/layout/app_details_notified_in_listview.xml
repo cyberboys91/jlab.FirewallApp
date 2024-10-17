@@ -58,7 +58,8 @@
                 android:id="@+id/rlAllowInternet"
                 android:layout_weight="1"
                 android:layout_width="0dp"
-                android:layout_height="48dp">
+                android:layout_height="48dp"
+                android:importantForAccessibility="no">
 
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
@@ -70,7 +71,6 @@
                     app:contentPaddingBottom="2dp"
                     android:layout_centerVertical="true"
                     android:layout_centerHorizontal="true"
-                    android:importantForAccessibility="no"
                     app:cardBackgroundColor="@color/green_bright">
 
                     <TextView
@@ -90,7 +90,8 @@
                 android:id="@+id/rlBlockInternet"
                 android:layout_weight="1"
                 android:layout_width="0dp"
-                android:layout_height="48dp">
+                android:layout_height="48dp"
+                android:importantForAccessibility="no">
 
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
@@ -101,7 +102,6 @@
                     app:cardCornerRadius="10dp"
                     app:contentPaddingTop="1dp"
                     app:contentPaddingBottom="2dp"
-                    android:importantForAccessibility="no"
                     app:cardBackgroundColor="@color/white">
 
                     <TextView

@@ -59,6 +59,6 @@
         android:importantForAccessibility="no"
         app:srcCompat="@drawable/vector_search"
         app:backgroundTint="@color/floating_button_color"
-        app:fabSize="mini"/>
+        app:fabSize="normal"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
