@@ -213,10 +213,12 @@ public class HomeFragment extends Fragment {
             if (vpnButton != null) {
                 if (stopped) {
                     tvTextButton.setText(R.string.start_vpn);
-                    vpnButton.setCardBackgroundColor(getResources().getColor(R.color.neutral));
+                    tvTextButton.setTextColor(getResources().getColor(R.color.white));
+                    vpnButton.setCardBackgroundColor(getResources().getColor(R.color.primary));
                 } else {
                     tvTextButton.setText(R.string.stop_vpn);
-                    vpnButton.setCardBackgroundColor(getResources().getColor(R.color.orange));
+                    tvTextButton.setTextColor(getResources().getColor(R.color.gray));
+                    vpnButton.setCardBackgroundColor(getResources().getColor(R.color.white));
                 }
                 vpnButton.setEnabled(true);
             }

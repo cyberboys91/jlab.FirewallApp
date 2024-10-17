@@ -12,7 +12,6 @@
 
         <androidx.appcompat.widget.SearchView
             android:id="@+id/svSearch"
-            android:minHeight="48dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:queryHint="@string/search_hint"
