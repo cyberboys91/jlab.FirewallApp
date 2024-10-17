@@ -19,11 +19,13 @@ import android.text.Selection;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.bumptech.glide.Glide;
@@ -137,6 +139,10 @@ public class AppListFragment extends Fragment implements AppListAdapter.IOnManag
             }
         });
         if(this.svSearch != null) {
+            var tvSearch = this.svSearch.findViewById(androidx.appcompat.R.id.search_src_text);
+            tvSearch.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                    (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                            48f, getResources().getDisplayMetrics())));
             if (query != null && !query.isEmpty()) {
                 if (!this.svSearch.getQuery()
                         .toString().equals(query))
