@@ -44,8 +44,7 @@
             android:textSize="@dimen/text_middle_size"
             android:maxLines="2"
             android:ellipsize="end"
-            android:fontFamily="@string/font_family_text"
-            android:textColor="@color/neutral"/>
+            android:fontFamily="@string/font_family_text"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -71,7 +70,7 @@
                     app:contentPaddingBottom="2dp"
                     android:layout_centerVertical="true"
                     android:layout_centerHorizontal="true"
-                    app:cardBackgroundColor="@color/green_bright">
+                    app:cardBackgroundColor="@color/green">
 
                     <TextView
                         android:layout_width="wrap_content"

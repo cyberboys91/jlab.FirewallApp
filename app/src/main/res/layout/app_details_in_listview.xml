@@ -47,8 +47,7 @@
                 android:textSize="@dimen/text_middle_size"
                 android:maxLines="5"
                 android:ellipsize="end"
-                android:fontFamily="@string/font_family_text"
-                android:textColor="@color/neutral"/>
+                android:fontFamily="@string/font_family_text"/>
 
         </LinearLayout>
 
