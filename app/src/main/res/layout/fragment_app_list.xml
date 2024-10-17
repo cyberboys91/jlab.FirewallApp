@@ -29,6 +29,7 @@
                 android:layout_centerVertical="true"
                 android:layout_centerHorizontal="true"
                 android:text="@string/empty_list"
+                android:textColor="@color/darken"
                 android:fontFamily="@string/font_family_text"
                 android:visibility="invisible"/>
 
